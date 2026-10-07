@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Extrato OFX para Domínio</title>
+<style>
+.ec-voltar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 20px;background:#ffffff;border-bottom:1px solid #dde4ec;font:500 14px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 2px 8px rgba(18,35,59,.05)}
+.ec-voltar a{color:#167a6e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px}
+.ec-voltar a:hover{background:#e3f3ee}
+.ec-voltar span{color:#4f5f73}
+@media (prefers-color-scheme:dark){.ec-voltar{background:#16212f;border-color:#26364a}.ec-voltar a{color:#3fc6a0}.ec-voltar a:hover{background:#16332c}.ec-voltar span{color:#9fb0c3}}
+</style>
+</head>
+<body>
+<div class="ec-voltar"><a href="index.html">&larr; Central de Automações</a><span>e.contabil projetos</span></div>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: uma coluna de trabalho — contas, arquivo, conferência, TXT final */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --fg:#17242b; --muted:#5b6b73; --line:#d8dfe2;
+  --accent:#1d5d78; --accent-fg:#ffffff; --accent-soft:#e2eef3;
+  --in:#1f7a4d; --in-soft:#e3f3ea; --out:#b03a2e; --out-soft:#f8e6e3; --fee:#9a6a0b; --fee-soft:#f7eed9; --jur:#7a3f8f; --jur-soft:#f1e6f5; --skip:#8a969c;
+  --code-bg:#eef2f3;
+  --f-display:"Fraunces",Georgia,serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11181c; --surface:#182227; --fg:#e4ecef; --muted:#93a4ab; --line:#2a383f;
+  --accent:#6fb3cf; --accent-fg:#0c1418; --accent-soft:#1d3440;
+  --in:#5fc58f; --in-soft:#173126; --out:#ec8073; --out-soft:#3a1f1c; --fee:#e0b25a; --fee-soft:#352a14; --jur:#c99ade; --jur-soft:#2e2136; --skip:#6c7a80;
+  --code-bg:#0e1417; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11181c; --surface:#182227; --fg:#e4ecef; --muted:#93a4ab; --line:#2a383f;
+  --accent:#6fb3cf; --accent-fg:#0c1418; --accent-soft:#1d3440;
+  --in:#5fc58f; --in-soft:#173126; --out:#ec8073; --out-soft:#3a1f1c; --fee:#e0b25a; --fee-soft:#352a14; --jur:#c99ade; --jur-soft:#2e2136; --skip:#6c7a80;
+  --code-bg:#0e1417; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body)}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:20px;padding-block:28px 56px;display:flex;flex-direction:column;gap:22px}
+header h1{font:600 clamp(1.6rem,3.4vw,2.2rem)/1.15 var(--f-display);margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--muted);max-width:66ch}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel h2{margin:0;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.accts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:.85rem;color:var(--muted)}
+label.f input,label.f select{font:500 1rem var(--f-mono);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%}
+label.f input:focus,label.f select:focus,button:focus-visible,.drop:focus-visible,td select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;font-size:.85rem}
+.rule{border-left:3px solid var(--c);padding:4px 0 4px 10px}
+.rule b{display:block;color:var(--c);font-weight:600}
+.rule span{font-family:var(--f-mono);color:var(--fg)}
+.drop{border:1.5px dashed var(--line);border-radius:8px;padding:22px;text-align:center;cursor:pointer;color:var(--muted);transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft);color:var(--fg)}
+.drop strong{color:var(--accent)}
+.filebar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:.85rem;color:var(--muted)}
+.tag{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;background:var(--fee-soft);color:var(--fee)}
+.sums{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.sum{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.sum small{color:var(--muted);font-size:.78rem}
+.sum b{font:500 1.05rem var(--f-mono);font-variant-numeric:tabular-nums}
+.sum i{font-style:normal;font-size:.78rem;color:var(--muted)}
+.sum.in b{color:var(--in)} .sum.out b{color:var(--out)} .sum.fee b{color:var(--fee)} .sum.jur b{color:var(--jur)}
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:760px}
+th{text-align:left;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0}
+td{padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.num,td.acc,td.dt{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.num{text-align:right}
+td.memo{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td select{font:inherit;font-size:.8rem;font-weight:600;border-radius:99px;padding:3px 8px;border:1px solid transparent;background:var(--c-soft);color:var(--c)}
+tr[data-k="dep"]{--c:var(--in);--c-soft:var(--in-soft)}
+tr[data-k="saq"]{--c:var(--out);--c-soft:var(--out-soft)}
+tr[data-k="tar"]{--c:var(--fee);--c-soft:var(--fee-soft)}
+tr[data-k="jur"]{--c:var(--jur);--c-soft:var(--jur-soft)}
+tr[data-k="ign"]{--c:var(--skip);--c-soft:var(--bg)}
+tr[data-k="ign"] td:not(:nth-child(4)){opacity:.45;text-decoration:line-through}
+td.hist{font-size:.78rem;color:var(--muted);white-space:nowrap}
+pre{margin:0;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font:13px/1.6 var(--f-mono);overflow:auto;max-height:280px;white-space:pre}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:600 .92rem var(--f-body);border-radius:7px;padding:9px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.msg{font-size:.85rem;color:var(--muted)}
+.msg.err{color:var(--out)}
+.note{font-size:.8rem;color:var(--muted);margin:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Extrato OFX para Domínio</h1>
+    <p>Informe as contas do plano da empresa, suba o OFX do banco e baixe o TXT de lançamentos pronto para importar no Domínio.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="h-contas">
+    <h2 id="h-contas">1 · Contas do plano</h2>
+    <div class="accts">
+      <label class="f">Conta caixa<input id="cCaixa" inputmode="numeric" value="19"></label>
+      <label class="f">Conta banco<input id="cBanco" inputmode="numeric" value="27"></label>
+      <label class="f">Conta tarifas bancárias<input id="cTarifa" inputmode="numeric" value="1880"></label>
+      <label class="f">Conta juros pagos<input id="cJuros" inputmode="numeric" value="1902"></label>
+      <label class="f">Formato do valor
+        <select id="fmtValor">
+          <option value="modelo">Como no modelo (15 · 15,50)</option>
+          <option value="2casas">Sempre 2 casas (15,00)</option>
+        </select>
+      </label>
+    </div>
+    <div class="rules" id="rules"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-ofx">
+    <h2 id="h-ofx">2 · Extrato</h2>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Escolher arquivo OFX">
+      <strong>Escolha o arquivo OFX</strong> ou arraste aqui · pode selecionar mais de um
+    </div>
+    <input type="file" id="file" accept=".ofx,.OFX,text/plain" multiple hidden>
+    <div class="filebar" id="filebar"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-conf">
+    <h2 id="h-conf">3 · Conferência dos lançamentos</h2>
+    <div class="sums" id="sums"></div>
+    <p class="note">As tarifas são reconhecidas pela descrição do extrato (tarifa, IOF, cesta, pacote de serviços, manutenção de conta) e os juros pelas saídas com a palavra JUROS. Se alguma linha ficou na classificação errada, troque no seletor da coluna Tipo.</p>
+    <div class="tablebox"><table>
+      <thead><tr><th>Data</th><th>Descrição no extrato</th><th style="text-align:right">Valor</th><th>Tipo</th><th>Débito</th><th>Crédito</th><th>Histórico</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-txt">
+    <h2 id="h-txt">4 · Arquivo para importação</h2>
+    <pre id="preview"></pre>
+    <div class="actions">
+      <button class="primary" id="btnSave">Baixar TXT</button>
+      <button id="btnCopy">Copiar conteúdo</button>
+      <span class="msg" id="msg" role="status"></span>
+    </div>
+  </section>
+</div>
+
+<script>
+const HIST = {dep:"DEPOSITO CFE EXTRATO", saq:"SAQUE CFE EXTRATO", tar:"TARIFA BANCARIA CFE EXTRATO", jur:"JUROS PAGOS CFE EXTRATO"};
+const TIPOS = [["dep","Depósito (entrada)"],["saq","Saque (saída)"],["tar","Tarifa bancária"],["jur","Juros pagos"],["ign","Não lançar"]];
+const TARIFA_RE = /\bTAR(IFA|\.|\s)|\bTARIFAS?\b|CESTA|PACOTE\s*(DE\s*)?SERV|MANUT(ENCAO|\.)?\s*(DE\s*)?CONTA|\bTX\.?\s*ADM|\bIOF\b/i;
+const JUROS_RE = /JUROS/i;
+const $ = id => document.getElementById(id);
+let rows = [], fileName = "", isSample = true;
+
+const SAMPLE = `OFXHEADER:100
+DATA:OFXSGML
+CHARSET:1252
+<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS><CURDEF>BRL<BANKTRANLIST>
+<STMTTRN><TRNTYPE>CREDIT<DTPOSTED>20260901<TRNAMT>4850.00<MEMO>PIX RECEBIDO CLIENTE</STMTTRN>
+<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260902<TRNAMT>-1200.00<MEMO>PAGTO BOLETO FORNECEDOR</STMTTRN>
+<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260905<TRNAMT>-89.90<MEMO>TARIFA PACOTE SERVICOS</STMTTRN>
+<STMTTRN><TRNTYPE>CREDIT<DTPOSTED>20260910<TRNAMT>15000.00<MEMO>TED RECEBIDA</STMTTRN>
+<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260912<TRNAMT>-3500.50<MEMO>PIX ENVIADO</STMTTRN>
+<STMTTRN><TRNTYPE>FEE<DTPOSTED>20260915<TRNAMT>-15.00<MEMO>TAR DOC/TED</STMTTRN>
+<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260916<TRNAMT>-4.37<MEMO>DÉB.IOF</STMTTRN>
+<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260916<TRNAMT>-32.80<MEMO>JUROS SALDO DEVEDOR</STMTTRN>
+<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260920<TRNAMT>-150.00<MEMO>SAQUE TERMINAL</STMTTRN>
+</BANKTRANLIST></STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>`;
+
+/* ---------- contas (lembradas neste navegador) ---------- */
+const ACC_IDS = ["cCaixa","cBanco","cTarifa","cJuros","fmtValor"];
+try{ const s = JSON.parse(localStorage.getItem("ofxdominio.cfg")||"{}"); ACC_IDS.forEach(k=>{ if(s[k]) $(k).value = s[k]; }); }catch(e){}
+function saveCfg(){ try{ const o={}; ACC_IDS.forEach(k=>o[k]=$(k).value.trim()); localStorage.setItem("ofxdominio.cfg",JSON.stringify(o)); }catch(e){} }
+const acc = () => ({cx:$("cCaixa").value.trim(), bc:$("cBanco").value.trim(), tf:$("cTarifa").value.trim(), jr:$("cJuros").value.trim()});
+
+function contas(k){
+  const a = acc();
+  if(k==="dep") return [a.bc,a.cx];
+  if(k==="saq") return [a.cx,a.bc];
+  if(k==="tar") return [a.tf,a.bc];
+  if(k==="jur") return [a.jr,a.bc];
+  return ["",""];
+}
+
+/* ---------- leitura do OFX ---------- */
+function decode(buf){
+  const head = new TextDecoder("latin1").decode(buf.slice(0,600));
+  const utf = /ENCODING\s*[:=]\s*"?UTF-?8|encoding="utf-8"|CHARSET\s*:\s*UTF-?8/i.test(head);
+  try{ return new TextDecoder(utf ? "utf-8" : "windows-1252").decode(buf); }catch(e){ return new TextDecoder().decode(buf); }
+}
+function tag(block,name){ const m = block.match(new RegExp("<"+name+">\\s*([^<\\r\\n]*)","i")); return m ? m[1].trim() : ""; }
+function parseAmount(s){
+  s = s.replace(/\s/g,"");
+  if(s.includes(",") && s.includes(".")) s = s.lastIndexOf(",") > s.lastIndexOf(".") ? s.replace(/\./g,"").replace(",",".") : s.replace(/,/g,"");
+  else if(s.includes(",")) s = s.replace(",",".");
+  return parseFloat(s);
+}
+function parseOFX(text){
+  const out = [];
+  const re = /<STMTTRN>([\s\S]*?)(?=<\/STMTTRN>|<STMTTRN>|<\/BANKTRANLIST>)/gi;
+  let m;
+  while((m = re.exec(text))){
+    const b = m[1];
+    const d = tag(b,"DTPOSTED"), amt = parseAmount(tag(b,"TRNAMT"));
+    if(!/^\d{8}/.test(d) || !isFinite(amt) || amt === 0) continue;
+    const memo = (tag(b,"MEMO") || tag(b,"NAME") || "").replace(/\s+/g," ");
+    const type = tag(b,"TRNTYPE").toUpperCase();
+    const cents = Math.round(Math.abs(amt)*100);
+    let k = amt > 0 ? "dep" : "saq";
+    if(amt < 0 && JUROS_RE.test(memo)) k = "jur";
+    else if(amt < 0 && (type==="FEE" || type==="SRVCHG" || TARIFA_RE.test(memo))) k = "tar";
+    out.push({date:`${d.slice(6,8)}/${d.slice(4,6)}/${d.slice(0,4)}`, sort:d.slice(0,8), memo, cents, k});
+  }
+  return out;
+}
+
+/* ---------- formatação ---------- */
+const brl = c => (c/100).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+function valorTxt(c){
+  const inteiro = Math.floor(c/100), cent = c%100;
+  if($("fmtValor").value==="modelo" && cent===0) return String(inteiro);
+  return inteiro + "," + String(cent).padStart(2,"0");
+}
+function buildTxt(){
+  return rows.filter(r=>r.k!=="ign").map(r=>{
+    const [d,c] = contas(r.k);
+    return `${r.date};${d};${c};${valorTxt(r.cents)};;${HIST[r.k]};;;;`;
+  }).join("\r\n") + (rows.some(r=>r.k!=="ign") ? "\r\n" : "");
+}
+
+/* ---------- tela ---------- */
+function renderRules(){
+  const a = acc(), r = [
+    ["Entrada no banco",`D ${a.bc||"?"} · C ${a.cx||"?"}`,HIST.dep,"var(--in)"],
+    ["Saída do banco",`D ${a.cx||"?"} · C ${a.bc||"?"}`,HIST.saq,"var(--out)"],
+    ["Tarifa bancária",`D ${a.tf||"?"} · C ${a.bc||"?"}`,HIST.tar,"var(--fee)"],
+    ["Juros pagos",`D ${a.jr||"?"} · C ${a.bc||"?"}`,HIST.jur,"var(--jur)"]];
+  $("rules").innerHTML = r.map(x=>`<div class="rule" style="--c:${x[3]}"><b>${x[0]}</b><span>${x[1]}</span> — ${x[2]}</div>`).join("");
+}
+function renderSums(){
+  const g = {dep:[0,0],saq:[0,0],tar:[0,0],jur:[0,0],ign:[0,0]};
+  rows.forEach(r=>{ g[r.k][0]++; g[r.k][1]+=r.cents; });
+  const total = g.dep[0]+g.saq[0]+g.tar[0]+g.jur[0];
+  $("sums").innerHTML = `
+    <div class="sum in"><small>Depósitos</small><b>${brl(g.dep[1])}</b><i>${g.dep[0]} lançamento(s)</i></div>
+    <div class="sum out"><small>Saques</small><b>${brl(g.saq[1])}</b><i>${g.saq[0]} lançamento(s)</i></div>
+    <div class="sum fee"><small>Tarifas</small><b>${brl(g.tar[1])}</b><i>${g.tar[0]} lançamento(s)</i></div>
+    <div class="sum jur"><small>Juros pagos</small><b>${brl(g.jur[1])}</b><i>${g.jur[0]} lançamento(s)</i></div>
+    <div class="sum"><small>Total no arquivo</small><b>${total}</b><i>${g.ign[0]} linha(s) não lançada(s)</i></div>`;
+}
+function esc(s){ return s.replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch])); }
+function renderTable(){
+  $("tbody").innerHTML = rows.length ? rows.map((r,i)=>{
+    const [d,c] = contas(r.k);
+    const opts = TIPOS.map(([v,l])=>`<option value="${v}"${v===r.k?" selected":""}>${l}</option>`).join("");
+    return `<tr data-k="${r.k}"><td class="dt">${r.date}</td><td class="memo" title="${esc(r.memo)}">${esc(r.memo)||"—"}</td>
+      <td class="num">${brl(r.cents)}</td><td><select id="tp${i}" data-i="${i}" aria-label="Tipo do lançamento">${opts}</select></td>
+      <td class="acc">${d}</td><td class="acc">${c}</td><td class="hist">${HIST[r.k]||""}</td></tr>`;
+  }).join("") : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">Nenhum lançamento encontrado no arquivo.</td></tr>`;
+}
+function renderAll(){
+  renderRules(); renderSums(); renderTable();
+  const t = buildTxt();
+  $("preview").textContent = t || "(sem lançamentos)";
+  $("btnSave").disabled = $("btnCopy").disabled = !t;
+  $("filebar").innerHTML = (isSample ? `<span class="tag">Exemplo</span>` : "") +
+    `<span>${esc(fileName)} · ${rows.length} movimento(s)</span>`;
+}
+
+$("tbody").addEventListener("change",e=>{
+  const i = e.target.dataset.i; if(i===undefined) return;
+  rows[i].k = e.target.value; renderAll();
+});
+ACC_IDS.forEach(k=>$(k).addEventListener("input",()=>{ saveCfg(); renderAll(); }));
+
+/* ---------- arquivo ---------- */
+async function loadFiles(list){
+  const files = [...list]; if(!files.length) return;
+  let all = [];
+  for(const f of files){ all = all.concat(parseOFX(decode(await f.arrayBuffer()))); }
+  all.sort((a,b)=>a.sort.localeCompare(b.sort));
+  rows = all; isSample = false;
+  fileName = files.map(f=>f.name).join(", ");
+  $("msg").textContent = ""; $("msg").className = "msg";
+  if(!all.length){ $("msg").textContent = "Não encontrei movimentos nesse arquivo. Confira se é um OFX exportado do internet banking."; $("msg").className="msg err"; }
+  renderAll();
+}
+const drop = $("drop");
+drop.addEventListener("click",()=>$("file").click());
+drop.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); $("file").click(); }});
+$("file").addEventListener("change",e=>{ loadFiles(e.target.files); e.target.value=""; });
+["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{ e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{ e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop",e=>loadFiles(e.dataTransfer.files));
+
+/* ---------- saída ---------- */
+function nomeArquivo(){
+  const ds = rows.filter(r=>r.k!=="ign").map(r=>r.sort).sort();
+  const p = ds.length ? ds[0].slice(4,6)+"-"+ds[0].slice(0,4) : "extrato";
+  return `lanctos_banco_${p}.txt`;
+}
+function say(t,err){ $("msg").textContent = t; $("msg").className = "msg" + (err?" err":""); }
+$("btnSave").addEventListener("click", async ()=>{
+  const txt = buildTxt(), name = nomeArquivo();
+  let dl = null;
+  try{ dl = window.claude ? await window.claude.use("downloads") : null; }catch(e){}
+  if(dl){
+    try{ await dl.save({filename:name, data:txt}); say("Arquivo "+name+" salvo."); }
+    catch(e){ if(e && e.code==="declined") say("Download cancelado."); else say("Não foi possível salvar aqui. Use Copiar conteúdo e cole num arquivo .txt.",true); }
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([txt],{type:"text/plain"}));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  say("Arquivo "+name+" gerado.");
+});
+$("btnCopy").addEventListener("click", ()=>{
+  const txt = buildTxt();
+  navigator.clipboard.writeText(txt).then(()=>say("Conteúdo copiado.")).catch(()=>{
+    const r = document.createRange(); r.selectNodeContents($("preview"));
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    say("Texto selecionado — use Ctrl+C para copiar.");
+  });
+});
+
+/* início com extrato de exemplo */
+rows = parseOFX(SAMPLE); fileName = "extrato de exemplo — suba o seu OFX acima"; renderAll();
+</script>
+</body>
+</html>

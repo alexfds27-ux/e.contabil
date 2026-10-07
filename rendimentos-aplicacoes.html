@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Rendimentos de Aplicações</title>
+<style>
+.ec-voltar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 20px;background:#ffffff;border-bottom:1px solid #dde4ec;font:500 14px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 2px 8px rgba(18,35,59,.05)}
+.ec-voltar a{color:#167a6e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px}
+.ec-voltar a:hover{background:#e3f3ee}
+.ec-voltar span{color:#4f5f73}
+@media (prefers-color-scheme:dark){.ec-voltar{background:#16212f;border-color:#26364a}.ec-voltar a{color:#3fc6a0}.ec-voltar a:hover{background:#16332c}.ec-voltar span{color:#9fb0c3}}
+</style>
+</head>
+<body>
+<div class="ec-voltar"><a href="index.html">&larr; Central de Automações</a><span>e.contabil projetos</span></div>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: barra de título + coluna de controles à esquerda, prévia do relatório à direita; empilha no celular */
+:root{
+  --bg:#f3f5f7; --panel:#ffffff; --ink:#14273d; --muted:#5d6b7a; --line:#d6dde4;
+  --navy:#16365a; --teal:#2a8fb5; --tint:#e4f0f6; --tint-strong:#c6e1ec;
+  --warn:#9a5b00; --warn-bg:#fff4e0; --bad:#a3262a; --bad-bg:#fdecec; --ok:#1e6b45; --ok-bg:#e6f4ec;
+  --display:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1720; --panel:#16212d; --ink:#e3eaf1; --muted:#97a6b5; --line:#2a3846;
+  --navy:#8fc2e6; --teal:#56b7da; --tint:#173246; --tint-strong:#1f4560;
+  --warn:#f0b35a; --warn-bg:#33270f; --bad:#f08a8d; --bad-bg:#3a1a1c; --ok:#7fd3a6; --ok-bg:#14301f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1720; --panel:#16212d; --ink:#e3eaf1; --muted:#97a6b5; --line:#2a3846;
+  --navy:#8fc2e6; --teal:#56b7da; --tint:#173246; --tint-strong:#1f4560;
+  --warn:#f0b35a; --warn-bg:#33270f; --bad:#f08a8d; --bad-bg:#3a1a1c; --ok:#7fd3a6; --ok-bg:#14301f; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:18px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 24px;border-bottom:2px solid var(--navy);padding-bottom:12px}
+header.top h1{font-family:var(--display);font-weight:700;font-size:1.65rem;margin:0;color:var(--navy);text-wrap:balance}
+header.top p{margin:2px 0 0;color:var(--muted);max-width:62ch}
+.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel h2{font-family:var(--display);font-size:1.05rem;margin:0;color:var(--navy)}
+.step{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);font-weight:600}
+.drop{border:1.5px dashed var(--teal);border-radius:8px;padding:18px 14px;text-align:center;background:var(--tint);cursor:pointer;transition:background .15s}
+.drop:hover,.drop.over{background:var(--tint-strong)}
+.drop strong{display:block;color:var(--navy)}
+.drop span{color:var(--muted);font-size:.85rem}
+.drop:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.periods{display:flex;flex-direction:column;gap:6px}
+.pill{display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:.88rem}
+.pill b{font-weight:600}
+.pill small{color:var(--muted)}
+.tag{font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:var(--tint);color:var(--navy)}
+.tag.atual{background:var(--navy);color:var(--panel)}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted);font-weight:500}
+label.f input{width:100%;min-width:0;font:inherit;font-size:.92rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 9px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;font-weight:600;border-radius:7px;padding:9px 14px;cursor:pointer;border:1px solid var(--navy);background:var(--navy);color:var(--panel)}
+button.sec{background:transparent;color:var(--navy)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.msgs{display:flex;flex-direction:column;gap:6px}
+.msg{border-radius:6px;padding:8px 10px;font-size:.85rem}
+.msg.warn{background:var(--warn-bg);color:var(--warn)}
+.msg.bad{background:var(--bad-bg);color:var(--bad)}
+.msg.ok{background:var(--ok-bg);color:var(--ok)}
+.sample{background:var(--warn-bg);color:var(--warn);border-radius:6px;padding:8px 12px;font-size:.86rem}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 20px;font-size:.88rem}
+.meta div{display:flex;gap:6px;min-width:0}
+.meta dt{color:var(--muted);flex:none}
+.meta dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:10px}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.kpi.base{background:var(--tint);border-color:var(--tint-strong)}
+.kpi span{font-size:.75rem;color:var(--muted)}
+.kpi b{font-size:1.08rem;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--navy)}
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:.84rem;font-variant-numeric:tabular-nums}
+th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{background:var(--navy);color:var(--panel);font-weight:600;font-size:.76rem;vertical-align:bottom}
+th.hl{background:var(--teal)}
+td.hl{background:var(--tint);font-weight:600;color:var(--navy)}
+th.grp{background:var(--tint);color:var(--navy);text-align:center;font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;border-bottom:none}
+th.blank{background:transparent;border-bottom:none}
+td.l,th.l{text-align:left}
+td.c,th.c{text-align:center}
+td small{display:block;color:var(--muted);font-size:.72rem}
+tr.tot td{background:var(--tint-strong);font-weight:700;color:var(--navy)}
+td.obs{white-space:normal;text-align:left;font-size:.76rem;color:var(--warn);min-width:220px}
+.sit{display:inline-block;font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.sit.ok{background:var(--ok-bg);color:var(--ok)}.sit.nova{background:var(--tint);color:var(--navy)}.sit.trib{background:var(--warn-bg);color:var(--warn)}
+td.neg{color:var(--bad)}
+.note{font-size:.8rem;color:var(--muted)}
+.note b{color:var(--navy)}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:var(--panel);padding:9px 16px;border-radius:8px;font-weight:500;box-shadow:0 4px 18px rgba(0,0,0,.2);max-width:calc(100% - 32px)}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:.82rem;color:var(--ink);line-height:1.35}
+.chk input{margin-top:2px;accent-color:var(--navy)}
+.hint{margin:-6px 0 0;font-size:.78rem;color:var(--muted)}
+label.f input:disabled{opacity:.5}
+.logoprev{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted)}
+.logoprev img{height:28px;width:auto;border:1px solid var(--line);border-radius:4px;background:#fff}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Rendimentos de Aplicações</h1>
+      <p>Compara duas posições mensais de renda fixa do Santander e apura o rendimento e o I.R. do mês por aplicação, base para o PIS e a COFINS no Lucro Real.</p>
+    </div>
+  </header>
+
+  <div class="grid">
+    <aside class="panel" aria-label="Arquivos e dados do relatório">
+      <div class="step">1 · Arquivos</div>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Selecionar PDFs das posições">
+        <strong>Arraste os 2 PDFs aqui</strong>
+        <span>ou clique para escolher · posição do mês anterior e do mês atual</span>
+        <input type="file" id="fileIn" accept="application/pdf,.pdf" multiple hidden>
+      </div>
+      <div class="periods" id="periods"></div>
+      <div class="btns"><button class="sec" id="swapBtn" disabled>Inverter anterior/atual</button></div>
+
+      <div class="step">2 · Dados do relatório</div>
+      <label class="f">Responsável<input id="cfgResp" placeholder="Nome do responsável"></label>
+      <label class="f">Nome do escritório (cabeçalho)<input id="cfgNome" value="e.contabil"></label>
+      <label class="f">Linha abaixo do nome<input id="cfgSub" value="CONTABILIDADE"></label>
+      <p class="hint" id="nomeHint" hidden>Com logotipo carregado, o PDF usa só o logotipo; o nome acima não é impresso.</p>
+      <label class="f">Rodapé (site, telefone…)<input id="cfgSite" placeholder="www.seusite.com.br"></label>
+      <div class="row2">
+        <label class="f">Alíquota PIS %<input id="cfgPis" value="0,65" inputmode="decimal"></label>
+        <label class="f">Alíquota COFINS %<input id="cfgCof" value="4,00" inputmode="decimal"></label>
+      </div>
+      <label class="chk"><input type="checkbox" id="cfgProp" checked> Resgate parcial: calcular o rendimento do mês proporcional ao saldo que ficou aplicado</label>
+      <label class="f">Logotipo (PNG ou JPG, opcional)<input type="file" id="cfgLogo" accept="image/png,image/jpeg"></label>
+      <div class="logoprev" id="logoPrev" hidden><img id="logoImg" alt="Logotipo carregado"><button class="sec" id="logoClear" type="button">Remover</button></div>
+
+      <div class="step">3 · Gerar</div>
+      <div class="btns">
+        <button id="xlsBtn">Baixar Excel</button>
+        <button id="pdfBtn">Baixar PDF</button>
+      </div>
+    </aside>
+
+    <main class="panel" aria-live="polite">
+      <div class="sample" id="sampleBanner">Exemplo com dados fictícios. Carregue os PDFs do banco para gerar o relatório da empresa.</div>
+      <div class="msgs" id="msgs"></div>
+      <h2 id="pvTitle">Prévia</h2>
+      <dl class="meta" id="meta"></dl>
+      <div class="kpis" id="kpis"></div>
+      <div class="tablebox"><table id="tbl"></table></div>
+      <p class="note"><b>Colunas destacadas:</b> Rendimento do mês e I.R. do mês são os <b>valores para cálculo do PIS e COFINS – Lucro Real</b>. Rendimento do mês = aumento do rendimento acumulado entre o mês anterior e o atual, por número de aplicação. Em resgate parcial, o rendimento anterior é proporcionalizado ao principal que ficou aplicado. Quando o acumulado diminui (resgate), a parcela resgatada já foi tributada de PIS/COFINS na provisão e não volta para a base. Mesmo critério para o I.R.</p>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+"use strict";
+/* ---------- utilidades ---------- */
+const MESES=["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];
+const MES_TXT=MESES.map(m=>m.charAt(0)+m.slice(1).toLowerCase());
+const $=id=>document.getElementById(id);
+const toCents=s=>{const t=String(s).trim().replace(/\./g,"").replace(",",".");const n=parseFloat(t);return isNaN(n)?null:Math.round(n*100)};
+const fmt=c=>(c<0?"-":"")+(Math.abs(c)/100).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const periodLabel=p=>p?MES_TXT[p.mes-1]+"/"+p.ano:"—";
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pct=s=>{const n=parseFloat(String(s).replace(",","."));return isNaN(n)?0:Math.round(n*1e4)/1e6};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
+function toast(t){const el=$("toast");el.textContent=t;el.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>el.hidden=true,3200)}
+
+/* ---------- leitura do PDF do Santander ---------- */
+function pdfLib(){
+  const lib=window.pdfjsLib||window["pdfjs-dist/build/pdf"];
+  if(!lib) throw new Error("A biblioteca de leitura de PDF não carregou. Verifique a conexão e recarregue a página.");
+  if(!lib.GlobalWorkerOptions.workerSrc) lib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  return lib;
+}
+async function readPdfItems(buf){
+  const doc=await pdfLib().getDocument({data:new Uint8Array(buf)}).promise;
+  const pages=[];
+  for(let i=1;i<=doc.numPages;i++){
+    const tc=await (await doc.getPage(i)).getTextContent();
+    pages.push(tc.items.filter(it=>it.str&&it.str.trim()).map(it=>({s:it.str.trim(),x:it.transform[4],y:it.transform[5]})));
+  }
+  return pages;
+}
+const RX_DATE=/^\d{2}\/\d{2}\/\d{4}$/, RX_NUM=/^-?[\d.]+,\d{2}$/, RX_DIG=/^\d{3,}$/;
+function parsePosicao(pages,fileName){
+  const all=pages.flat(), text=all.map(i=>i.s).join(" ");
+  const out={arquivo:fileName,empresa:"",cnpj:"",agencia:"",conta:"",periodo:null,rows:[]};
+  const pm=text.match(/M[ÊE]S\s+DE\s+([A-ZÇÃÉÊÍÓÔÚ]+)\s*\/\s*(\d{2,4})/i);
+  if(pm){const mi=MESES.indexOf(pm[1].toUpperCase().replace("MARCO","MARÇO"));let ano=+pm[2];if(ano<100)ano+=2000;if(mi>=0)out.periodo={mes:mi+1,ano,key:ano*100+mi+1}}
+  const cm=text.match(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/); if(cm)out.cnpj=cm[0];
+  const ag=all.find(i=>/^Ag[êe]ncia/i.test(i.s)), ct=all.find(i=>/^Conta/i.test(i.s));
+  const valorApos=lab=>{const v=(lab.s.split(":")[1]||"").trim();if(v)return v;
+    const nx=all.filter(i=>Math.abs(i.y-lab.y)<3&&i.x>lab.x&&/^\d[\d\-.]*$/.test(i.s)).sort((a,b)=>a.x-b.x)[0];return nx?nx.s:""};
+  if(ag){out.agencia=valorApos(ag);
+    out.empresa=all.filter(i=>Math.abs(i.y-ag.y)<3&&i.x<ag.x&&!/Ag[êe]ncia|Conta/i.test(i.s)).sort((a,b)=>a.x-b.x).map(i=>i.s).join(" ")}
+  if(ct)out.conta=valorApos(ct);
+  for(const items of pages){
+    const dates=items.filter(i=>RX_DATE.test(i.s)).sort((a,b)=>b.y-a.y);
+    const anchors=[];
+    for(const d of dates){const a=anchors.find(a=>Math.abs(a.y-d.y)<4);a?a.n++:anchors.push({y:d.y,n:1})}
+    for(const a of anchors.filter(a=>a.n>=2)){
+      const cell=items.filter(i=>Math.abs(i.y-a.y)<=9);
+      const ds=cell.filter(i=>RX_DATE.test(i.s)).sort((p,q)=>p.x-q.x);
+      const x0=ds[0].x, x1=ds[ds.length-1].x;
+      const nums=cell.filter(i=>RX_NUM.test(i.s)&&i.x>x1).sort((p,q)=>p.x-q.x);
+      const numero=cell.filter(i=>RX_DIG.test(i.s)&&i.x<x0).sort((p,q)=>q.y-p.y||p.x-q.x).map(i=>i.s).join("");
+      const titulo=cell.filter(i=>/[A-Za-z]/.test(i.s)&&i.x<x0).sort((p,q)=>q.y-p.y||p.x-q.x).map(i=>i.s).join(" ");
+      const status=cell.filter(i=>/^[A-Za-zÇÃ]+$/.test(i.s)&&i.x>x1).map(i=>i.s).join(" ");
+      const r={titulo,numero,dataAplic:ds[0].s,venc:ds[1]?ds[1].s:"",status,erro:null};
+      if(nums.length===8){[r.taxa,r.index,r.principal,r.rendimento,r.bruto,r.ir,r.iof,r.liquido]=nums.map(n=>toCents(n.s))}
+      else r.erro="Linha com "+nums.length+" valores (esperado 8)";
+      out.rows.push(r);
+    }
+  }
+  return out;
+}
+
+/* ---------- comparação ---------- */
+function comparar(ant,atu){
+  const msgs=[], rows=[];
+  if(ant.cnpj&&atu.cnpj&&ant.cnpj!==atu.cnpj) msgs.push(["bad","Os CNPJs dos dois arquivos são diferentes ("+ant.cnpj+" × "+atu.cnpj+")."]);
+  if(ant.conta&&atu.conta&&ant.conta!==atu.conta) msgs.push(["warn","As contas dos dois arquivos são diferentes ("+ant.conta+" × "+atu.conta+")."]);
+  if(ant.periodo&&atu.periodo&&ant.periodo.key===atu.periodo.key) msgs.push(["bad","Os dois arquivos são do mesmo mês ("+periodLabel(atu.periodo)+")."]);
+  for(const f of [ant,atu]) for(const r of f.rows) if(r.erro) msgs.push(["bad","Não consegui ler a aplicação "+r.numero+" em "+f.arquivo+": "+r.erro+"."]);
+  const mapA=new Map(ant.rows.filter(r=>!r.erro).map(r=>[r.numero,r]));
+  const usados=new Set(), prop=getCfg().prop;
+  const base=(n,o)=>({titulo:(n||o).titulo,numero:(n||o).numero,dataAplic:(n||o).dataAplic,venc:(n||o).venc});
+  const pPct=(a,b)=>(b/a*100).toLocaleString("pt-BR",{maximumFractionDigits:2});
+  // monta a linha: rendBase/irBase = acumulado anterior usado na comparação (proporcional ao saldo quando há resgate parcial)
+  const linha=(o,n,extra)=>{
+    const pAnt=o?o.principal:0, pAtu=n?n.principal:0;
+    const parcial=!!(o&&n&&prop&&pAtu<pAnt&&pAnt>0);
+    const total=!!(o&&!n);
+    const fator=parcial?pAtu/pAnt:(total&&prop?0:1);
+    const rendAnt=o?o.rendimento:0, irAnt=o?o.ir:0, rendAtu=n?n.rendimento:0, irAtu=n?n.ir:0;
+    const rendBase=Math.round(rendAnt*fator), irBase=Math.round(irAnt*fator);
+    const rendVar=rendAtu-rendBase, irVar=irAtu-irBase;
+    return {...base(n,o),principalAnt:pAnt,principal:pAtu,rendAnt,rendBase,rendAtu,rendVar,rendMes:Math.max(rendVar,0),
+      irAnt,irBase,irAtu,irVar,irMes:Math.max(irVar,0),liquido:n?n.liquido:0,parcial,
+      jaTrib:(rendAnt-rendBase)+Math.max(-rendVar,0),...extra};
+  };
+  for(const n of atu.rows.filter(r=>!r.erro)){
+    const o=mapA.get(n.numero); const obs=[]; let row;
+    if(o){usados.add(n.numero);
+      row=linha(o,n,{tipo:"ok",situacao:"Rendimento do mês"});
+      if(row.parcial){row.tipo="parcial";row.situacao="Resgate parcial (proporcional)";
+        obs.push("Resgate parcial: principal de "+fmt(o.principal)+" para "+fmt(n.principal)+" ("+pPct(o.principal,n.principal)+"% mantido). Rendimento anterior proporcional ao saldo: "+fmt(o.rendimento)+" × "+pPct(o.principal,n.principal)+"% = "+fmt(row.rendBase)+"; rendimento do mês = "+fmt(n.rendimento)+" − "+fmt(row.rendBase)+" = "+fmt(row.rendVar)+". A parcela resgatada ("+fmt(o.rendimento-row.rendBase)+") já foi tributada de PIS/COFINS na provisão.");
+        row.nota="Resgate parcial: principal de "+fmt(o.principal)+" para "+fmt(n.principal)+". Rendimento anterior proporcional ao saldo: "+fmt(o.rendimento)+" × "+pPct(o.principal,n.principal)+"% = "+fmt(row.rendBase)+"; rendimento do mês: "+fmt(n.rendimento)+" - "+fmt(row.rendBase)+" = "+fmt(row.rendVar)+".";
+        if(row.rendVar<0) obs.push("Mesmo proporcionalizado, o rendimento ficou negativo; considerado zero.");
+      }else if(row.rendVar<0){row.tipo="tributado";row.situacao=n.principal<o.principal?"Já tributado (resgate parcial)":"Já tributado";
+        obs.push("Rendimento acumulado caiu "+fmt(-row.rendVar)+(n.principal<o.principal?" com resgate parcial (principal de "+fmt(o.principal)+" para "+fmt(n.principal)+")":"")+"; já tributado de PIS/COFINS na provisão, fora da base do mês.")}
+      else if(n.principal!==o.principal) obs.push("Valor principal mudou de "+fmt(o.principal)+" para "+fmt(n.principal)+" (aporte). Conferir com o extrato.");
+      if(row.irVar<0&&row.rendVar>=0) obs.push("I.R. provisionado caiu "+fmt(-row.irVar)+" (provável troca de faixa da tabela regressiva); I.R. do mês considerado zero.");
+      else if(row.irVar<0) obs.push("I.R. caiu "+fmt(-row.irVar)+".");
+    }else{
+      row=linha(null,n,{tipo:"nova",situacao:"Aplicação nova"});
+      obs.push("Aplicação nova no período: entra com o rendimento e o I.R. acumulados integrais.");
+    }
+    row.obs=obs.join(" "); rows.push(row);
+  }
+  for(const o of ant.rows.filter(r=>!r.erro&&!usados.has(r.numero))){
+    rows.push(linha(o,null,{tipo:"saiu",situacao:"Já tributado (resgate total)",
+      obs:"Resgate total ou vencimento (não consta na posição atual): rendimento de "+fmt(o.rendimento)+" já tributado de PIS/COFINS na provisão, fora da base do mês."}));
+  }
+  const sum=k=>rows.reduce((s,r)=>s+(r[k]||0),0);
+  const tot={principal:sum("principal"),principalAnt:sum("principalAnt"),rendMes:sum("rendMes"),irMes:sum("irMes"),liquido:sum("liquido"),
+    rendAnt:sum("rendAnt"),rendBase:sum("rendBase"),rendAtu:sum("rendAtu"),irAnt:sum("irAnt"),irBase:sum("irBase"),irAtu:sum("irAtu"),rendVar:sum("rendVar"),irVar:sum("irVar"),
+    jaTrib:sum("jaTrib")};
+  const nTrib=rows.filter(r=>r.tipo==="tributado"||r.tipo==="saiu").length, nParc=rows.filter(r=>r.tipo==="parcial").length;
+  if(nParc) msgs.push(["warn",nParc+(nParc>1?" aplicações tiveram":" aplicação teve")+" resgate parcial: o rendimento do mês foi calculado sobre o saldo que ficou aplicado (proporcional ao principal)."]);
+  if(nTrib) msgs.push(["warn",nTrib+(nTrib>1?" aplicações tiveram":" aplicação teve")+" rendimento acumulado menor que no mês anterior (resgate). "+(nTrib>1?"Foram tratadas como já tributadas de PIS/COFINS e ficaram":"Foi tratada como já tributada de PIS/COFINS e ficou")+" fora da base do mês."]);
+  if(rows.some(r=>r.tipo==="nova")) msgs.push(["warn","Há aplicação nova no mês atual; ela entra com o rendimento acumulado integral."]);
+  if(!msgs.some(m=>m[0]!=="ok")) msgs.push(["ok",rows.length+" aplicações conferidas pelo número da aplicação."]);
+  return {ant,atu,rows,tot,msgs};
+}
+
+/* ---------- estado ---------- */
+const EXEMPLO=(()=>{const mk=(per,list)=>({arquivo:"exemplo",empresa:"TRANSPORTES EXEMPLO LTDA",cnpj:"00.000.000/0001-00",agencia:"0000",conta:"000000000",periodo:per,
+  rows:list.map(([titulo,numero,da,vc,pr,re,ir,li])=>({titulo,numero,dataAplic:da,venc:vc,status:"ATIVA",principal:pr,rendimento:re,ir,liquido:li,erro:null}))});
+  return [mk({mes:5,ano:2026,key:202605},[["CDB DI PJ SANTANDER","00000000000000000001","10/02/2025","05/02/2028",5000000,412030,82406,5329624],["CDB DI PJ SANTANDER","00000000000000000002","03/11/2025","20/10/2029",12000000,618450,139151,12479299]]),
+          mk({mes:6,ano:2026,key:202606},[["CDB DI PJ SANTANDER","00000000000000000001","10/02/2025","05/02/2028",5000000,466210,93242,5372968],["CDB DI PJ SANTANDER","00000000000000000002","03/11/2025","20/10/2029",12000000,744980,167621,12577359],["CDB DI PJ SANTANDER","00000000000000000003","15/06/2026","10/06/2029",3000000,13740,3092,3010648]])]})();
+let arquivos=[], exemplo=true, swapped=false, res=null, logo=null;
+
+function recalc(){
+  let lista=exemplo?EXEMPLO.slice():arquivos.slice();
+  lista.sort((a,b)=>(a.periodo?.key||0)-(b.periodo?.key||0));
+  if(swapped) lista.reverse();
+  const [ant,atu]=lista;
+  res=(ant&&atu)?comparar(ant,atu):null;
+  render(lista);
+}
+
+function render(lista){
+  $("sampleBanner").hidden=!exemplo;
+  $("swapBtn").disabled=lista.length!==2;
+  $("periods").innerHTML=lista.map((f,i)=>`<div class="pill"><span><span class="tag ${i===1?"atual":""}">${i===0?"Anterior":"Atual"}</span> <b>${periodLabel(f.periodo)}</b></span><small>${f.rows.length} aplic. · ${esc(f.arquivo)}</small></div>`).join("")||"";
+  const msgs=[];
+  if(!exemplo&&arquivos.length===1) msgs.push(["warn","Falta o segundo PDF (mês anterior ou atual)."]);
+  if(res) msgs.push(...res.msgs);
+  $("msgs").innerHTML=msgs.map(([t,m])=>`<div class="msg ${t}">${esc(m)}</div>`).join("");
+  $("xlsBtn").disabled=$("pdfBtn").disabled=!res||!res.rows.length;
+  if(!res){$("meta").innerHTML="";$("kpis").innerHTML="";$("tbl").innerHTML="";$("pvTitle").textContent="Prévia";return}
+  const {ant,atu,rows,tot}=res, cfg=getCfg();
+  $("pvTitle").textContent="Prévia · "+periodLabel(atu.periodo)+" comparado com "+periodLabel(ant.periodo);
+  $("meta").innerHTML=[["Razão social",atu.empresa],["CNPJ",atu.cnpj],["Banco","Santander · Ag. "+atu.agencia+" · C/C "+atu.conta],["Regime","Lucro Real"]]
+    .map(([k,v])=>`<div><dt>${k}:</dt><dd>${esc(v)}</dd></div>`).join("");
+  const pis=Math.round(tot.rendMes*cfg.pis), cof=Math.round(tot.rendMes*cfg.cof);
+  const k=[["Rendimento do mês · base PIS/COFINS",tot.rendMes,1],["I.R. do mês",tot.irMes,1],["PIS ("+(cfg.pis*100).toLocaleString("pt-BR")+"%)",pis],["COFINS ("+(cfg.cof*100).toLocaleString("pt-BR")+"%)",cof],["Valor líquido atual",tot.liquido]];
+  if(tot.jaTrib) k.push(["Já tributado (redução por resgate)",tot.jaTrib]);
+  $("kpis").innerHTML=k.map(([k,v,b])=>`<div class="kpi ${b?"base":""}"><span>${k}</span><b>R$ ${fmt(v)}</b></div>`).join("");
+  const a=periodLabel(ant.periodo), t=periodLabel(atu.periodo);
+  const vr=x=>`<td class="${x<0?"neg":""}">${fmt(x)}</td>`;
+  const sc=r=>r.tipo==="ok"?"ok":(r.tipo==="nova"||r.tipo==="parcial")?"nova":"trib";
+  $("tbl").innerHTML=`<thead><tr><th class="blank" colspan="8"></th><th class="grp">PIS/COFINS</th><th class="blank" colspan="4"></th><th class="grp">PIS/COFINS</th><th class="blank" colspan="3"></th></tr>
+  <tr><th class="l">Ativo / Nº aplicação</th><th class="c">Data aplic.</th><th>Principal ${a}</th><th>Principal ${t}</th><th>Rend. ${a}</th><th>Rend. ${a} proporcional</th><th>Rend. ${t}</th><th>Variação</th><th class="hl">Rendimento do mês</th><th>I.R. ${a}</th><th>I.R. ${a} proporcional</th><th>I.R. ${t}</th><th>Variação</th><th class="hl">I.R. do mês</th><th>Líquido ${t}</th><th class="l">Situação</th><th class="l">Observação</th></tr></thead><tbody>`+
+  rows.map(r=>`<tr><td class="l">${esc(r.titulo)}<small>${esc(r.numero)}</small></td><td class="c">${r.dataAplic}</td><td>${fmt(r.principalAnt)}</td><td>${fmt(r.principal)}</td><td>${fmt(r.rendAnt)}</td><td>${fmt(r.rendBase)}</td><td>${fmt(r.rendAtu)}</td>${vr(r.rendVar)}<td class="hl">${fmt(r.rendMes)}</td><td>${fmt(r.irAnt)}</td><td>${fmt(r.irBase)}</td><td>${fmt(r.irAtu)}</td>${vr(r.irVar)}<td class="hl">${fmt(r.irMes)}</td><td>${fmt(r.liquido)}</td><td class="l"><span class="sit ${sc(r)}">${esc(r.situacao)}</span></td><td class="obs">${esc(r.obs)}</td></tr>`).join("")+
+  `<tr class="tot"><td class="l">TOTAL</td><td></td><td>${fmt(tot.principalAnt)}</td><td>${fmt(tot.principal)}</td><td>${fmt(tot.rendAnt)}</td><td>${fmt(tot.rendBase)}</td><td>${fmt(tot.rendAtu)}</td><td>${fmt(tot.rendVar)}</td><td>${fmt(tot.rendMes)}</td><td>${fmt(tot.irAnt)}</td><td>${fmt(tot.irBase)}</td><td>${fmt(tot.irAtu)}</td><td>${fmt(tot.irVar)}</td><td>${fmt(tot.irMes)}</td><td>${fmt(tot.liquido)}</td><td></td><td></td></tr></tbody>`;
+}
+
+function getCfg(){return {prop:$("cfgProp").checked,resp:$("cfgResp").value.trim(),nome:$("cfgNome").value.trim(),sub:$("cfgSub").value.trim(),site:$("cfgSite").value.trim(),pis:pct($("cfgPis").value),cof:pct($("cfgCof").value)}}
+
+/* ---------- arquivos ---------- */
+async function addFiles(fileList){
+  const novos=[...fileList].filter(f=>/\.pdf$/i.test(f.name)||f.type==="application/pdf");
+  if(!novos.length){toast("Selecione arquivos PDF.");return}
+  if(exemplo){exemplo=false;arquivos=[]}
+  for(const f of novos){
+    try{
+      const p=parsePosicao(await readPdfItems(await f.arrayBuffer()),f.name);
+      if(!p.rows.length){toast("Nenhuma aplicação encontrada em "+f.name+".");continue}
+      if(!p.periodo){toast("Não achei o mês de referência em "+f.name+".");continue}
+      arquivos=arquivos.filter(x=>x.periodo.key!==p.periodo.key); arquivos.push(p);
+    }catch(e){console.error(e);toast("Erro ao ler "+f.name+": "+e.message)}
+  }
+  arquivos.sort((a,b)=>a.periodo.key-b.periodo.key);
+  if(arquivos.length>2){arquivos=arquivos.slice(-2);toast("Usei os dois meses mais recentes.")}
+  swapped=false; recalc();
+}
+const drop=$("drop"), fileIn=$("fileIn");
+drop.addEventListener("click",()=>fileIn.click());
+drop.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fileIn.click()}});
+fileIn.addEventListener("change",()=>{addFiles(fileIn.files);fileIn.value=""});
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over")}));
+drop.addEventListener("drop",e=>addFiles(e.dataTransfer.files));
+$("swapBtn").addEventListener("click",()=>{swapped=!swapped;recalc()});
+
+/* config persistida */
+["cfgResp","cfgNome","cfgSub","cfgSite","cfgPis","cfgCof"].forEach(id=>{const v=store.get("rend_"+id);if(v!=null)$(id).value=v;$(id).addEventListener("input",()=>{store.set("rend_"+id,$(id).value);if(id==="cfgPis"||id==="cfgCof")recalc()})});
+{const v=store.get("rend_cfgProp");if(v!=null)$("cfgProp").checked=v==="1";$("cfgProp").addEventListener("change",()=>{store.set("rend_cfgProp",$("cfgProp").checked?"1":"0");recalc()})}
+function showLogo(){ $("logoPrev").hidden=!logo; if(logo)$("logoImg").src=logo.dataUrl; $("cfgNome").disabled=$("cfgSub").disabled=!!logo; $("nomeHint").hidden=!logo }
+try{const l=store.get("rend_logo");if(l)logo=JSON.parse(l)}catch(e){}
+showLogo();
+$("cfgLogo").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{logo={dataUrl:r.result,type:f.type.includes("png")?"png":"jpg"};store.set("rend_logo",JSON.stringify(logo));showLogo()};r.readAsDataURL(f)});
+$("logoClear").addEventListener("click",()=>{logo=null;store.set("rend_logo",null);$("cfgLogo").value="";showLogo()});
+
+/* ---------- salvar arquivo ---------- */
+async function saveFile(name,blob){
+  if(window.claude&&typeof window.claude.use==="function"){
+    try{const d=await window.claude.use("downloads");
+      if(d){await d.save({filename:name,data:blob});toast("Arquivo salvo: "+name);return}}
+    catch(e){ if(e&&e.code==="declined"){toast("Download cancelado.");return} if(e&&e.code==="rate_limited"){toast("Já há um download aguardando confirmação.");return}
+      toast("Não foi possível salvar aqui: "+(e&&e.message||e));return}
+  }
+  const url=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
+  toast("Arquivo gerado: "+name);
+}
+const baseName=()=>{const e=(res.atu.empresa||"empresa").replace(/[^\wÀ-ú ]+/g,"").trim().replace(/\s+/g,"_");const p=res.atu.periodo;return "Rendimento_Aplicacoes_"+e+"_"+String(p.mes).padStart(2,"0")+"-"+p.ano};
+
+/* ---------- Excel (xlsx montado à mão) ---------- */
+const colL=n=>{let s="";n++;while(n){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s};
+const xesc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"");
+const serial=d=>{const m=String(d).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);return m?(Date.UTC(+m[3],+m[2]-1,+m[1])-Date.UTC(1899,11,30))/864e5:null};
+function Sheet(){this.rows={};this.merges=[];this.heights={}}
+Sheet.prototype.set=function(r,c,cell){(this.rows[r]=this.rows[r]||{})[c]=cell};
+Sheet.prototype.s=function(r,c,v,st){this.set(r,c,{t:"s",v,st})};
+Sheet.prototype.n=function(r,c,v,st){this.set(r,c,{t:"n",v,st})};
+Sheet.prototype.f=function(r,c,f,v,st){this.set(r,c,{t:"f",f,v,st})};
+Sheet.prototype.xml=function(cols,opts={}){
+  const rs=Object.keys(this.rows).map(Number).sort((a,b)=>a-b);
+  const data=rs.map(r=>{const cs=Object.keys(this.rows[r]).map(Number).sort((a,b)=>a-b);
+    const ht=this.heights[r]?` ht="${this.heights[r]}" customHeight="1"`:"";
+    return `<row r="${r}"${ht}>`+cs.map(c=>{const x=this.rows[r][c],ref=colL(c)+r,st=x.st?` s="${x.st}"`:"";
+      if(x.t==="s")return `<c r="${ref}"${st} t="inlineStr"><is><t xml:space="preserve">${xesc(x.v)}</t></is></c>`;
+      if(x.t==="n")return x.v==null?`<c r="${ref}"${st}/>`:`<c r="${ref}"${st}><v>${x.v}</v></c>`;
+      return `<c r="${ref}"${st}><f>${x.f}</f>${x.v!=null?`<v>${x.v}</v>`:""}</c>`}).join("")+`</row>`}).join("");
+  const pane=opts.freeze?`<sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane ySplit="${opts.freeze}" topLeftCell="A${opts.freeze+1}" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`:`<sheetViews><sheetView workbookViewId="0" showGridLines="${opts.grid?1:0}"/></sheetViews>`;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>${pane}<sheetFormatPr defaultRowHeight="15"/><cols>${cols.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("")}</cols><sheetData>${data}</sheetData>${this.merges.length?`<mergeCells count="${this.merges.length}">${this.merges.map(m=>`<mergeCell ref="${m}"/>`).join("")}</mergeCells>`:""}<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>`;
+};
+const STYLES=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="3"><numFmt numFmtId="164" formatCode="#,##0.00"/><numFmt numFmtId="165" formatCode="dd/mm/yyyy"/><numFmt numFmtId="166" formatCode="0.00%"/></numFmts>
+<fonts count="7"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><color rgb="FF16365A"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><i/><sz val="9"/><color rgb="FF5D6B7A"/><name val="Calibri"/></font><font><b/><sz val="9"/><color rgb="FF16365A"/><name val="Calibri"/></font><font><sz val="9"/><color rgb="FF8A5300"/><name val="Calibri"/></font></fonts>
+<fills count="6"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF16365A"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDCEDF5"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF2A8FB5"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8EBEF"/><bgColor indexed="64"/></patternFill></fill></fills>
+<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFB7C3CF"/></left><right style="thin"><color rgb="FFB7C3CF"/></right><top style="thin"><color rgb="FFB7C3CF"/></top><bottom style="thin"><color rgb="FFB7C3CF"/></bottom><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="21">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="3" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="3" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>
+<xf numFmtId="165" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>
+<xf numFmtId="164" fontId="2" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>
+<xf numFmtId="0" fontId="2" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="2" fillId="5" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="2" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="4" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf>
+<xf numFmtId="0" fontId="5" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="166" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="2" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/>
+<xf numFmtId="0" fontId="6" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment wrapText="1" vertical="center"/></xf>
+<xf numFmtId="0" fontId="2" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="2" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>
+</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+const S={title:1,bold:2,txt:3,th:4,thHl:5,cell:6,date:7,money:8,moneyHl:9,totL:10,tot:11,totHl:12,note:13,grp:14,pct:15,moneyB:16,obs:17,lab:18,moneyBox:19,cellW:20};
+
+async function gerarExcel(){
+  const {ant,atu,rows,tot}=res, cfg=getCfg(), a=periodLabel(ant.periodo), t=periodLabel(atu.periodo);
+  const sh=new Sheet(), d=v=>v==null?null:v/100;
+  sh.s(1,0,"RELATÓRIO DE RENDIMENTO DE APLICAÇÃO FINANCEIRA",S.title); sh.merges.push("A1:S1"); sh.heights[1]=22;
+  sh.s(2,0,"Empresas enquadradas no Regime Lucro Real",S.bold); sh.merges.push("A2:S2");
+  sh.s(3,0,"Período de referência: "+t+" (comparativo com a posição de "+a+")",S.txt); sh.merges.push("A3:S3");
+  [["Razão social:",atu.empresa],["CNPJ:",atu.cnpj],["Regime tributário:","Lucro Real"],["Instituição:","Santander – Agência "+atu.agencia+" – Conta "+atu.conta],["Responsável:",cfg.resp]]
+    .forEach(([k,v],i)=>{sh.s(5+i,0,k,S.bold);sh.s(5+i,1,v,S.txt);sh.merges.push(`B${5+i}:F${5+i}`)});
+  sh.s(11,10,"Base PIS/COFINS – Lucro Real",S.grp); sh.s(11,15,"Base PIS/COFINS – Lucro Real",S.grp); sh.heights[11]=26;
+  const H=["Título","Nº da aplicação","Data da aplicação","Vencimento","Principal "+a,"Principal "+t,"Rendimento "+a,"Rendimento "+a+" proporcional ao saldo","Rendimento "+t,"Variação do rendimento","Rendimento do mês","I.R. "+a,"I.R. "+a+" proporcional ao saldo","I.R. "+t,"Variação do I.R.","I.R. do mês","Valor líquido "+t,"Situação","Observação"];
+  H.forEach((h,c)=>sh.s(12,c,h,(c===10||c===15)?S.thHl:S.th)); sh.heights[12]=44;
+  let r=13;
+  for(const x of rows){
+    sh.s(r,0,x.titulo,S.cell); sh.s(r,1,x.numero,S.cell);
+    const sd=serial(x.dataAplic), sv=serial(x.venc);
+    sd!=null?sh.n(r,2,sd,S.date):sh.s(r,2,x.dataAplic,S.cell); sv!=null?sh.n(r,3,sv,S.date):sh.s(r,3,x.venc,S.cell);
+    sh.n(r,4,d(x.principalAnt),S.money); sh.n(r,5,d(x.principal),S.money);
+    const prop=x.rendBase!==x.rendAnt||x.irBase!==x.irAnt;
+    sh.n(r,6,d(x.rendAnt),S.money); sh.f(r,7,prop?`ROUND(G${r}*F${r}/E${r},2)`:`G${r}`,d(x.rendBase),S.money); sh.n(r,8,d(x.rendAtu),S.money);
+    sh.f(r,9,`I${r}-H${r}`,d(x.rendVar),S.money); sh.f(r,10,`MAX(J${r},0)`,d(x.rendMes),S.moneyHl);
+    sh.n(r,11,d(x.irAnt),S.money); sh.f(r,12,prop?`ROUND(L${r}*F${r}/E${r},2)`:`L${r}`,d(x.irBase),S.money); sh.n(r,13,d(x.irAtu),S.money);
+    sh.f(r,14,`N${r}-M${r}`,d(x.irVar),S.money); sh.f(r,15,`MAX(O${r},0)`,d(x.irMes),S.moneyHl);
+    sh.n(r,16,d(x.liquido),S.money); sh.s(r,17,x.situacao,S.cell); sh.s(r,18,x.obs||"",x.obs?S.obs:S.cell);
+    if(x.obs) sh.heights[r]=Math.min(90,15*Math.ceil(x.obs.length/62));
+    r++;
+  }
+  const r0=13, r1=r-1, tr=r;
+  sh.s(tr,0,"TOTAL",S.totL); [1,2,3].forEach(c=>sh.s(tr,c,"",S.totL));
+  const totV={4:tot.principalAnt,5:tot.principal,6:tot.rendAnt,7:tot.rendBase,8:tot.rendAtu,9:tot.rendVar,10:tot.rendMes,11:tot.irAnt,12:tot.irBase,13:tot.irAtu,14:tot.irVar,15:tot.irMes,16:tot.liquido};
+  for(let c=4;c<=16;c++){const L=colL(c);sh.f(tr,c,`SUM(${L}${r0}:${L}${r1})`,d(totV[c]),(c===10||c===15)?S.totHl:S.tot)}
+  sh.s(tr,17,"",S.totL); sh.s(tr,18,"",S.totL);
+  let n=tr+2;
+  sh.s(n,0,"* Colunas destacadas (Rendimento do mês e I.R. do mês): valores para cálculo do PIS e COFINS – Lucro Real. Considera-se o aumento do rendimento acumulado entre "+a+" e "+t+", por número de aplicação."+(cfg.prop?" Em resgate parcial, o rendimento anterior é proporcionalizado ao principal que ficou aplicado (rendimento anterior × principal atual ÷ principal anterior); a parcela resgatada já foi tributada na provisão.":"")+" Quando o acumulado diminui, o rendimento já foi tributado de PIS/COFINS na provisão dos meses anteriores e a aplicação entra com zero. Mesmo critério para o I.R.",S.note);
+  sh.merges.push(`A${n}:S${n}`); sh.heights[n]=44;
+  n+=2; sh.s(n,0,"APURAÇÃO PIS/COFINS – RECEITAS FINANCEIRAS (LUCRO REAL)",S.bold); n++;
+  const bR=n;
+  sh.s(n,0,"Base de cálculo (rendimento do mês)",S.lab); sh.f(n,1,`K${tr}`,d(tot.rendMes),S.moneyBox); n++;
+  sh.s(n,0,"Alíquota PIS",S.lab); sh.n(n,1,cfg.pis,S.pct); n++;
+  sh.s(n,0,"PIS",S.lab); sh.f(n,1,`ROUND(B${bR}*B${n-1},2)`,Math.round(tot.rendMes*cfg.pis)/100,S.moneyBox); n++;
+  sh.s(n,0,"Alíquota COFINS",S.lab); sh.n(n,1,cfg.cof,S.pct); n++;
+  sh.s(n,0,"COFINS",S.lab); sh.f(n,1,`ROUND(B${bR}*B${n-1},2)`,Math.round(tot.rendMes*cfg.cof)/100,S.moneyBox); n++;
+  sh.s(n,0,"I.R. do mês (compensável)",S.lab); sh.f(n,1,`P${tr}`,d(tot.irMes),S.moneyBox); n++;
+  sh.s(n,0,"Valor líquido atual das aplicações",S.lab); sh.f(n,1,`Q${tr}`,d(tot.liquido),S.moneyBox); n++;
+  sh.s(n,0,"Rendimento já tributado (resgates)",S.lab); sh.f(n,1,`G${tr}-H${tr}-SUMIF(J${r0}:J${r1},"&lt;0")`,d(tot.jaTrib),S.moneyBox);
+
+  /* aba 2: dados extraídos */
+  const s2=new Sheet();
+  const H2=["Mês","Título","Nº da aplicação","Data da aplicação","Vencimento","Status","Index %","Valor principal","Rendimento","Valor bruto","I.R.","I.O.F.","Valor líquido","Arquivo"];
+  H2.forEach((h,c)=>s2.s(1,c,h,S.th)); s2.heights[1]=30;
+  let k=2;
+  for(const f of [ant,atu]) for(const x of f.rows){
+    s2.s(k,0,periodLabel(f.periodo),S.cell); s2.s(k,1,x.titulo,S.cell); s2.s(k,2,x.numero,S.cell);
+    const sd=serial(x.dataAplic),sv=serial(x.venc); sd!=null?s2.n(k,3,sd,S.date):s2.s(k,3,x.dataAplic,S.cell); sv!=null?s2.n(k,4,sv,S.date):s2.s(k,4,x.venc,S.cell);
+    s2.s(k,5,x.status||"",S.cell); s2.n(k,6,d(x.index),S.money);
+    ["principal","rendimento","bruto","ir","iof","liquido"].forEach((key,i)=>s2.n(k,7+i,d(x[key]),S.money));
+    s2.s(k,13,f.arquivo,S.cell); k++;
+  }
+
+  const zip=new JSZip();
+  zip.file("[Content_Types].xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`);
+  zip.file("_rels/.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`);
+  zip.file("xl/workbook.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="Relatório" sheetId="1" r:id="rId1"/><sheet name="Dados extraídos" sheetId="2" r:id="rId2"/></sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`);
+  zip.file("xl/_rels/workbook.xml.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`);
+  zip.file("xl/styles.xml",STYLES);
+  zip.file("xl/worksheets/sheet1.xml",sh.xml([40,24,12,12,15,15,14,15,14,14,15,12,13,12,12,13,16,26,60]));
+  zip.file("xl/worksheets/sheet2.xml",s2.xml([12,22,24,12,12,9,9,15,14,15,12,10,15,18],{freeze:1}));
+  const blob=await zip.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",compression:"DEFLATE"});
+  await saveFile(baseName()+".xlsx",blob);
+}
+
+/* ---------- PDF (layout do modelo) ---------- */
+async function gerarPDF(){
+  const {PDFDocument,StandardFonts,rgb}=PDFLib;
+  const {ant,atu,rows,tot}=res, cfg=getCfg(), a=periodLabel(ant.periodo), t=periodLabel(atu.periodo);
+  const doc=await PDFDocument.create();
+  doc.setTitle("Relatório de Rendimento de Aplicação Financeira – "+t); doc.setCreator("Rendimentos de Aplicações");
+  const F={r:await doc.embedFont(StandardFonts.TimesRoman),b:await doc.embedFont(StandardFonts.TimesRomanBold),
+           i:await doc.embedFont(StandardFonts.TimesRomanItalic),h:await doc.embedFont(StandardFonts.HelveticaBold),hr:await doc.embedFont(StandardFonts.Helvetica)};
+  const C={navy:rgb(.086,.212,.353),teal:rgb(.165,.561,.71),grey:rgb(.9,.91,.925),greyB:rgb(.72,.745,.776),txt:rgb(.1,.12,.15),muted:rgb(.4,.43,.47),
+           tint:rgb(.89,.933,.957),tintRow:rgb(.925,.96,.976),tot:rgb(.722,.863,.91),white:rgb(1,1,1),lab:rgb(.84,.87,.9),val:rgb(.955,.96,.968),shadow:rgb(.86,.87,.89),warn:rgb(.6,.36,0)};
+  const W=595.28,Hh=841.89,M=36,CW=W-2*M;
+  const safe=(s,f)=>{s=String(s??"").replace(/−/g,"-");try{f.encodeText(s);return s}catch(e){return [...s].map(ch=>{try{f.encodeText(ch);return ch}catch(e2){return ch.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^\x20-\x7E -ÿ]/g,"")}}).join("")}};
+  const tw=(s,f,z)=>f.widthOfTextAtSize(safe(s,f),z);
+  let page; const pages=[];
+  const newPage=()=>{page=doc.addPage([W,Hh]);pages.push(page);return page};
+  const Y=top=>Hh-top;
+  const text=(s,x,top,f,z,color=C.txt,align="left")=>{s=safe(s,f);let xx=x;if(align==="right")xx=x-f.widthOfTextAtSize(s,z);else if(align==="center")xx=x-f.widthOfTextAtSize(s,z)/2;page.drawText(s,{x:xx,y:Y(top),size:z,font:f,color})};
+  const rect=(x,top,w,h,o)=>page.drawRectangle({x,y:Y(top+h),width:w,height:h,...o});
+  const rrect=(x,top,w,h,r,o)=>page.drawSvgPath(`M ${r} 0 H ${w-r} Q ${w} 0 ${w} ${r} V ${h-r} Q ${w} ${h} ${w-r} ${h} H ${r} Q 0 ${h} 0 ${h-r} V ${r} Q 0 0 ${r} 0 Z`,{x,y:Y(top),...o});
+  const wrap=(s,f,z,maxW)=>{const out=[];for(const para of String(s).split("\n")){let line="";for(const w of para.split(/\s+/)){const tst=line?line+" "+w:w;if(tw(tst,f,z)>maxW&&line){out.push(line);line=w}else line=tst}out.push(line)}return out};
+
+  /* cabeçalho */
+  newPage();
+  let logoW=0;
+  if(logo){try{const img=logo.type==="png"?await doc.embedPng(logo.dataUrl):await doc.embedJpg(logo.dataUrl);const h=66,w=Math.min(img.width*h/img.height,245);const hh=w*img.height/img.width;page.drawImage(img,{x:M,y:Y(36+hh),width:w,height:hh});logoW=w+12}catch(e){console.warn(e)}}
+  if(!logo){ // emblema simples
+    const s=62,ox=M,oy=36;
+    page.drawSvgPath(`M ${s/2} 3 L ${s-3} ${s/2} L ${s/2} ${s-3} L 3 ${s/2} Z`,{x:ox,y:Y(oy),borderColor:C.teal,borderWidth:6.5});
+    page.drawSvgPath(`M ${s/2} 19 L ${s-19} ${s/2} L ${s/2} ${s-19} L 19 ${s/2} Z`,{x:ox,y:Y(oy),color:C.navy});
+    page.drawSvgPath(`M ${s/2} 26 L ${s-26} ${s/2} L ${s/2} ${s-26} L 26 ${s/2} Z`,{x:ox,y:Y(oy),color:C.white});
+    logoW=s+12;
+  }
+  if(!logo&&cfg.nome){let z=28;while(tw(cfg.nome,F.h,z)>215-logoW+62&&z>14)z--;text(cfg.nome,M+logoW,36+40,F.h,z,C.navy)}
+  if(!logo&&cfg.sub){const sub=cfg.sub.toUpperCase();let x=M+logoW+1;for(const ch of sub){text(ch,x,36+56,F.hr,9,C.navy);x+=tw(ch,F.hr,9)+1.6}}
+  const RX=W-M;
+  text("RELATÓRIO DE RENDIMENTO",RX,58,F.b,19,C.navy,"right");
+  text("DE APLICAÇÃO FINANCEIRA",RX,80,F.b,19,C.navy,"right");
+  text("Empresas enquadradas no Regime Lucro Real",RX,100,F.b,12.5,C.txt,"right");
+  const per=t; text(per,RX,124,F.r,11,C.txt,"right"); text("Período de Referência: ",RX-tw(per,F.r,11),124,F.b,11,C.txt,"right");
+  text("Comparativo com a posição de "+a,RX,137,F.i,9,C.muted,"right");
+
+  /* quadro de identificação */
+  const info=[["RAZÃO SOCIAL: ",atu.empresa],["CNPJ: ",atu.cnpj],["REGIME TRIBUTÁRIO: ","Lucro Real"],["INSTITUIÇÃO: ","Santander – Agência "+atu.agencia+" – Conta "+atu.conta],["RESPONSÁVEL: ",cfg.resp||"—"]];
+  const bTop=150,bH=20+info.length*14.5;
+  rrect(M,bTop,CW,bH,8,{color:C.grey,borderColor:C.greyB,borderWidth:.8});
+  info.forEach(([k,v],i)=>{const tp=bTop+20+i*14.5;text(k.trim(),M+16,tp,F.b,10.5);text(v,M+16+tw(k.trim(),F.b,10.5)+4,tp,F.r,10.5)});
+
+  /* tabela */
+  const cols=[{w:146,h:["Instituição / Ativo"],al:"left"},{w:60,h:["Data da","Aplicação"],al:"center"},{w:82,h:["Valor","Principal"]},
+              {w:80,h:["Rendimento","do Mês"],hl:1},{w:68,h:["I.R.","do Mês"],hl:1},{w:CW-436,h:["Valor Líquido","Atual"]}];
+  const xs=[];cols.reduce((x,c)=>{xs.push(x);return x+c.w},M);
+  const ROWH=27, BOTTOM=Hh-66;
+  const drawHead=(top)=>{
+    const gx=xs[3],gw=cols[3].w+cols[4].w;
+    rrect(gx,top,gw,15,4,{color:C.tint,borderColor:C.teal,borderWidth:.6});
+    text("VALORES PARA CÁLCULO DO PIS E COFINS",gx+gw/2,top+6.4,F.b,6.4,C.navy,"center");
+    text("LUCRO REAL",gx+gw/2,top+12.6,F.b,6.4,C.navy,"center");
+    const ht=top+18, hh=34;
+    cols.forEach((c,i)=>{rect(xs[i],ht,c.w,hh,{color:c.hl?C.teal:C.navy,borderColor:C.white,borderWidth:.5});
+      c.h.forEach((ln,j)=>text(ln,xs[i]+c.w/2,ht+(c.h.length===1?21:15)+j*12,F.b,10,C.white,"center"))});
+    return ht+hh;
+  };
+  let y=drawHead(bTop+bH+16);
+  const notas=[];
+  const cellR=(s,i,top,f=F.r,z=10,color=C.txt)=>{const c=cols[i];if(c.al==="center")text(s,xs[i]+c.w/2,top,f,z,color,"center");else if(c.al==="left")text(s,xs[i]+6,top,f,z,color);else text(s,xs[i]+c.w-6,top,f,z,color,"right")};
+  const vlines=(top,h,color=C.greyB)=>{for(let i=0;i<=cols.length;i++){const x=i<cols.length?xs[i]:M+CW;page.drawLine({start:{x,y:Y(top)},end:{x,y:Y(top+h)},thickness:.6,color})}};
+  for(const r of rows){
+    if(y+ROWH>BOTTOM){newPage();text("Relatório de Rendimento de Aplicação Financeira – "+t+" (continuação)",M,48,F.b,11,C.navy);y=drawHead(62)}
+    cols.forEach((c,i)=>{if(c.hl)rect(xs[i],y,c.w,ROWH,{color:C.tintRow})});
+    let tit=r.titulo; if(r.obs){notas.push(r.nota||r.obs);tit+=" ("+notas.length+")"}
+    let z=9.6; while(tw(tit,F.b,z)>cols[0].w-10&&z>7)z-=.2;
+    cellR(tit,0,y+11.5,F.b,z); cellR("Nº "+r.numero,0,y+21.5,F.r,7.6,C.muted);
+    cellR(r.dataAplic,1,y+17);
+    const mudouP=r.tipo!=="nova"&&r.principal!==r.principalAnt;
+    if(r.tipo==="saiu"){cellR("Resgatada",2,y+12.5,F.i,9.6,C.warn);cellR("antes R$ "+fmt(r.principalAnt),2,y+22,F.r,7.4,C.muted)}
+    else if(mudouP){cellR("R$ "+fmt(r.principal),2,y+12.5);cellR("antes R$ "+fmt(r.principalAnt),2,y+22,F.r,7.4,C.muted)}
+    else cellR("R$ "+fmt(r.principal),2,y+17);
+    const dup=(val,vari,i)=>{if(r.tipo==="saiu"){cellR("R$ "+fmt(val),i,y+12.5,F.b,10,C.navy);cellR("já tributado",i,y+22,F.i,7.6,C.warn)}else if(r.tipo==="parcial"&&vari>=0){cellR("R$ "+fmt(val),i,y+12.5,F.b,10,C.navy);cellR("proporcional",i,y+22,F.i,7.6,C.teal)}else if(vari<0){cellR("R$ "+fmt(val),i,y+12.5,F.b,10,C.navy);cellR("já tributado",i,y+22,F.i,7.6,C.warn)}else cellR("R$ "+fmt(val),i,y+17,F.b,10,C.navy)};
+    dup(r.rendMes,r.rendVar,3); dup(r.irMes,r.irVar,4);
+    cellR("R$ "+fmt(r.liquido),5,y+17);
+    page.drawLine({start:{x:M,y:Y(y+ROWH)},end:{x:M+CW,y:Y(y+ROWH)},thickness:.6,color:C.greyB}); vlines(y,ROWH); y+=ROWH;
+  }
+  if(y+24>BOTTOM){newPage();y=drawHead(62)}
+  rect(M,y,CW,24,{color:C.tot});
+  cellR("TOTAL",0,y+16,F.b,11,C.navy); cellR("R$ "+fmt(tot.principal),2,y+16,F.b,10); cellR("R$ "+fmt(tot.rendMes),3,y+16,F.b,10,C.navy);
+  cellR("R$ "+fmt(tot.irMes),4,y+16,F.b,10,C.navy); cellR("R$ "+fmt(tot.liquido),5,y+16,F.b,10);
+  page.drawLine({start:{x:M,y:Y(y+24)},end:{x:M+CW,y:Y(y+24)},thickness:.8,color:C.greyB}); vlines(y,24); y+=24;
+  page.drawRectangle({x:M,y:Y(y),width:CW,height:0,borderColor:C.greyB});
+  y+=13; text("Colunas destacadas: valores para cálculo do PIS e COFINS – Lucro Real.",M,y,F.i,8.6,C.muted);
+  if(notas.length){y+=4;for(const [i,nt] of notas.entries()){for(const ln of wrap("("+(i+1)+") "+nt,F.r,8.2,CW)){y+=10.2;if(y>BOTTOM){newPage();y=60}text(ln,M,y,F.r,8.2,C.warn)}}}
+
+  /* memória de cálculo */
+  const pisP=(cfg.pis*100).toLocaleString("pt-BR",{minimumFractionDigits:2}), cofP=(cfg.cof*100).toLocaleString("pt-BR",{minimumFractionDigits:2});
+  const memo="Rendimento do mês = aumento do rendimento acumulado entre as posições de "+a+" e "+t+", por aplicação; aplicações novas entram com o acumulado integral."+(cfg.prop?" Em resgate parcial, o rendimento anterior é proporcionalizado ao principal mantido (rendimento anterior × principal atual ÷ principal anterior).":"")+" Parcelas resgatadas e reduções do acumulado já foram tributadas de PIS/COFINS na provisão e entram com zero. Mesmo critério para o I.R. Receitas financeiras sujeitas ao PIS e à COFINS no regime não cumulativo (Decreto nº 8.426/2015) e computadas no lucro real (IRPJ e CSLL); o IRRF é compensável com o imposto devido.";
+  const mLines=wrap(memo,F.r,9.6,CW-32), mH=30+mLines.length*12+8;
+  const sumRows=[["Total Rendimento do Mês",tot.rendMes],["Total I.R. do Mês",tot.irMes],["PIS ("+pisP+"%)",Math.round(tot.rendMes*cfg.pis)],["COFINS ("+cofP+"%)",Math.round(tot.rendMes*cfg.cof)]];
+  if(tot.jaTrib) sumRows.push(["Já Tributado (Resgates)",tot.jaTrib]);
+  const sH=sumRows.length*17.5+8;
+  if(y+12+mH+12+sH>BOTTOM){newPage();y=40}
+  y+=12;
+  rrect(M,y,CW,mH,10,{color:C.tint,borderColor:C.navy,borderWidth:1});
+  text("MEMÓRIA DE CÁLCULO E TRATAMENTO TRIBUTÁRIO",M+16,y+22,F.b,12,C.txt);
+  mLines.forEach((ln,i)=>text(ln,M+16,y+36+i*12,F.r,9.6));
+  y+=mH+12;
+  /* quadro resumo */
+  const sw=310, lw=180;
+  rrect(M+3,y+3,sw,sH,8,{color:C.shadow});
+  rrect(M,y,sw,sH,8,{color:C.val,borderColor:C.greyB,borderWidth:.8});
+  page.drawSvgPath(`M 8 0 H ${lw} V ${sH} H 8 Q 0 ${sH} 0 ${sH-8} V 8 Q 0 0 8 0 Z`,{x:M,y:Y(y),color:C.lab});
+  sumRows.forEach(([k,v],i)=>{const tp=y+4+i*17.5+13;text(k,M+12,tp,F.b,10.8,i<2?C.navy:C.txt);text("R$ "+fmt(v),M+sw-14,tp,F.b,10.8,C.txt,"right")});
+  const side=wrap("* Rendimento e I.R. do mês: valores para cálculo do PIS e COFINS – Lucro Real. PIS e COFINS calculados sobre o rendimento do mês.",F.i,8.6,CW-sw-18);
+  side.forEach((ln,i)=>text(ln,M+sw+18,y+sH-6-(side.length-1-i)*11,F.i,8.6,C.muted));
+
+  /* rodapé */
+  const hoje=new Date().toLocaleDateString("pt-BR");
+  pages.forEach((p,i)=>{page=p;page.drawLine({start:{x:M,y:Y(Hh-58)},end:{x:W-M,y:Y(Hh-58)},thickness:1,color:C.navy});
+    text("Gerado em "+hoje,M,Hh-42,F.r,9,C.muted); if(cfg.site)text(cfg.site,W/2,Hh-42,F.r,10.5,C.txt,"center");
+    text("Página "+(i+1)+" de "+pages.length,W-M,Hh-42,F.r,10.5,C.txt,"right")});
+  const bytes=await doc.save();
+  await saveFile(baseName()+".pdf",new Blob([bytes],{type:"application/pdf"}));
+}
+$("xlsBtn").addEventListener("click",async()=>{try{$("xlsBtn").disabled=true;await gerarExcel()}catch(e){console.error(e);toast("Erro ao gerar o Excel: "+e.message)}finally{$("xlsBtn").disabled=false}});
+$("pdfBtn").addEventListener("click",async()=>{try{$("pdfBtn").disabled=true;await gerarPDF()}catch(e){console.error(e);toast("Erro ao gerar o PDF: "+e.message)}finally{$("pdfBtn").disabled=false}});
+recalc();
+</script>
+</body>
+</html>
