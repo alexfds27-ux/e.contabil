@@ -312,7 +312,33 @@ const FERRAMENTAS = [
     href: "cruzamento-codigos.html",
     botao: "Carregar Planilha do Mês",
     previa: "Conferência de códigos"
-  }
+   },
+  {
+    id: "ofx",
+    aba: "OFX para Domínio",
+    curto: "OFX",
+    titulo: "Gerar Lançamentos do Extrato",
+    descricao: "Suba o OFX do banco e gere o TXT de lançamentos caixa x banco, tarifas e juros pagos, pronto para importar no Domínio.",
+    resumo: "Extrato OFX vira TXT de importação no Domínio.",
+    tags: ["OFX", "Domínio", "TXT"],
+    icone: "receipt",
+    href: "ofx-dominio.html",
+    botao: "Carregar Extrato OFX",
+    previa: "Lançamentos gerados"
+  },
+  {
+    id: "rendimentos",
+    aba: "Rendimentos de Aplicações",
+    curto: "Aplicações",
+    titulo: "Apurar Rendimentos de Aplicações",
+    descricao: "Compare as posições mensais de aplicações do Santander e apure o rendimento e o I.R. do mês, base do PIS e da COFINS no Lucro Real.",
+    resumo: "Posições mensais em PDF viram relatório de rendimento e I.R.",
+    tags: ["PDF Santander", "PIS/COFINS", "Excel e PDF"],
+    icone: "cross",
+    href: "rendimentos-aplicacoes.html",
+    botao: "Carregar PDFs das Posições",
+    previa: "Rendimento do mês"
+  },
 ];
 
 const $ = id => document.getElementById(id);
