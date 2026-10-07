@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+[hidden]:not([hidden=until-found i]){display:none!important}
+img{max-width:100%}
+.ec-voltar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 20px;background:#ffffff;border-bottom:1px solid #dde4ec;font:500 14px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 2px 8px rgba(18,35,59,.05)}
+.ec-voltar a{color:#167a6e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px}
+.ec-voltar a:hover{background:#e3f3ee}
+.ec-voltar span{color:#4f5f73}
+@media (prefers-color-scheme:dark){.ec-voltar{background:#16212f;border-color:#26364a}.ec-voltar a{color:#3fc6a0}.ec-voltar a:hover{background:#16332c}.ec-voltar span{color:#9fb0c3}}
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+<div class="ec-voltar"><a href="index.html">&larr; Central de Automações</a><span>e.contabil projetos</span></div>
+<script>function ecBaixar(blob, nome){ const u=URL.createObjectURL(blob instanceof Blob?blob:new Blob([blob])); const a=document.createElement('a'); a.href=u; a.download=nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }</script>
+<title>Cruzamento PIS/COFINS por Produto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ferramenta de escritório contábil — faixa de entrada (2 PDFs) → resumo → tabela larga com rolagem própria */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --ink:#18231f; --muted:#5d6b66; --line:#d9e0dd;
+  --accent:#1d6a53; --accent-ink:#ffffff; --accent-soft:#e2efe9;
+  --ok:#1d6a53; --ok-bg:#e2efe9; --warn:#8a5a00; --warn-bg:#fbefd5; --bad:#a3302a; --bad-bg:#f8e1df;
+  --font-body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111816; --surface:#18211e; --ink:#e4ebe8; --muted:#97a7a1; --line:#2b3733;
+  --accent:#5fc19d; --accent-ink:#0c1512; --accent-soft:#1d332b;
+  --ok:#6fcca8; --ok-bg:#1d332b; --warn:#e9b955; --warn-bg:#382c13; --bad:#f08a82; --bad-bg:#3a1d1b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111816; --surface:#18211e; --ink:#e4ebe8; --muted:#97a7a1; --line:#2b3733;
+  --accent:#5fc19d; --accent-ink:#0c1512; --accent-soft:#1d332b;
+  --ok:#6fcca8; --ok-bg:#1d332b; --warn:#e9b955; --warn-bg:#382c13; --bad:#f08a82; --bad-bg:#3a1d1b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.45}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:20px;padding-block:24px 48px;display:flex;flex-direction:column;gap:20px}
+header h1{font-size:1.5rem;font-weight:700;margin:0;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:.35rem 0 0;color:var(--muted);max-width:72ch}
+.inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.drop{background:var(--surface);border:1.5px dashed var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:6px;cursor:pointer;transition:border-color .15s,background .15s;min-width:0}
+.drop:hover,.drop:focus-within,.drop.over{border-color:var(--accent)}
+.drop.loaded{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
+.drop .lbl{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.drop .name{font-weight:600;overflow-wrap:anywhere}
+.drop .hint{color:var(--muted);font-size:.85rem}
+.drop input{position:absolute;width:1px;height:1px;opacity:0}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:inherit;font-weight:600;border-radius:8px;padding:.6rem 1rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.status{color:var(--muted);font-size:.9rem}
+.banner{border-radius:8px;padding:.6rem .9rem;font-size:.9rem;background:var(--warn-bg);color:var(--warn)}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.summary div{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.summary span{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.summary b{font-size:1.25rem;font-variant-numeric:tabular-nums}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{border:none;border-bottom:2px solid transparent;border-radius:0;background:none;color:var(--muted);padding:.55rem .8rem}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.filters input,.filters select{font:inherit;padding:.45rem .6rem;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);min-width:0}
+.filters input{flex:1 1 220px}
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;max-height:70vh;overflow-y:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.84rem}
+th,td{padding:.45rem .6rem;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}
+th{position:sticky;top:0;background:var(--surface);font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);z-index:1}
+th.grp{top:0}
+td.n,th.n{text-align:right}
+td.code{font-family:var(--font-mono);font-size:.8rem}
+td.rec{font-family:var(--font-mono);font-weight:500;color:var(--accent)}
+td.desc{white-space:normal;min-width:220px;max-width:340px}
+tfoot td{font-weight:700;position:sticky;bottom:0;background:var(--surface);border-top:2px solid var(--line)}
+.pill{display:inline-block;padding:.1rem .5rem;border-radius:99px;font-size:.75rem;font-weight:600}
+.pill.OK{background:var(--ok-bg);color:var(--ok)}
+.pill.Verificar{background:var(--warn-bg);color:var(--warn)}
+.pill.Nao{background:var(--bad-bg);color:var(--bad)}
+td.obs{white-space:normal;min-width:200px;color:var(--muted);font-size:.8rem}
+.note{color:var(--muted);font-size:.85rem;max-width:80ch}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Cruzamento PIS/COFINS por produto</h1>
+    <p>Carregue o relatório <b>Movimentação de Produtos</b> e o relatório <b>Relação de Produtos – Informações PIS/COFINS</b>. Cada linha do movimento é cruzada pelo código do produto, usando o cadastro com a vigência válida na data da nota, e recebe a natureza da receita e os códigos de receita de PIS e COFINS.</p>
+  </header>
+
+  <section class="inputs">
+    <label class="drop" id="dropMov">
+      <span class="lbl">1 · Movimentação de Produtos (PDF)</span>
+      <span class="name" id="nameMov">Clique ou arraste o PDF aqui</span>
+      <span class="hint" id="hintMov">Pode ser o mês inteiro</span>
+      <input type="file" id="fileMov" accept="application/pdf,.pdf">
+    </label>
+    <label class="drop" id="dropRec">
+      <span class="lbl">2 · Informações PIS/COFINS (PDF)</span>
+      <span class="name" id="nameRec">Clique ou arraste o PDF aqui</span>
+      <span class="hint" id="hintRec">Relatório de código da receita</span>
+      <input type="file" id="fileRec" accept="application/pdf,.pdf">
+    </label>
+  </section>
+
+  <div class="actions">
+    <button class="primary" id="btnRun" disabled>Cruzar relatórios</button>
+    <button id="btnXlsx">Baixar Excel</button>
+    <button id="btnCopy">Copiar tabela</button>
+    <span class="status" id="status" role="status"></span>
+  </div>
+
+  <div class="banner" id="banner"></div>
+
+  <section class="summary" id="summary"></section>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tabDet" aria-selected="true">Itens cruzados</button>
+    <button role="tab" id="tabRes" aria-selected="false">Totais por código de receita</button>
+  </nav>
+
+  <div class="filters" id="filters">
+    <input type="search" id="q" placeholder="Buscar código, descrição, NCM ou CFOP">
+    <select id="fStatus">
+      <option value="">Todos os status</option>
+      <option value="OK">OK</option>
+      <option value="Verificar">Verificar</option>
+      <option value="Não encontrado">Não encontrado</option>
+    </select>
+  </div>
+
+  <div class="tablebox"><table id="tbl"></table></div>
+
+  <p class="note">Regras: o código do produto é o primeiro código antes da descrição. Quando o produto tem mais de um cadastro, vale o de vigência mais recente que comece até a data do movimento. “Verificar” aparece quando o cadastro vigente não tem Rec. PIS/COFINS, quando há cadastros conflitantes na mesma vigência, ou quando o CST da nota difere do CST de saída cadastrado. Os PDFs são lidos no seu navegador; nada é enviado.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+// Núcleo do cruzamento Movimento de Produtos x Código da Receita (PIS/COFINS)
+// Usado tanto no teste (Node) quanto na página (navegador).
+
+async function pdfLines(pdfjs, data) {
+  const doc = await pdfjs.getDocument({ data }).promise;
+  const pages = [];
+  for (let n = 1; n <= doc.numPages; n++) {
+    const p = await doc.getPage(n);
+    const tc = await p.getTextContent();
+    const H = p.view[3];
+    const its = tc.items
+      .filter(i => i.str && i.str.trim())
+      .map(i => ({ s: i.str.trim(), x: i.transform[4], r: i.transform[4] + i.width, y: H - i.transform[5] }));
+    its.sort((a, b) => a.y - b.y);
+    const lines = [];
+    for (const it of its) {
+      const l = lines.find(l => Math.abs(l.y - it.y) < 2);
+      if (l) l.items.push(it); else lines.push({ y: it.y, items: [it] });
+    }
+    lines.forEach(l => l.items.sort((a, b) => a.x - b.x));
+    lines.sort((a, b) => a.y - b.y);
+    pages.push(lines);
+    p.cleanup();
+  }
+  return pages;
+}
+
+const num = s => {
+  if (s == null || s === '') return null;
+  const v = parseFloat(String(s).replace(/\./g, '').replace(',', '.'));
+  return isNaN(v) ? null : v;
+};
+const dateKey = s => { const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s || ''); return m ? +(m[3] + m[2].padStart(2, '0') + m[1].padStart(2, '0')) : null; };
+const isDate = s => /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s);
+
+// ---------- Movimento de Produtos ----------
+// Colunas numéricas são alinhadas à direita: classificamos pelo fim do texto (r).
+const MOV_RIGHT = [
+  ['qtde', 359.4], ['unit', 396.9], ['vlProduto', 437.3],
+  ['icmsBase', 477.0], ['icmsAliq', 494.3], ['icmsValor', 529.2], ['icmsCst', 546.8],
+  ['pisBase', 589.4], ['pisAliq', 606.7], ['pisValor', 641.6], ['pisCst', 653.5],
+  ['cofBase', 701.9], ['cofAliq', 719.2], ['cofValor', 763.0], ['cofCst', 774.7],
+];
+
+function parseMovimento(pages) {
+  const rows = [], avisos = [];
+  let secao = '', periodo = '', empresa = '';
+  pages.forEach((lines, pi) => {
+    for (const l of lines) {
+      const it = l.items;
+      const first = it[0].s;
+      if (/^Movimenta/i.test(first)) { const m = /de:\s*(\S+)\s*até\s*(\S+)/.exec(first); if (m) periodo = m[1] + ' a ' + m[2]; continue; }
+      if (/^Empresa:/i.test(first)) { empresa = it.filter(i => i.x < 600).map(i => i.s).join('').replace(/^Empresa:\s*/i, ''); continue; }
+      if (it.length === 1 && /^(Sa[ií]das|Entradas)$/i.test(first)) { secao = /^E/i.test(first) ? 'Entradas' : 'Saídas'; continue; }
+      const data = it.find(i => i.x > 70 && i.x < 112 && isDate(i.s));
+      if (!data) continue; // cabeçalho, total ou linha de continuação
+      const prod = it.filter(i => i.x >= 112 && i.x < 262).map(i => i.s).join(' ');
+      const m = /^(\S+)\s+-\s+(.*)$/.exec(prod);
+      const r = {
+        pagina: pi + 1, secao, data: data.s,
+        codigo: m ? m[1] : prod.split(' ')[0],
+        descricao: m ? m[2] : prod,
+        controle: (it.find(i => i.x < 30) || {}).s || '',
+        numero: (it.find(i => i.x >= 30 && i.x < 75) || {}).s || '',
+        cfop: (it.find(i => i.x >= 255 && i.x < 290 && /^\d{4}$/.test(i.s)) || {}).s || '',
+        ncm: (it.find(i => i.x >= 285 && i.x < 335 && /^\d{8}$/.test(i.s)) || {}).s || '',
+      };
+      for (const i of it) {
+        if (i.x < 335) continue;
+        let best = null, bd = 9;
+        for (const [k, rr] of MOV_RIGHT) { const d = Math.abs(i.r - rr); if (d < bd) { bd = d; best = k; } }
+        if (best) r[best] = /Cst$/.test(best) ? i.s : num(i.s);
+        else avisos.push(`Pág. ${pi + 1}: valor "${i.s}" fora das colunas esperadas`);
+      }
+      rows.push(r);
+    }
+  });
+  return { rows, avisos, periodo, empresa };
+}
+
+// ---------- Relação de Produtos - Informações PIS/COFINS ----------
+function colRec(x) {
+  if (x < 50) return 'codigo';
+  if (x < 196) return 'descricao';
+  if (x < 238) return 'cadastro';
+  if (x < 305) return 'ncm';
+  if (x < 385) return 'tipo';
+  if (x < 436) return 'vigencia';
+  if (x < 470) return 'icmsEnt';
+  if (x < 505) return 'icmsSai';
+  if (x < 540) return 'cstEnt';
+  if (x < 575) return 'vincCred';
+  if (x < 615) return 'baseCred';
+  if (x < 652) return 'cstSai';
+  if (x < 690) return 'natReceita';
+  if (x < 730) return 'recPis';
+  return 'recCofins';
+}
+
+function parseReceita(pages) {
+  const regs = [];
+  let ult = null;
+  pages.forEach((lines, pi) => {
+    for (const l of lines) {
+      const it = l.items;
+      if (/^(Rela|Empresa|Todos|Produto)/.test(it[0].s) || it.some(i => /^P[aá]gina:/.test(i.s))) continue;
+      const r = { pagina: pi + 1 };
+      for (const i of it) { const c = colRec(i.x); r[c] = r[c] ? r[c] + ' ' + i.s : i.s; }
+      if (!r.codigo || !r.vigencia || !isDate(r.vigencia)) {
+        // continuação de descrição quebrada em duas linhas
+        if (ult && !r.codigo && r.descricao && !r.vigencia) ult.descricao += ' ' + r.descricao;
+        continue;
+      }
+      ult = r; regs.push(r);
+    }
+  });
+  const porCodigo = new Map();
+  for (const r of regs) { if (!porCodigo.has(r.codigo)) porCodigo.set(r.codigo, []); porCodigo.get(r.codigo).push(r); }
+  for (const v of porCodigo.values()) v.sort((a, b) => dateKey(a.vigencia) - dateKey(b.vigencia));
+  return { regs, porCodigo };
+}
+
+// Vigência aplicável: a mais recente com início <= data do movimento.
+// Se houver mais de um cadastro com a mesma vigência, prefere o que tem códigos de receita.
+function escolherVigencia(lista, data) {
+  const d = dateKey(data);
+  const validos = lista.filter(r => dateKey(r.vigencia) <= d);
+  if (!validos.length) return { reg: null, obs: 'Sem vigência anterior à data do movimento' };
+  const vig = validos[validos.length - 1].vigencia;
+  const mesma = validos.filter(r => r.vigencia === vig);
+  const comRec = mesma.filter(r => r.recPis || r.recCofins);
+  const reg = (comRec.length ? comRec : mesma)[0];
+  let obs = '';
+  const recs = new Set(mesma.map(r => (r.recPis || '') + '/' + (r.recCofins || '')));
+  if (recs.size > 1) obs = 'Mais de um cadastro com a mesma vigência e códigos diferentes';
+  else if (!reg.recPis && !reg.recCofins) obs = 'Cadastro vigente sem Rec. PIS/COFINS';
+  return { reg, obs };
+}
+
+function cruzar(mov, rec) {
+  return mov.rows.map(m => {
+    const lista = rec.porCodigo.get(m.codigo);
+    let reg = null, obs = '';
+    if (!lista) obs = 'Código não encontrado no relatório de código da receita';
+    else ({ reg, obs } = escolherVigencia(lista, m.data));
+    if (reg && reg.cstSai && m.pisCst && +reg.cstSai !== +m.pisCst) {
+      obs = (obs ? obs + '; ' : '') + `CST PIS da nota (${m.pisCst}) difere do cadastro (${reg.cstSai})`;
+    }
+    return {
+      ...m,
+      vigencia: reg ? reg.vigencia : '',
+      cstSaiCad: reg ? (reg.cstSai || '') : '',
+      natReceita: reg ? (reg.natReceita || '') : '',
+      recPis: reg ? (reg.recPis || '') : '',
+      recCofins: reg ? (reg.recCofins || '') : '',
+      status: !lista ? 'Não encontrado' : (obs ? 'Verificar' : 'OK'),
+      obs,
+    };
+  });
+}
+
+if (typeof module !== 'undefined') module.exports = { pdfLines, parseMovimento, parseReceita, cruzar, dateKey };
+
+</script>
+<script>
+const SAMPLE = {"rows":[{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"360001","descricao":"0000900362 - BBMI SKINKA FRUTCITRIC 0.45LPET 12UN PBR","controle":"96582","numero":"1338349","cfop":"5405","ncm":"22021000","qtde":2,"unit":37.57,"vlProduto":75.14,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":55.78,"pisAliq":1.86,"pisValor":1.04,"pisCst":"2","cofBase":55.78,"cofAliq":8.54,"cofValor":4.76,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"056008","descricao":"0000905451 - CERV PRAYA LAGER 0.330GFA DESC 4X6UNPBR","controle":"96583","numero":"1338350","cfop":"5405","ncm":"22029100","qtde":1,"unit":150.38,"vlProduto":150.38,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":114.93,"pisAliq":1.86,"pisValor":2.14,"pisCst":"2","cofBase":114.93,"cofAliq":8.54,"cofValor":9.82,"cofCst":"2","vigencia":"01/12/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"97376002040079","descricao":"0000903478 - CERV HEINEKEN PIL 0.330 DESCARTAVEL","controle":"96585","numero":"1338352","cfop":"5405","ncm":"22030000","qtde":1,"unit":138.96,"vlProduto":138.96,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":97.69,"pisAliq":1.86,"pisValor":1.82,"pisCst":"2","cofBase":97.69,"cofAliq":8.54,"cofValor":8.34,"cofCst":"2","vigencia":"01/04/2026","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"040045","descricao":"0000905052 - CERV AMSTEL LAGER 0.355LN DES 2X6UN PBR","controle":"96585","numero":"1338352","cfop":"5405","ncm":"22030000","qtde":1,"unit":50.27,"vlProduto":50.27,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":37.1,"pisAliq":1.86,"pisValor":0.69,"pisCst":"2","cofBase":37.1,"cofAliq":8.54,"cofValor":3.17,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"97376002040079","descricao":"0000903478 - CERV HEINEKEN PIL 0.330 DESCARTAVEL","controle":"96586","numero":"1338353","cfop":"5405","ncm":"22030000","qtde":1,"unit":138.96,"vlProduto":138.96,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":97.69,"pisAliq":1.86,"pisValor":1.82,"pisCst":"2","cofBase":97.69,"cofAliq":8.54,"cofValor":8.34,"cofCst":"2","vigencia":"01/04/2026","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"021001","descricao":"0000903482 - CERV HEINEKEN PIL 0.60GFA RT 24UN","controle":"96587","numero":"1338354","cfop":"5405","ncm":"22030000","qtde":3,"unit":209.1,"vlProduto":627.3,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":378.65,"pisAliq":1.86,"pisValor":7.04,"pisCst":"2","cofBase":378.65,"cofAliq":8.54,"cofValor":32.34,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"060066","descricao":"0000904961 - CERV HEINEKEN 0.0% 0.350LTSLEEKDES12UNPB","controle":"96588","numero":"1338355","cfop":"5405","ncm":"22029100","qtde":20,"unit":60.18,"vlProduto":1203.61,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":879.37,"pisAliq":1.86,"pisValor":16.36,"pisCst":"2","cofBase":879.37,"cofAliq":8.54,"cofValor":75.1,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"245032","descricao":"0000903791 - REFR FYS GUARANA 0.350LT DES 12UN PBR","controle":"96590","numero":"1338356","cfop":"5405","ncm":"22021000","qtde":4,"unit":2.68,"vlProduto":10.7,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":7.17,"pisAliq":1.86,"pisValor":0.13,"pisCst":"2","cofBase":7.17,"cofAliq":8.54,"cofValor":0.61,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"245034","descricao":"0000903793 - REFR FYS LARANJA 0.350LT DES 12UN PBR","controle":"96590","numero":"1338356","cfop":"5405","ncm":"22021000","qtde":4,"unit":2.68,"vlProduto":10.7,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":7.17,"pisAliq":1.86,"pisValor":0.13,"pisCst":"2","cofBase":7.17,"cofAliq":8.54,"cofValor":0.61,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"245035","descricao":"0000903795 - REFR FYS LIMAO 0.350LT DES 12UN PBR","controle":"96590","numero":"1338356","cfop":"5405","ncm":"22021000","qtde":4,"unit":2.68,"vlProduto":10.7,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":7.17,"pisAliq":1.86,"pisValor":0.13,"pisCst":"2","cofBase":7.17,"cofAliq":8.54,"cofValor":0.61,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"245032","descricao":"0000903791 - REFR FYS GUARANA 0.350LT DES 12UN PBR","controle":"96592","numero":"1338357","cfop":"5405","ncm":"22021000","qtde":1,"unit":32.1,"vlProduto":32.1,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":21.51,"pisAliq":1.86,"pisValor":0.4,"pisCst":"2","cofBase":21.51,"cofAliq":8.54,"cofValor":1.84,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"235001","descricao":"0000900525 - REFR SCHIN ITUBAINA 0.355LN 2X6UN PBR","controle":"96592","numero":"1338357","cfop":"5405","ncm":"22021000","qtde":1,"unit":41.26,"vlProduto":41.26,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":28.93,"pisAliq":1.86,"pisValor":0.54,"pisCst":"2","cofBase":28.93,"cofAliq":8.54,"cofValor":2.47,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"245034","descricao":"0000903793 - REFR FYS LARANJA 0.350LT DES 12UN PBR","controle":"96592","numero":"1338357","cfop":"5405","ncm":"22021000","qtde":1,"unit":32.1,"vlProduto":32.1,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":21.51,"pisAliq":1.86,"pisValor":0.4,"pisCst":"2","cofBase":21.51,"cofAliq":8.54,"cofValor":1.84,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"245035","descricao":"0000903795 - REFR FYS LIMAO 0.350LT DES 12UN PBR","controle":"96592","numero":"1338357","cfop":"5405","ncm":"22021000","qtde":1,"unit":32.1,"vlProduto":32.1,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":21.51,"pisAliq":1.86,"pisValor":0.4,"pisCst":"2","cofBase":21.51,"cofAliq":8.54,"cofValor":1.84,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"060065","descricao":"0000904952 - CERV AMSTEL LAGER 0.350LT SLEEK 12UN PBR","controle":"96593","numero":"1338358","cfop":"5405","ncm":"22030000","qtde":10,"unit":38.52,"vlProduto":385.2,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":282.59,"pisAliq":1.86,"pisValor":5.26,"pisCst":"2","cofBase":282.59,"cofAliq":8.54,"cofValor":24.13,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"97376002040079","descricao":"0000903478 - CERV HEINEKEN PIL 0.330 DESCARTAVEL","controle":"96595","numero":"1338359","cfop":"5405","ncm":"22030000","qtde":1,"unit":146.03,"vlProduto":126.02,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":84.75,"pisAliq":1.86,"pisValor":1.58,"pisCst":"2","cofBase":84.75,"cofAliq":8.54,"cofValor":7.24,"cofCst":"2","vigencia":"01/04/2026","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"060051","descricao":"0000904193 - CERV BADEN WITBIER 0.350LT SLEEK2X6UNPBR","controle":"96595","numero":"1338359","cfop":"5405","ncm":"22030000","qtde":2,"unit":4.74,"vlProduto":9.48,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":6.63,"pisAliq":1.86,"pisValor":0.12,"pisCst":"2","cofBase":6.63,"cofAliq":8.54,"cofValor":0.57,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"060060","descricao":"0000904743 - CERV BADEN PEACH 0.350LT SLEEK 2X6UN PBR","controle":"96595","numero":"1338359","cfop":"5405","ncm":"22030000","qtde":1,"unit":4.74,"vlProduto":4.74,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":3.27,"pisAliq":1.86,"pisValor":0.06,"pisCst":"2","cofBase":3.27,"cofAliq":8.54,"cofValor":0.28,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"060053","descricao":"0000904441 - CERV BADEN PILCRIST 0.350LT SLEK2X6UNPBR","controle":"96595","numero":"1338359","cfop":"5405","ncm":"22030000","qtde":1,"unit":4.74,"vlProduto":4.74,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":3.33,"pisAliq":1.86,"pisValor":0.06,"pisCst":"2","cofBase":3.33,"cofAliq":8.54,"cofValor":0.28,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"060061","descricao":"0000904831 - CERV BADEN GOLD ALE 0.350LT SLEEK2X6UNPB","controle":"96595","numero":"1338359","cfop":"5405","ncm":"22030000","qtde":1,"unit":4.74,"vlProduto":4.74,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":3.27,"pisAliq":1.86,"pisValor":0.06,"pisCst":"2","cofBase":3.27,"cofAliq":8.54,"cofValor":0.28,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"021001","descricao":"0000903482 - CERV HEINEKEN PIL 0.60GFA RT 24UN","controle":"96595","numero":"1338359","cfop":"5405","ncm":"22030000","qtde":3,"unit":209.1,"vlProduto":627.3,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":378.65,"pisAliq":1.86,"pisValor":7.04,"pisCst":"2","cofBase":378.65,"cofAliq":8.54,"cofValor":32.34,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"060052","descricao":"0000904451 - CERV BADEN IPA 0.350LT SLEK2X6UNPBR","controle":"96595","numero":"1338359","cfop":"5405","ncm":"22030000","qtde":1,"unit":4.74,"vlProduto":4.74,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":3.32,"pisAliq":1.86,"pisValor":0.06,"pisCst":"2","cofBase":3.32,"cofAliq":8.54,"cofValor":0.28,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"056003","descricao":"0000903996 - CERV HEINEKEN 0.0% 0.330GFA DES 4X6UNPBR","controle":"96595","numero":"1338359","cfop":"5405","ncm":"22029100","qtde":1,"unit":145.99,"vlProduto":125.99,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":84.66,"pisAliq":1.86,"pisValor":1.57,"pisCst":"2","cofBase":84.66,"cofAliq":8.54,"cofValor":7.23,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"97376002040079","descricao":"0000903478 - CERV HEINEKEN PIL 0.330 DESCARTAVEL","controle":"96596","numero":"1338360","cfop":"5405","ncm":"22030000","qtde":1,"unit":151.16,"vlProduto":151.16,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":109.89,"pisAliq":1.86,"pisValor":2.04,"pisCst":"2","cofBase":109.89,"cofAliq":8.54,"cofValor":9.38,"cofCst":"2","vigencia":"01/04/2026","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"060065","descricao":"0000904952 - CERV AMSTEL LAGER 0.350LT SLEEK 12UN PBR","controle":"96597","numero":"1338361","cfop":"5405","ncm":"22030000","qtde":2,"unit":40.44,"vlProduto":80.88,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":60.36,"pisAliq":1.86,"pisValor":1.12,"pisCst":"2","cofBase":60.36,"cofAliq":8.54,"cofValor":5.15,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"025012","descricao":"0000904213 - CERV AMSTEL PIL 1LGFA RT 12UN","controle":"96597","numero":"1338361","cfop":"5405","ncm":"22030000","qtde":2,"unit":84,"vlProduto":168,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":113.92,"pisAliq":1.86,"pisValor":2.12,"pisCst":"2","cofBase":113.92,"cofAliq":8.54,"cofValor":9.73,"cofCst":"2","vigencia":"01/04/2026","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"025012","descricao":"0000904213 - CERV AMSTEL PIL 1LGFA RT 12UN","controle":"96598","numero":"1338362","cfop":"5405","ncm":"22030000","qtde":1,"unit":84,"vlProduto":84,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":56.96,"pisAliq":1.86,"pisValor":1.06,"pisCst":"2","cofBase":56.96,"cofAliq":8.54,"cofValor":4.86,"cofCst":"2","vigencia":"01/04/2026","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"056003","descricao":"0000903996 - CERV HEINEKEN 0.0% 0.330GFA DES 4X6UNPBR","controle":"96600","numero":"1338363","cfop":"5405","ncm":"22029100","qtde":6,"unit":5.79,"vlProduto":34.74,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":24.41,"pisAliq":1.86,"pisValor":0.45,"pisCst":"2","cofBase":24.41,"cofAliq":8.54,"cofValor":2.08,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"060065","descricao":"0000904952 - CERV AMSTEL LAGER 0.350LT SLEEK 12UN PBR","controle":"96601","numero":"1338364","cfop":"5405","ncm":"22030000","qtde":1,"unit":35.88,"vlProduto":35.88,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":25.62,"pisAliq":1.86,"pisValor":0.48,"pisCst":"2","cofBase":25.62,"cofAliq":8.54,"cofValor":2.19,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"245018","descricao":"0000902321 - REFR ITUBAINA RETRO 0.350LT 12UN PBR","controle":"96602","numero":"1338365","cfop":"5405","ncm":"22021000","qtde":1,"unit":33.46,"vlProduto":33.46,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":24.44,"pisAliq":1.86,"pisValor":0.45,"pisCst":"2","cofBase":24.44,"cofAliq":8.54,"cofValor":2.09,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"245034","descricao":"0000903793 - REFR FYS LARANJA 0.350LT DES 12UN PBR","controle":"96602","numero":"1338365","cfop":"5405","ncm":"22021000","qtde":1,"unit":32.1,"vlProduto":32.1,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":21.51,"pisAliq":1.86,"pisValor":0.4,"pisCst":"2","cofBase":21.51,"cofAliq":8.54,"cofValor":1.84,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"360001","descricao":"0000900362 - BBMI SKINKA FRUTCITRIC 0.45LPET 12UN PBR","controle":"96602","numero":"1338365","cfop":"5405","ncm":"22021000","qtde":1,"unit":37.57,"vlProduto":37.57,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":27.89,"pisAliq":1.86,"pisValor":0.52,"pisCst":"2","cofBase":27.89,"cofAliq":8.54,"cofValor":2.38,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"245032","descricao":"0000903791 - REFR FYS GUARANA 0.350LT DES 12UN PBR","controle":"96602","numero":"1338365","cfop":"5405","ncm":"22021000","qtde":1,"unit":32.1,"vlProduto":32.1,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":21.51,"pisAliq":1.86,"pisValor":0.4,"pisCst":"2","cofBase":21.51,"cofAliq":8.54,"cofValor":1.84,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"235001","descricao":"0000900525 - REFR SCHIN ITUBAINA 0.355LN 2X6UN PBR","controle":"96602","numero":"1338365","cfop":"5405","ncm":"22021000","qtde":1,"unit":41.26,"vlProduto":41.26,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":28.93,"pisAliq":1.86,"pisValor":0.54,"pisCst":"2","cofBase":28.93,"cofAliq":8.54,"cofValor":2.47,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"040045","descricao":"0000905052 - CERV AMSTEL LAGER 0.355LN DES 2X6UN PBR","controle":"96603","numero":"1338366","cfop":"5405","ncm":"22030000","qtde":1,"unit":48.56,"vlProduto":48.56,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":35.39,"pisAliq":1.86,"pisValor":0.66,"pisCst":"2","cofBase":35.39,"cofAliq":8.54,"cofValor":3.02,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"245018","descricao":"0000902321 - REFR ITUBAINA RETRO 0.350LT 12UN PBR","controle":"96603","numero":"1338366","cfop":"5405","ncm":"22021000","qtde":1,"unit":32.33,"vlProduto":32.33,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":23.31,"pisAliq":1.86,"pisValor":0.43,"pisCst":"2","cofBase":23.31,"cofAliq":8.54,"cofValor":1.99,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"060064","descricao":"0000904932 - CERV HEINEKEN PIL 0.350LT SLEEKDES12UNPB","controle":"96603","numero":"1338366","cfop":"5405","ncm":"22030000","qtde":1,"unit":57.48,"vlProduto":57.48,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":41.6,"pisAliq":1.86,"pisValor":0.77,"pisCst":"2","cofBase":41.6,"cofAliq":8.54,"cofValor":3.55,"cofCst":"2","vigencia":"01/04/2026","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"056003","descricao":"0000903996 - CERV HEINEKEN 0.0% 0.330GFA DES 4X6UNPBR","controle":"96603","numero":"1338366","cfop":"5405","ncm":"22029100","qtde":1,"unit":138.96,"vlProduto":138.96,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":97.63,"pisAliq":1.86,"pisValor":1.82,"pisCst":"2","cofBase":97.63,"cofAliq":8.54,"cofValor":8.34,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"97376002040079","descricao":"0000903478 - CERV HEINEKEN PIL 0.330 DESCARTAVEL","controle":"96603","numero":"1338366","cfop":"5405","ncm":"22030000","qtde":1,"unit":146.03,"vlProduto":124.43,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":83.16,"pisAliq":1.86,"pisValor":1.55,"pisCst":"2","cofBase":83.16,"cofAliq":8.54,"cofValor":7.1,"cofCst":"2","vigencia":"01/04/2026","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"021001","descricao":"0000903482 - CERV HEINEKEN PIL 0.60GFA RT 24UN","controle":"96604","numero":"1338367","cfop":"5405","ncm":"22030000","qtde":1,"unit":216.76,"vlProduto":216.76,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":133.88,"pisAliq":1.86,"pisValor":2.49,"pisCst":"2","cofBase":133.88,"cofAliq":8.54,"cofValor":11.43,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"060064","descricao":"0000904932 - CERV HEINEKEN PIL 0.350LT SLEEKDES12UNPB","controle":"96604","numero":"1338367","cfop":"5405","ncm":"22030000","qtde":20,"unit":60.35,"vlProduto":1207.03,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":889.37,"pisAliq":1.86,"pisValor":16.54,"pisCst":"2","cofBase":889.37,"cofAliq":8.54,"cofValor":75.95,"cofCst":"2","vigencia":"01/04/2026","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"97376002040079","descricao":"0000903478 - CERV HEINEKEN PIL 0.330 DESCARTAVEL","controle":"96604","numero":"1338367","cfop":"5405","ncm":"22030000","qtde":40,"unit":146.03,"vlProduto":5841.36,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":4190.46,"pisAliq":1.86,"pisValor":77.94,"pisCst":"2","cofBase":4190.46,"cofAliq":8.54,"cofValor":357.87,"cofCst":"2","vigencia":"01/04/2026","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"235001","descricao":"0000900525 - REFR SCHIN ITUBAINA 0.355LN 2X6UN PBR","controle":"96604","numero":"1338367","cfop":"5405","ncm":"22021000","qtde":1,"unit":39.87,"vlProduto":39.87,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":27.54,"pisAliq":1.86,"pisValor":0.51,"pisCst":"2","cofBase":27.54,"cofAliq":8.54,"cofValor":2.35,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"069103","recCofins":"077603","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"056003","descricao":"0000903996 - CERV HEINEKEN 0.0% 0.330GFA DES 4X6UNPBR","controle":"96604","numero":"1338367","cfop":"5405","ncm":"22029100","qtde":2,"unit":145.99,"vlProduto":291.98,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":209.31,"pisAliq":1.86,"pisValor":3.89,"pisCst":"2","cofBase":209.31,"cofAliq":8.54,"cofValor":17.88,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"003010","descricao":"0000904113 - CERV AMSTEL LAGER 0.269LT SHR 12UNPBR","controle":"96606","numero":"1338368","cfop":"5405","ncm":"22030000","qtde":1,"unit":32.68,"vlProduto":32.68,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":23.76,"pisAliq":1.86,"pisValor":0.44,"pisCst":"2","cofBase":23.76,"cofAliq":8.54,"cofValor":2.03,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"056003","descricao":"0000903996 - CERV HEINEKEN 0.0% 0.330GFA DES 4X6UNPBR","controle":"96607","numero":"1338369","cfop":"5405","ncm":"22029100","qtde":6,"unit":5.79,"vlProduto":34.74,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":24.41,"pisAliq":1.86,"pisValor":0.45,"pisCst":"2","cofBase":24.41,"cofAliq":8.54,"cofValor":2.08,"cofCst":"2","vigencia":"01/06/2025","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""},{"pagina":1,"secao":"Saídas","data":"01/09/2026","codigo":"025012","descricao":"0000904213 - CERV AMSTEL PIL 1LGFA RT 12UN","controle":"96608","numero":"1338370","cfop":"5405","ncm":"22030000","qtde":2,"unit":84,"vlProduto":168,"icmsBase":0,"icmsAliq":0,"icmsValor":0,"icmsCst":"60","pisBase":113.92,"pisAliq":1.86,"pisValor":2.12,"pisCst":"2","cofBase":113.92,"cofAliq":8.54,"cofValor":9.73,"cofCst":"2","vigencia":"01/04/2026","cstSaiCad":"2","natReceita":"407","recPis":"067903","recCofins":"076003","status":"OK","obs":""}],"periodo":"01/09/2026 a 30/09/2026","empresa":"0021 - COMERCIO DE BEBIDAS JARDIM LTDA","paginasMov":1};
+</script>
+<script type="module">
+const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs';
+const WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+let pdfjsP = null;
+function getPdfjs(){
+  if(!pdfjsP) pdfjsP = import(PDFJS_URL).then(m=>{ m.GlobalWorkerOptions.workerSrc = WORKER_URL; return m; });
+  return pdfjsP;
+}
+
+const $ = id => document.getElementById(id);
+const files = { mov:null, rec:null };
+let state = { rows: SAMPLE.rows, periodo: SAMPLE.periodo, empresa: SAMPLE.empresa, exemplo: true, paginasMov: SAMPLE.paginasMov, avisos: [] };
+let view = 'det';
+
+const fmt = v => v==null ? '' : v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function setupDrop(key, dropId, inputId, nameId, hintId){
+  const drop=$(dropId), inp=$(inputId);
+  const take = f => { if(!f) return; files[key]=f; drop.classList.add('loaded'); $(nameId).textContent=f.name; $(hintId).textContent=(f.size/1024).toFixed(0)+' KB'; $('btnRun').disabled=!(files.mov&&files.rec); };
+  inp.addEventListener('change',()=>take(inp.files[0]));
+  drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over')});
+  drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
+  drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('over');take(e.dataTransfer.files[0])});
+}
+setupDrop('mov','dropMov','fileMov','nameMov','hintMov');
+setupDrop('rec','dropRec','fileRec','nameRec','hintRec');
+
+$('btnRun').addEventListener('click', async ()=>{
+  $('btnRun').disabled=true;
+  try{
+    $('status').textContent='Carregando leitor de PDF…';
+    const pdfjs = await getPdfjs();
+    $('status').textContent='Lendo relatório de código da receita…';
+    const recPages = await pdfLines(pdfjs, new Uint8Array(await files.rec.arrayBuffer()));
+    const rec = parseReceita(recPages);
+    $('status').textContent='Lendo movimentação de produtos…';
+    const movPages = await pdfLines(pdfjs, new Uint8Array(await files.mov.arrayBuffer()));
+    const mov = parseMovimento(movPages);
+    if(!mov.rows.length) throw new Error('Nenhuma linha de produto encontrada no PDF de movimentação. Confira se os arquivos não foram trocados.');
+    if(!rec.regs.length) throw new Error('Nenhum cadastro encontrado no PDF de informações PIS/COFINS. Confira se os arquivos não foram trocados.');
+    state = { rows: cruzar(mov, rec), periodo: mov.periodo, empresa: mov.empresa, exemplo:false, paginasMov: movPages.length, avisos: mov.avisos, cadastros: rec.regs.length };
+    $('status').textContent=`Pronto: ${state.rows.length} linhas de ${movPages.length} página(s), ${rec.regs.length} cadastros lidos.`;
+    render();
+  }catch(e){
+    $('status').textContent='Não foi possível ler: '+(e.message||e);
+  }finally{ $('btnRun').disabled=!(files.mov&&files.rec); }
+});
+
+function filtered(){
+  const q=$('q').value.trim().toLowerCase(), st=$('fStatus').value;
+  return state.rows.filter(r=>(!st||r.status===st)&&(!q||[r.codigo,r.descricao,r.ncm,r.cfop,r.recPis,r.recCofins].join(' ').toLowerCase().includes(q)));
+}
+
+function resumo(rows){
+  const m=new Map();
+  for(const r of rows){
+    const k=[r.recPis||'—',r.recCofins||'—',r.natReceita||'—',r.pisCst||'',r.cfop].join('|');
+    if(!m.has(k)) m.set(k,{recPis:r.recPis||'—',recCofins:r.recCofins||'—',natReceita:r.natReceita||'—',cst:r.pisCst||'',cfop:r.cfop,itens:0,vl:0,pisBase:0,pis:0,cofBase:0,cof:0});
+    const a=m.get(k); a.itens++; a.vl+=r.vlProduto||0; a.pisBase+=r.pisBase||0; a.pis+=r.pisValor||0; a.cofBase+=r.cofBase||0; a.cof+=r.cofValor||0;
+  }
+  const r2=v=>Math.round(v*100)/100; for(const a of m.values()) for(const k of ['vl','pisBase','pis','cofBase','cof']) a[k]=r2(a[k]);
+  return [...m.values()].sort((a,b)=>(a.recPis+a.cfop).localeCompare(b.recPis+b.cfop));
+}
+
+const DET_COLS = [
+  ['Status','status'],['Data','data'],['Nota','numero'],['Código','codigo','code'],['Descrição','descricao','desc'],['CFOP','cfop','code'],['NCM','ncm','code'],
+  ['Vl. produto','vlProduto','n'],['CST PIS','pisCst','n'],['Base PIS','pisBase','n'],['Alíq. PIS','pisAliq','n'],['Valor PIS','pisValor','n'],
+  ['CST COFINS','cofCst','n'],['Base COFINS','cofBase','n'],['Alíq. COFINS','cofAliq','n'],['Valor COFINS','cofValor','n'],
+  ['Vigência cadastro','vigencia'],['Nat. receita','natReceita','code'],['Rec. PIS','recPis','rec'],['Rec. COFINS','recCofins','rec'],['Observação','obs','obs']
+];
+const MONEY = new Set(['vlProduto','pisBase','pisValor','cofBase','cofValor','pisAliq','cofAliq']);
+const RES_COLS = [['Rec. PIS','recPis','rec'],['Rec. COFINS','recCofins','rec'],['Nat. receita','natReceita','code'],['CST','cst','n'],['CFOP','cfop','code'],['Itens','itens','n'],['Vl. produto','vl','n'],['Base PIS','pisBase','n'],['Valor PIS','pis','n'],['Base COFINS','cofBase','n'],['Valor COFINS','cof','n']];
+
+function render(){
+  const rows=state.rows, cnt=s=>rows.filter(r=>r.status===s).length;
+  const tot=k=>rows.reduce((s,r)=>s+(r[k]||0),0);
+  $('banner').hidden=!(state.exemplo || (state.paginasMov===1));
+  $('banner').textContent = state.exemplo
+    ? `Exemplo carregado: ${state.empresa}, ${state.periodo}, apenas a página 1 do movimento (o PDF enviado tinha 1 das 262 páginas). Carregue os dois PDFs completos para cruzar o mês todo.`
+    : 'O PDF de movimentação tem só 1 página. Se o relatório completo tem mais páginas, exporte-o inteiro para cruzar o mês todo.';
+  $('summary').innerHTML = [
+    ['Linhas', rows.length.toLocaleString('pt-BR')],['OK', cnt('OK')],['Verificar', cnt('Verificar')],['Não encontrados', cnt('Não encontrado')],
+    ['Total PIS', 'R$ '+fmt(tot('pisValor'))],['Total COFINS','R$ '+fmt(tot('cofValor'))]
+  ].map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');
+  $('filters').hidden = view!=='det';
+  const tbl=$('tbl');
+  if(view==='det'){
+    const fr=filtered();
+    const body=fr.map(r=>'<tr>'+DET_COLS.map(([,k,c])=>{
+      if(k==='status') return `<td><span class="pill ${r.status==='Não encontrado'?'Nao':r.status}">${r.status}</span></td>`;
+      const v = MONEY.has(k)?fmt(r[k]):esc(r[k]);
+      return `<td class="${c||''}">${v}</td>`;}).join('')+'</tr>').join('');
+    const sum=k=>fmt(fr.reduce((s,r)=>s+(r[k]||0),0));
+    const foot='<tr>'+DET_COLS.map(([,k],i)=>i===0?`<td>${fr.length} linhas</td>`:(['vlProduto','pisBase','pisValor','cofBase','cofValor'].includes(k)?`<td class="n">${sum(k)}</td>`:'<td></td>')).join('')+'</tr>';
+    tbl.innerHTML=`<thead><tr>${DET_COLS.map(([h,,c])=>`<th class="${c==='n'?'n':''}">${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody><tfoot>${foot}</tfoot>`;
+  }else{
+    const res=resumo(rows);
+    tbl.innerHTML=`<thead><tr>${RES_COLS.map(([h,,c])=>`<th class="${c==='n'?'n':''}">${h}</th>`).join('')}</tr></thead><tbody>`+
+      res.map(a=>'<tr>'+RES_COLS.map(([,k,c])=>`<td class="${c||''}">${typeof a[k]==='number'&&k!=='itens'?fmt(a[k]):esc(a[k])}</td>`).join('')+'</tr>').join('')+
+      `</tbody><tfoot><tr><td colspan="5">Total</td><td class="n">${rows.length}</td>${['vl','pisBase','pis','cofBase','cof'].map(k=>`<td class="n">${fmt(res.reduce((s,a)=>s+a[k],0))}</td>`).join('')}</tr></tfoot>`;
+  }
+}
+$('q').addEventListener('input',render); $('fStatus').addEventListener('change',render);
+for(const [id,v] of [['tabDet','det'],['tabRes','res']]) $(id).addEventListener('click',()=>{view=v;$('tabDet').setAttribute('aria-selected',v==='det');$('tabRes').setAttribute('aria-selected',v==='res');render();});
+
+// ----- Excel (.xlsx) mínimo com JSZip -----
+function colName(i){let s='';i++;while(i){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26);}return s;}
+const xe=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function sheetXml(header, rows, numKeys){
+  const widths=header.map(([h,k])=>Math.min(60,Math.max(h.length,...rows.slice(0,500).map(r=>String(r[k]??'').length))+2));
+  let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>'+
+    widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')+'</cols><sheetData>';
+  x+='<row r="1">'+header.map(([h],i)=>`<c r="${colName(i)}1" t="inlineStr" s="1"><is><t>${xe(h)}</t></is></c>`).join('')+'</row>';
+  rows.forEach((r,ri)=>{const n=ri+2;
+    x+=`<row r="${n}">`+header.map(([,k],i)=>{const v=r[k]; const ref=colName(i)+n;
+      if(numKeys.has(k)&&typeof v==='number') return `<c r="${ref}" s="2"><v>${v}</v></c>`;
+      if(v==null||v==='') return '';
+      return `<c r="${ref}" t="inlineStr"><is><t>${xe(v)}</t></is></c>`;}).join('')+'</row>';});
+  x+=`</sheetData><autoFilter ref="A1:${colName(header.length-1)}${rows.length+1}"/></worksheet>`;
+  return x;
+}
+async function buildXlsx(){
+  const zip=new JSZip();
+  const det=DET_COLS.filter(([,k])=>k!=='status').map(([h,k])=>[h,k]); det.unshift(['Status','status']);
+  const detRows=state.rows;
+  const res=resumo(state.rows);
+  zip.file('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>');
+  zip.file('_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+  zip.file('xl/workbook.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Cruzamento" sheetId="1" r:id="rId1"/><sheet name="Totais por cod receita" sheetId="2" r:id="rId2"/></sheets><definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">Cruzamento!$A$1:$'+colName(det.length-1)+'$'+(detRows.length+1)+'</definedName></definedNames></workbook>');
+  zip.file('xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
+  zip.file('xl/styles.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0.00"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE2EFE9"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="3"><xf/><xf fontId="1" fillId="2" applyFont="1" applyFill="1"/><xf numFmtId="164" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>');
+  zip.file('xl/worksheets/sheet1.xml', sheetXml(det, detRows, MONEY));
+  zip.file('xl/worksheets/sheet2.xml', sheetXml(RES_COLS.map(([h,k])=>[h,k]), res, new Set(['itens','vl','pisBase','pis','cofBase','cof'])));
+  return zip.generateAsync({type:'blob'});
+}
+// Download direto do navegador: usado quando a página é aberta como arquivo .html no computador
+function baixarDireto(blob, nome){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=nome; a.style.display='none';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 60000);
+}
+$('btnXlsx').addEventListener('click', async ()=>{
+  let blob, nome;
+  try{
+    $('status').textContent='Gerando planilha…';
+    if(typeof JSZip==='undefined') throw new Error('o componente de planilha não carregou (verifique a conexão com a internet)');
+    blob=await buildXlsx();
+    const per=(state.periodo||'').replace(/\//g,'-').replace(/\s+a\s+/,'_a_');
+    nome=`cruzamento_pis_cofins_${per||'relatorio'}.xlsx`;
+  }catch(e){ $('status').textContent='Não foi possível gerar a planilha: '+(e.message||e); return; }
+  // Dentro do Claude: usa o salvamento do próprio Claude. Fora dele: download normal do navegador.
+  const dentroDoClaude = !!(window.claude && window.claude.use);
+  if(dentroDoClaude){
+    try{
+      const dl = await window.claude.use('downloads');
+      if(dl){
+        await dl.save({filename:nome, data:blob});
+        $('status').textContent='Planilha salva.';
+        return;
+      }
+    }catch(e){
+      if(e && e.code==='declined'){ $('status').textContent='Download cancelado.'; return; }
+      if(e && e.code==='rate_limited'){ $('status').textContent='Já existe um download aguardando confirmação.'; return; }
+    }
+  }
+  baixarDireto(blob, nome);
+  $('status').textContent='Planilha gerada: '+nome+' (veja a pasta Downloads).';
+});
+$('btnCopy').addEventListener('click', ()=>{
+  const cols=DET_COLS;
+  const lines=[cols.map(c=>c[0]).join('\t'), ...filtered().map(r=>cols.map(([,k])=>MONEY.has(k)&&r[k]!=null?fmt(r[k]):(r[k]??'')).join('\t'))].join('\n');
+  navigator.clipboard.writeText(lines).then(()=>{$('status').textContent='Tabela copiada. Cole no Excel com Ctrl+V.';},()=>{$('status').textContent='O navegador bloqueou a cópia. Use “Baixar Excel”.';});
+});
+window.__test = { buildXlsx, getState:()=>state };
+render();
+</script>
+</body>
+</html>

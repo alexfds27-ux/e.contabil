@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+[hidden]:not([hidden=until-found i]){display:none!important}
+img{max-width:100%}
+.ec-voltar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 20px;background:#ffffff;border-bottom:1px solid #dde4ec;font:500 14px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 2px 8px rgba(18,35,59,.05)}
+.ec-voltar a{color:#167a6e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px}
+.ec-voltar a:hover{background:#e3f3ee}
+.ec-voltar span{color:#4f5f73}
+@media (prefers-color-scheme:dark){.ec-voltar{background:#16212f;border-color:#26364a}.ec-voltar a{color:#3fc6a0}.ec-voltar a:hover{background:#16332c}.ec-voltar span{color:#9fb0c3}}
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+<div class="ec-voltar"><a href="index.html">&larr; Central de Automações</a><span>e.contabil projetos</span></div>
+<script>function ecBaixar(blob, nome){ const u=URL.createObjectURL(blob instanceof Blob?blob:new Blob([blob])); const a=document.createElement('a'); a.href=u; a.download=nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }</script>
+<title>Cruzamento de Códigos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: coluna única de ferramenta — base → planilha do mês → conferência → download */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --ink:#18232e; --muted:#5d6b78; --line:#d9e0e6;
+  --accent:#1f5f8b; --accent-ink:#ffffff; --accent-soft:#e3eef6;
+  --ok:#22704a; --ok-soft:#e2f2e9; --warn:#8a5a00; --warn-soft:#fdf0d2;
+  --f-sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11171d; --surface:#18212a; --ink:#e4eaf0; --muted:#97a5b2; --line:#2b3742;
+  --accent:#6fb0de; --accent-ink:#0d1a24; --accent-soft:#1b3346;
+  --ok:#6fd19c; --ok-soft:#173527; --warn:#f2c46b; --warn-soft:#3a2d12; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11171d; --surface:#18212a; --ink:#e4eaf0; --muted:#97a5b2; --line:#2b3742;
+  --accent:#6fb0de; --accent-ink:#0d1a24; --accent-soft:#1b3346;
+  --ok:#6fd19c; --ok-soft:#173527; --warn:#f2c46b; --warn-soft:#3a2d12; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:28px 60px;display:grid;gap:20px}
+header h1{font-size:1.65rem;margin:0;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:.35rem 0 0;color:var(--muted);max-width:65ch}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:14px;min-width:0}
+.step-h{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.step-h .n{font-family:var(--f-mono);font-size:.8rem;color:var(--accent);font-weight:500;letter-spacing:.06em}
+.step-h h2{font-size:1.08rem;margin:0}
+.step-h .meta{margin-left:auto;color:var(--muted);font-size:.88rem}
+.muted{color:var(--muted)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font:inherit;font-weight:600;border-radius:7px;padding:9px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:disabled{opacity:.45;cursor:not-allowed}
+.btn.small{padding:4px 10px;font-size:.82rem;font-weight:500}
+.btn:focus-visible,select:focus-visible,input:focus-visible,.drop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:26px 16px;text-align:center;cursor:pointer;display:grid;gap:4px;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop strong{font-size:1rem}
+.file-chip{font-family:var(--f-mono);font-size:.85rem;background:var(--accent-soft);color:var(--ink);padding:3px 9px;border-radius:5px;word-break:break-all}
+.cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.cfg label{display:grid;gap:4px;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+select,input[type=text]{font:inherit;font-size:.92rem;padding:7px 9px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);width:100%;text-transform:none;letter-spacing:0}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{display:flex;gap:8px;align-items:baseline;padding:8px 14px;border-radius:8px;border:1px solid var(--line)}
+.stat b{font-size:1.3rem;font-variant-numeric:tabular-nums}
+.stat.ok{background:var(--ok-soft);border-color:transparent}.stat.ok b{color:var(--ok)}
+.stat.warn{background:var(--warn-soft);border-color:transparent}.stat.warn b{color:var(--warn)}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filters button{font:inherit;font-size:.85rem;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+.filters button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;max-height:560px;overflow-y:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{position:sticky;top:0;background:var(--surface);font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);z-index:1}
+td.num{font-family:var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums;width:1%;white-space:nowrap}
+td.code{font-family:var(--f-mono);white-space:nowrap}
+td.code input{font-family:var(--f-mono);max-width:180px;padding:4px 7px}
+.pill{display:inline-block;font-size:.76rem;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.man{background:var(--accent-soft);color:var(--accent)}
+.sug{font-size:.8rem;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:3px}
+.sug code{font-family:var(--f-mono)}
+details summary{cursor:pointer;color:var(--accent);font-weight:500}
+.example-tag{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--warn)}
+.msg{padding:10px 14px;border-radius:8px;font-size:.9rem}
+.msg.err{background:var(--warn-soft);color:var(--warn)}
+.msg.ok{background:var(--ok-soft);color:var(--ok)}
+.how{font-size:.88rem;color:var(--muted);margin:0;padding-left:1.1rem;display:grid;gap:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Cruzamento de Códigos de Produto</h1>
+    <p>Envie a contagem do mês. A ferramenta procura cada produto pelo nome na base antiga, cria a coluna <b>Código</b> e marca como <b>a localizar</b> o que não encontrar.</p>
+  </header>
+
+  <!-- Base -->
+  <section class="step" aria-labelledby="h-base">
+    <div class="step-h"><span class="n">ETAPA 1</span><h2 id="h-base">Base de códigos</h2><span class="meta" id="baseMeta"></span></div>
+    <div class="row">
+      <span class="file-chip" id="baseName">Contagem 01/09 com códigos (já carregada)</span>
+      <button class="btn small" id="baseBtn" type="button">Usar outra planilha como base</button>
+      <input type="file" id="baseFile" accept=".xlsx" hidden>
+    </div>
+    <div id="baseCfg" class="cfg" hidden>
+      <label>Aba<select id="bSheet"></select></label>
+      <label>Linha do cabeçalho<select id="bHead"></select></label>
+      <label>Coluna do produto<select id="bProd"></select></label>
+      <label>Coluna do código<select id="bCode"></select></label>
+    </div>
+    <details><summary>Ver produtos da base</summary><div class="tbl" style="margin-top:10px;max-height:300px"><table><thead><tr><th>Produto</th><th>Código</th></tr></thead><tbody id="baseList"></tbody></table></div></details>
+  </section>
+
+  <!-- Novo -->
+  <section class="step" aria-labelledby="h-new">
+    <div class="step-h"><span class="n">ETAPA 2</span><h2 id="h-new">Planilha do mês (sem códigos)</h2></div>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Selecionar planilha do mês">
+      <strong>Arraste a planilha .xlsx aqui ou clique para escolher</strong>
+      <span class="muted" id="newName">Nenhum arquivo selecionado</span>
+    </div>
+    <input type="file" id="newFile" accept=".xlsx" hidden>
+    <div id="newCfg" class="cfg" hidden>
+      <label>Aba<select id="nSheet"></select></label>
+      <label>Linha do cabeçalho<select id="nHead"></select></label>
+      <label>Coluna do produto<select id="nProd"></select></label>
+    </div>
+    <div id="newMsg"></div>
+  </section>
+
+  <!-- Resultado -->
+  <section class="step" aria-labelledby="h-res">
+    <div class="step-h"><span class="n">ETAPA 3</span><h2 id="h-res">Conferência</h2><span class="meta example-tag" id="exTag">Exemplo ilustrativo</span></div>
+    <div class="stats" id="stats"></div>
+    <div class="msg ok" id="colInfo" hidden></div>
+    <div class="row" style="justify-content:space-between">
+      <div class="filters" role="group" aria-label="Filtro">
+        <button type="button" data-f="all" aria-pressed="true">Todos</button>
+        <button type="button" data-f="ok" aria-pressed="false">Encontrados</button>
+        <button type="button" data-f="warn" aria-pressed="false">A localizar</button>
+      </div>
+      <button class="btn primary" id="dl" type="button" disabled>Baixar planilha com códigos</button>
+    </div>
+    <div class="tbl"><table><thead><tr><th>Linha</th><th>Produto</th><th>Código</th><th>Situação</th></tr></thead><tbody id="res"></tbody></table></div>
+    <div id="dlMsg"></div>
+    <ul class="how">
+      <li>O nome é comparado sem diferenciar maiúsculas, acentos, espaços extras e ponto/vírgula (0.350 = 0,350).</li>
+      <li>Para os itens "a localizar", a tela mostra o nome mais parecido da base. Clique em <b>usar</b> ou digite o código para preencher antes de baixar.</li>
+      <li>O arquivo baixado mantém a planilha original e acrescenta a coluna Código. As células "a localizar" ficam destacadas em amarelo.</li>
+    </ul>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script>
+const DEFAULT_BASE = [["BBMI SKINKA FRUTCITRIC 0,45LPET","360001"],["CERV BADEN WITBIER 350 LT","904193PR"],["CERV BADEN PILSCRIST 350 LT","060053"],["CERV BADEN IPA 350 LT","060052"],["CERV BADEN PEACH 350 LT","060060"],["CERV BADEN GOLD ALE 350 LT","060061"],["CERV BADEN AMERICAN IPA 0,60LG 12UN","010017"],["CERV BADEN GOLDEN ALE 0,60LGFA 12UN","010005"],["CERV BADEN PILSCRIST 0,60LGFA 12UN","010002"],["CERV BADEN WITBIER 0,60LGFA 12","010014"],["CERV GLACIAL PILS 0,350LT 12UN","060006"],["CERV GLACIAL PILS 1LGFA 12UN","025002"],["CERV SCHIN PILS 0,350LT 12UN P","060022"],["CERV SCHIN PILS 0,60LGFA 24UN","001012"],["CERV SCHIN PILS 1LGFA 12UN","902432PR"],["REFR SCHIN ITUBAINA 0,355LN 2X","900525PR"],["REFR ITUBAINA RETRO 0,350LT 12","245018"],["REFR ITUBAINA ZERO 0,350LT 12UN PBR","245019"],["REFR FYS GUARANA 0,350LT DES 12UN PBR","903791PR"],["REFR FYS GUARANA ZERO 0,350LT 12UN PBR","905283PR"],["REFR FYS LARANJA 0,350LT DES 12UN PBR","245034"],["REFR FYS LIMAO 0,350L DES 12UN PBR","903795PR"],["AMSTEL ULTRA 0,330GFA DESC 4X6UNPBR","905603PR"],["AMSTEL ULTRA 0,269LT 12UN","003014"],["AMSTEL ULTRA 0,350LT 12UN","060078"],["BMA AMSTEL VIBES LIMAO 0,269LT 6UN PT","905072PR"],["BMA AMSTEL VIBES MEL MOR 0,269 6UN PT","905073PR"],["CERV AMSTEL LAGER 0,269LT SHR 12UNPBR","003010"],["CERV AMSTEL LAGER 0,437LT 12UN","030021"],["CERV AMSTEL LAGER 0,60L GFA RT 24UN","904502PR"],["CERV AMSTEL LAGER 1 LGFA 12UN","904213PR"],["DRAFT BEER AMSTEL LAGER 30L PBR2","160058"],["CERV AMSTEL LAGER 0,350LT SLEEK 12UN","904952PR"],["CERV AMSTEL LAGER 0,355LN DES 2X6UN PBR","040045"],["CERV HEINEKEN 0,0% 0,350LT DESC 12UN SLEEK","060066"],["CERV HEINEKEN 0,0% 0,330GFA DES 4X6UNPBR","056003"],["CERV HEINEKEN 0,0% 0,250GFA DES 4X6UNPBR","052006"],["CERV HEINEKEN PIL 0,250GFA DESC 4X6UN PBR","052005"],["CERV HEINEKEN PIL 0,269 DESC 8UN","904721PR"],["CERV HEINEKEN 0,0% 0,269LT DESC 8UN","078002"],["CERV HEINEKEN PIL 0,330GFA DESC 4X6UN PBR","97376002040079"],["CERV HEINEKEN PIL 0,330GFA PAPELAO","97376002040120"],["CERV HEINEKEN PIL 0,330GFA RT 24 UM","97376002040094"],["CERV HEINEKEN PIL 0,350LT DESC 12UN SLEEK","060064"],["CERV HEINEKEN PIL 0,6GFA DESC 12UN PBR","010029"],["CERV HEINEKEN PIL 0,6GFA RT 24UN","021001"],["CERV HEINEKEN PIL 0,473LT DES 12UN PBR","030020"],["CERV HEINEKEN PIL 5LBARRIL DESC 2UN PBR","597001"],["CHOP HEINEKEN PIL 30LBARRIL RT","160027"],["AGUA MINERAL MAMBA C/ GAS 0.350LT 12UN","325003"],["AGUA MINERAL MAMBA S/GAS 0,350LT SLK 12UN","325002"],["AGUA MAMBA PROTEIN MANG PE M 350LT 6UN","00000000674963"],["AGUA MAMBA PROTEIN ABAC HORT 350LT 6UN","00000000674964"],["AGUA MAMBA PROTEIN LIM FRAM 350LT 6UN","00000000675065"],["CHA BAER MATE 0,269LT 6UN","97376002040076"],["CERV PRAYA LAGER 0,330N 4X6UN","056008"],["CERV PRAYA RECEITA CLASS 0,269LT 12 UM","00000000418502"]];
+const NAO = "a localizar";
+const $ = id => document.getElementById(id);
+
+const norm = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase()
+  .replace(/\./g,",").replace(/\s*\/\s*/g,"/").replace(/\s+/g," ").trim();
+function bigrams(s){s=s.replace(/ /g,"");const m=new Map();for(let i=0;i<s.length-1;i++){const b=s.slice(i,i+2);m.set(b,(m.get(b)||0)+1)}return m}
+function dice(a,b){const A=bigrams(a),B=bigrams(b);let inter=0,tot=0;A.forEach((v,k)=>{tot+=v;if(B.has(k))inter+=Math.min(v,B.get(k))});B.forEach(v=>tot+=v);return tot?2*inter/tot:0}
+
+let base = []; // {name, code, key}
+let baseMap = new Map();
+function setBase(pairs){
+  base = pairs.filter(p=>p[0]&&p[1]!==""&&p[1]!=null).map(([n,c])=>({name:String(n).trim(),code:String(c).trim(),key:norm(n)}));
+  baseMap = new Map(); base.forEach(b=>{ if(!baseMap.has(b.key)) baseMap.set(b.key,b.code) });
+  $("baseMeta").textContent = base.length + " produtos com código";
+  $("baseList").innerHTML = base.map(b=>`<tr><td>${esc(b.name)}</td><td class="code">${esc(b.code)}</td></tr>`).join("");
+  if(newState) runMatch();
+}
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cellText = c => { if(!c) return ""; const v=c.value; if(v==null) return ""; if(typeof v==="object"){ if(v.richText) return v.richText.map(r=>r.text).join(""); if("result" in v) return v.result==null?"":String(v.result); if(v.text) return String(v.text);} return String(c.text ?? v); };
+const colLetter = n => { let s=""; while(n>0){const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26);} return s; };
+
+// Coluna onde o código será gravado: sempre depois da última coluna com qualquer dado na aba inteira.
+// Só reaproveita uma coluna "Código" já existente se ela for a última e estiver vazia nas linhas de produto.
+function lastUsedCol(ws){let last=0;ws.eachRow({includeEmpty:false},row=>{row.eachCell({includeEmpty:false},(c,n)=>{const v=c.value;if(v!==null&&v!==undefined&&!(typeof v==="string"&&!v.trim()))last=Math.max(last,n)})});return last}
+function targetCol(ws,h){
+  const last=lastUsedCol(ws);
+  const t=norm(cellText(ws.getRow(h).getCell(last)));
+  if(t.startsWith("COD")){let empty=true;for(let r=h+1;r<=ws.rowCount;r++){const x=cellText(ws.getRow(r).getCell(last)).trim();if(x&&norm(x)!==norm(NAO)){empty=false;break}} if(empty) return last;}
+  return last+1;
+}
+function detect(ws, wantCode){
+  let head=1, prod=1, code=null;
+  outer: for(let r=1;r<=Math.min(20,ws.rowCount);r++){
+    const row=ws.getRow(r);
+    for(let c=1;c<=Math.max(ws.columnCount,1);c++){
+      const t=norm(cellText(row.getCell(c)));
+      if(t==="PRODUTO"||t==="PRODUTOS"||t==="DESCRICAO"||t.startsWith("PRODUTO")||t.startsWith("DESCRICAO")){head=r;prod=c;break outer;}
+    }
+  }
+  if(head===1&&prod===1&&!/PRODUTO|DESCRICAO/.test(norm(cellText(ws.getRow(1).getCell(1))))){
+    // sem cabeçalho "produto": usa a linha com mais células preenchidas
+    let best=0; for(let r=1;r<=Math.min(20,ws.rowCount);r++){let n=0;ws.getRow(r).eachCell(c=>{if(cellText(c).trim())n++});if(n>best){best=n;head=r}}
+  }
+  if(wantCode){const row=ws.getRow(head);for(let c=1;c<=ws.columnCount;c++){const t=norm(cellText(row.getCell(c)));if(t.startsWith("COD")){code=c;break;}} if(!code) code=ws.columnCount;}
+  return {head,prod,code};
+}
+function fillSelects(ws, sheetSel, headSel, colSels, wb, picks){
+  sheetSel.innerHTML = wb.worksheets.map((w,i)=>`<option value="${i}">${esc(w.name)}</option>`).join("");
+  sheetSel.value = wb.worksheets.indexOf(ws);
+  const rows=[]; for(let r=1;r<=Math.min(20,ws.rowCount);r++){const vals=[];ws.getRow(r).eachCell(c=>{const t=cellText(c);if(t)vals.push(t)});rows.push(`<option value="${r}">${r}: ${esc(vals.slice(0,3).join(" | ").slice(0,60))}</option>`)}
+  headSel.innerHTML = rows.join(""); headSel.value = picks.head;
+  refreshCols(ws, picks.head, colSels, picks);
+}
+function refreshCols(ws, head, colSels, picks){
+  const opts=[]; const row=ws.getRow(head);
+  for(let c=1;c<=Math.max(ws.columnCount,1);c++){opts.push(`<option value="${c}">${colLetter(c)} — ${esc(cellText(row.getCell(c)).slice(0,40)||"(vazio)")}</option>`)}
+  colSels.forEach(([sel,key])=>{sel.innerHTML=opts.join(""); if(picks[key]) sel.value=picks[key];});
+}
+
+/* ---------- Base upload ---------- */
+let baseWb=null;
+$("baseBtn").onclick=()=>$("baseFile").click();
+$("baseFile").onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{
+    baseWb=new ExcelJS.Workbook(); await baseWb.xlsx.load(await f.arrayBuffer());
+    const ws=baseWb.worksheets[0]; const p=detect(ws,true);
+    $("baseName").textContent=f.name; $("baseCfg").hidden=false;
+    fillSelects(ws,$("bSheet"),$("bHead"),[[$("bProd"),"prod"],[$("bCode"),"code"]],baseWb,p);
+    readBase();
+  }catch(err){$("baseMeta").textContent="Não consegui ler esse arquivo. Use um .xlsx.";}
+};
+function readBase(){
+  const ws=baseWb.worksheets[+$("bSheet").value]; const h=+$("bHead").value, pc=+$("bProd").value, cc=+$("bCode").value;
+  const pairs=[]; for(let r=h+1;r<=ws.rowCount;r++){const row=ws.getRow(r);pairs.push([cellText(row.getCell(pc)),cellText(row.getCell(cc))])}
+  setBase(pairs.filter(p=>p[0].trim()&&p[1].trim()));
+}
+$("bSheet").onchange=()=>{const ws=baseWb.worksheets[+$("bSheet").value];const p=detect(ws,true);fillSelects(ws,$("bSheet"),$("bHead"),[[$("bProd"),"prod"],[$("bCode"),"code"]],baseWb,p);readBase()};
+$("bHead").onchange=()=>{const ws=baseWb.worksheets[+$("bSheet").value];refreshCols(ws,+$("bHead").value,[[$("bProd"),"prod"],[$("bCode"),"code"]],{prod:+$("bProd").value,code:+$("bCode").value});readBase()};
+$("bProd").onchange=readBase; $("bCode").onchange=readBase;
+
+/* ---------- Novo arquivo ---------- */
+let newWb=null, newName="", newState=null, results=[], filter="all";
+const drop=$("drop");
+drop.onclick=()=>$("newFile").click();
+drop.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("newFile").click()}};
+drop.ondragover=e=>{e.preventDefault();drop.classList.add("over")};
+drop.ondragleave=()=>drop.classList.remove("over");
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove("over");if(e.dataTransfer.files[0])loadNew(e.dataTransfer.files[0])};
+$("newFile").onchange=e=>{if(e.target.files[0])loadNew(e.target.files[0])};
+
+async function loadNew(f){
+  $("newMsg").innerHTML="";
+  if(!/\.xlsx$/i.test(f.name)){$("newMsg").innerHTML=`<div class="msg err">O arquivo precisa estar em .xlsx. Se for .xls, abra no Excel e use "Salvar como" &gt; Pasta de Trabalho do Excel (.xlsx).</div>`;return}
+  try{
+    newWb=new ExcelJS.Workbook(); await newWb.xlsx.load(await f.arrayBuffer());
+  }catch(err){$("newMsg").innerHTML=`<div class="msg err">Não consegui ler esse arquivo. Confira se ele abre normalmente no Excel.</div>`;return}
+  newName=f.name; $("newName").innerHTML=`<span class="file-chip">${esc(f.name)}</span>`;
+  const ws=newWb.worksheets[0]; const p=detect(ws,false);
+  $("newCfg").hidden=false;
+  fillSelects(ws,$("nSheet"),$("nHead"),[[$("nProd"),"prod"]],newWb,p);
+  newState={}; runMatch();
+}
+$("nSheet").onchange=()=>{const ws=newWb.worksheets[+$("nSheet").value];const p=detect(ws,false);fillSelects(ws,$("nSheet"),$("nHead"),[[$("nProd"),"prod"]],newWb,p);runMatch()};
+$("nHead").onchange=()=>{const ws=newWb.worksheets[+$("nSheet").value];refreshCols(ws,+$("nHead").value,[[$("nProd"),"prod"]],{prod:+$("nProd").value});runMatch()};
+$("nProd").onchange=runMatch;
+
+function bestSuggestion(key){let best=null,score=0;for(const b of base){const s=dice(key,b.key);if(s>score){score=s;best=b}}return score>=0.55?{...best,score}:null}
+
+function runMatch(){
+  if(!newWb) return;
+  const ws=newWb.worksheets[+$("nSheet").value], h=+$("nHead").value, pc=+$("nProd").value;
+  results=[];
+  for(let r=h+1;r<=ws.rowCount;r++){
+    const name=cellText(ws.getRow(r).getCell(pc)).trim(); if(!name) continue;
+    const key=norm(name); const code=baseMap.get(key);
+    results.push(code!=null?{row:r,name,code,status:"ok"}:{row:r,name,code:"",status:"warn",sug:bestSuggestion(key)});
+  }
+  $("exTag").hidden=true; $("dl").disabled=results.length===0;
+  { const tc=targetCol(ws,h), prev=tc>1?cellText(ws.getRow(h).getCell(tc-1)).trim():"";
+    $("colInfo").innerHTML=`O código será gravado na coluna <b>${colLetter(tc)}</b>${prev?`, logo depois de <b>${esc(prev)}</b>`:""}. Nenhuma coluna existente é alterada.`; $("colInfo").hidden=false; }
+  $("dlMsg").innerHTML = results.length?"":`<div class="msg err">Nenhum produto encontrado abaixo da linha ${h}. Ajuste a linha do cabeçalho ou a coluna do produto na Etapa 2.</div>`;
+  render();
+}
+
+function render(){
+  const ok=results.filter(r=>r.status==="ok").length, man=results.filter(r=>r.status==="man").length, warn=results.filter(r=>r.status==="warn").length;
+  $("stats").innerHTML=`<div class="stat"><b>${results.length}</b><span>produtos</span></div><div class="stat ok"><b>${ok}</b><span>encontrados</span></div>${man?`<div class="stat"><b>${man}</b><span>preenchidos à mão</span></div>`:""}<div class="stat warn"><b>${warn}</b><span>a localizar</span></div>`;
+  const list=results.map((r,i)=>({...r,i})).filter(r=>filter==="all"||(filter==="ok"?r.status!=="warn":r.status==="warn"));
+  $("res").innerHTML=list.map(r=>{
+    if(r.status==="ok") return `<tr><td class="num">${r.row}</td><td>${esc(r.name)}</td><td class="code">${esc(r.code)}</td><td><span class="pill ok">Encontrado</span></td></tr>`;
+    const sug=r.sug?`<div class="sug">Parecido: ${esc(r.sug.name)} → <code>${esc(r.sug.code)}</code> <button class="btn small" type="button" data-use="${r.i}">usar</button></div>`:"";
+    return `<tr><td class="num">${r.row}</td><td>${esc(r.name)}${r.status==="warn"?sug:""}</td><td class="code"><input type="text" id="c-${r.row}" data-i="${r.i}" value="${esc(r.code)}" placeholder="${NAO}" aria-label="Código para ${esc(r.name)}"></td><td>${r.status==="man"?'<span class="pill man">Manual</span>':'<span class="pill warn">A localizar</span>'}</td></tr>`;
+  }).join("") || `<tr><td colspan="4" class="muted">Nada neste filtro.</td></tr>`;
+}
+$("res").addEventListener("click",e=>{const b=e.target.closest("[data-use]");if(!b)return;const r=results[+b.dataset.use];r.code=r.sug.code;r.status="man";render()});
+$("res").addEventListener("change",e=>{const inp=e.target.closest("input[data-i]");if(!inp)return;const r=results[+inp.dataset.i];r.code=inp.value.trim();r.status=r.code?"man":"warn";render()});
+document.querySelectorAll(".filters button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;document.querySelectorAll(".filters button").forEach(x=>x.setAttribute("aria-pressed",x===b));render()});
+
+/* ---------- Download ---------- */
+$("dl").onclick=async()=>{
+  $("dlMsg").innerHTML="";
+  const ws=newWb.worksheets[+$("nSheet").value], h=+$("nHead").value;
+  const headRow=ws.getRow(h);
+  const col=targetCol(ws,h);
+  const hc=headRow.getCell(col); hc.value="Código";
+  if(col>1){const ref=headRow.getCell(col-1); if(ref.style) hc.style=JSON.parse(JSON.stringify(ref.style));}
+  ws.getColumn(col).width=Math.max(ws.getColumn(col).width||0,18);
+  for(const r of results){
+    const c=ws.getRow(r.row).getCell(col);
+    const ref=col>1?ws.getRow(r.row).getCell(col-1):null;
+    if(ref&&ref.style){const st=JSON.parse(JSON.stringify(ref.style));delete st.fill;delete st.numFmt;c.style=st;}
+    c.numFmt="@";
+    if(r.code){c.value=String(r.code)}
+    else{c.value=NAO;c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFFFF2CC"}};c.font={...(c.font||{}),color:{argb:"FF9C5700"},bold:true}}
+  }
+  const buf=await newWb.xlsx.writeBuffer();
+  const fname=newName.replace(/\.xlsx$/i,"")+"_com_codigos.xlsx";
+  const downloads=window.claude?.use ? await window.claude.use("downloads").catch(()=>null) : null;
+  if(!downloads){ecBaixar(new Blob([buf]),fname);$("dlMsg").innerHTML=`<div class="msg ok">Arquivo ${esc(fname)} baixado (veja a pasta Downloads).</div>`;return}
+  try{await downloads.save({filename:fname,data:new Blob([buf])});$("dlMsg").innerHTML=`<div class="msg ok">Arquivo ${esc(fname)} salvo.</div>`}
+  catch(err){ if(err&&err.code==="declined") return; $("dlMsg").innerHTML=`<div class="msg err">Não foi possível salvar o arquivo (${esc(err&&err.code||"erro")}). Tente de novo em alguns segundos.</div>`}
+};
+
+/* ---------- Estado inicial: base carregada + exemplo marcado ---------- */
+setBase(DEFAULT_BASE);
+results=[
+  {row:3,name:"CERV GLACIAL PILS 0,350LT 12UN",code:"060006",status:"ok"},
+  {row:4,name:"cerv heineken pil 0,6gfa rt 24un",code:"021001",status:"ok"},
+  {row:5,name:"CERV HEINEKEN PIL 0,350LT DESC 12UN",code:"",status:"warn",sug:bestSuggestion(norm("CERV HEINEKEN PIL 0,350LT DESC 12UN"))},
+  {row:6,name:"REFR NOVO SABOR 2L 6UN",code:"",status:"warn",sug:null}
+];
+render();
+document.querySelectorAll("#res input, #res button").forEach(x=>x.disabled=true);
+</script>
+</body>
+</html>

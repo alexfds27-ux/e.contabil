@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>e.contabil · Central de Automações</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23167a6e'/%3E%3Crect x='20' y='34' width='6' height='12' rx='1' fill='white'/%3E%3Crect x='29' y='28' width='6' height='18' rx='1' fill='white'/%3E%3Crect x='38' y='22' width='6' height='24' rx='1' fill='white'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#eef2f6; --surface:#ffffff; --surface-2:#f4f7fa;
+  --ink:#12233b; --muted:#4f5f73; --line:#dde4ec;
+  --teal-1:#1b5f86; --teal-2:#17a074; --accent:#167a6e; --accent-soft:#e3f3ee;
+  --shadow:0 1px 2px rgba(18,35,59,.05),0 6px 20px rgba(18,35,59,.06);
+  --grad:linear-gradient(100deg,var(--teal-1),var(--teal-2));
+  --f:"Lexend",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1824; --surface:#16212f; --surface-2:#1b2838;
+  --ink:#e6edf5; --muted:#9fb0c3; --line:#26364a;
+  --accent:#3fc6a0; --accent-soft:#16332c;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1824; --surface:#16212f; --surface-2:#1b2838;
+  --ink:#e6edf5; --muted:#9fb0c3; --line:#26364a;
+  --accent:#3fc6a0; --accent-soft:#16332c;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.container{max-width:1200px;margin:0 auto;padding-inline:20px}
+
+/* ---------- Topo ---------- */
+.topbar{background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 2px 10px rgba(18,35,59,.04);position:sticky;top:0;z-index:10}
+.topbar .container{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:76px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand svg{width:48px;height:48px;flex:none}
+.brand-txt{display:flex;flex-direction:column;line-height:1}
+.brand-txt b{font-size:1.65rem;font-weight:700;letter-spacing:-.02em}
+.brand-txt span{align-self:flex-end;font-size:.95rem;color:var(--muted);margin-top:2px}
+nav.menu{display:flex;gap:28px;align-items:center}
+nav.menu a{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);font-size:1rem;padding:6px 0;border-bottom:2px solid transparent}
+nav.menu a:hover{border-bottom-color:var(--accent)}
+nav.menu svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8}
+.theme-btn{border:1px solid var(--line);background:var(--surface-2);color:var(--ink);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;cursor:pointer}
+.theme-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+
+/* ---------- Título ---------- */
+.hero{padding-block:44px 28px}
+.hero h1{margin:0;font-size:clamp(1.9rem,4vw,2.6rem);font-weight:700;letter-spacing:-.02em}
+.hero p{margin:6px 0 0;font-size:1.15rem;color:var(--muted)}
+
+/* ---------- Abas ---------- */
+.tabs{display:flex;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin}
+.tab{flex:1 1 0;min-width:0;text-align:left;line-height:1.25;display:flex;align-items:center;gap:10px;padding:16px 16px;background:var(--surface);border:1px solid var(--line);border-bottom:none;margin-right:-1px;font:inherit;font-size:1.05rem;color:var(--ink);cursor:pointer;position:relative}
+.tab:first-child{border-top-left-radius:10px}
+.tab:last-child{border-top-right-radius:10px}
+.tab svg{width:30px;height:30px;flex:none}
+.tab[aria-selected="true"]{background:var(--accent-soft)}
+.tab[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--grad)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+
+/* ---------- Corpo ---------- */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:32px;padding-block:32px 60px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:24px}
+.panel-inner{background:var(--surface-2);border-radius:12px;padding:40px 28px 0;text-align:center;overflow:hidden}
+.panel-inner h2{margin:0;font-size:1.75rem;font-weight:700;letter-spacing:-.01em}
+.panel-inner p{margin:10px auto 0;color:var(--muted);font-size:1.1rem;max-width:56ch}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--grad);color:#fff;text-decoration:none;font-weight:500;font-size:1.05rem;padding:14px 30px;border-radius:8px;box-shadow:0 4px 12px rgba(23,122,110,.25);transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(23,122,110,.32)}
+.btn:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.panel-inner .btn{margin-top:26px}
+.tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.tags span{font-size:.82rem;color:var(--accent);background:var(--accent-soft);padding:4px 12px;border-radius:999px}
+
+/* mini prévia da ferramenta */
+.preview{margin:34px auto 0;max-width:620px;border-radius:10px 10px 0 0;border:1px solid var(--line);border-bottom:none;overflow:hidden;background:var(--surface);box-shadow:0 -4px 24px rgba(18,35,59,.08);text-align:left}
+.pv-bar{height:26px;background:#e3e7ec;display:flex;align-items:center;gap:6px;padding-inline:10px}
+.pv-bar i{width:9px;height:9px;border-radius:50%;display:block}
+.pv-body{display:grid;grid-template-columns:130px 1fr;min-height:230px}
+.pv-side{background:#132a45;padding:12px 10px;display:flex;flex-direction:column;gap:10px}
+.pv-logo{color:#fff;font-size:.78rem;font-weight:600;display:flex;align-items:center;gap:5px;margin-bottom:6px}
+.pv-logo svg{width:18px;height:18px}
+.pv-side .ln{height:7px;border-radius:4px;background:rgba(255,255,255,.18)}
+.pv-side .ln.on{background:var(--grad);height:16px}
+.pv-main{padding:12px 14px;display:flex;flex-direction:column;gap:9px}
+.pv-main .t{font-size:.82rem;font-weight:600;color:var(--ink)}
+.pv-card{border:1px solid var(--line);border-radius:6px;padding:9px 10px;display:flex;flex-direction:column;gap:9px}
+.pv-card .h{font-size:.7rem;font-weight:600;color:var(--ink)}
+.pv-row{display:flex;gap:10px;align-items:center}
+.pv-row .ic{width:14px;height:14px;border-radius:3px;background:var(--accent-soft);flex:none}
+.pv-row .b{height:6px;border-radius:3px;background:var(--line)}
+.pv-row .ok{width:34px;height:12px;border-radius:999px;background:var(--accent-soft);margin-left:auto}
+
+/* ---------- Cartões laterais ---------- */
+.side{display:flex;flex-direction:column;gap:22px}
+.side h3.label{margin:0;font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);display:grid;grid-template-columns:120px 1fr;gap:0;padding:20px 20px 20px 10px}
+.card .ico{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border-right:1px solid var(--line);padding-inline:6px;text-align:center}
+.card .ico svg{width:64px;height:64px}
+.card .ico b{font-size:.92rem;font-weight:600;line-height:1.2}
+.card .txt{padding-left:18px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.card h4{margin:0;font-size:1.08rem;font-weight:600}
+.card p{margin:0;color:var(--muted);font-size:.95rem;line-height:1.4}
+.card .btn{margin-top:auto;padding:11px 16px;font-size:.98rem}
+.card .actions{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.card .linklike{background:none;border:none;color:var(--accent);font:inherit;font-size:.88rem;cursor:pointer;padding:0;text-align:left}
+.card .linklike:hover{text-decoration:underline}
+
+/* ---------- Ajuda ---------- */
+.help{border-top:1px solid var(--line);padding-block:36px 50px;color:var(--muted);font-size:.95rem}
+.help h2{color:var(--ink);font-size:1.2rem;margin:0 0 10px}
+.help ul{margin:0;padding-left:20px;display:grid;gap:6px;max-width:80ch}
+footer{text-align:center;color:var(--muted);font-size:.85rem;padding-bottom:30px}
+
+/* ---------- Responsivo ---------- */
+@media (max-width:1000px){
+  .layout{grid-template-columns:1fr}
+  nav.menu{gap:18px}
+}
+@media (max-width:700px){
+  nav.menu a span{display:none}
+  .brand-txt b{font-size:1.35rem}
+  .brand svg{width:40px;height:40px}
+  .tab{flex:none;white-space:nowrap;padding:14px 16px;font-size:.95rem}
+  .tab svg{width:26px;height:26px}
+  .panel{padding:14px}
+  .panel-inner{padding:28px 16px 0}
+  .pv-body{grid-template-columns:80px 1fr}
+  .pv-logo span{display:none}
+  .card{grid-template-columns:90px 1fr}
+  .card .ico svg{width:48px;height:48px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<!-- Ícones reutilizados -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b5f86"/><stop offset="1" stop-color="#17a074"/>
+    </linearGradient>
+  </defs>
+  <symbol id="i-logo" viewBox="0 0 64 64">
+    <path fill="url(#g)" d="M27.6 3h8.8l1.4 7.1a22 22 0 0 1 5.6 2.3l6-4.1 6.2 6.2-4.1 6a22 22 0 0 1 2.3 5.6l7.2 1.4v8.8l-7.2 1.4a22 22 0 0 1-2.3 5.6l4.1 6-6.2 6.2-6-4.1a22 22 0 0 1-5.6 2.3L36.4 61h-8.8l-1.4-7.2a22 22 0 0 1-5.6-2.3l-6 4.1-6.2-6.2 4.1-6a22 22 0 0 1-2.3-5.6L3 36.4v-8.8l7.2-1.4a22 22 0 0 1 2.3-5.6l-4.1-6 6.2-6.2 6 4.1a22 22 0 0 1 5.6-2.3z"/>
+    <circle cx="32" cy="32" r="15" fill="#fff"/>
+    <rect x="23" y="33" width="4.5" height="8" rx="1" fill="#1b5f86"/>
+    <rect x="29.8" y="28" width="4.5" height="13" rx="1" fill="#1a7f84"/>
+    <rect x="36.6" y="24" width="4.5" height="17" rx="1" fill="#17a074"/>
+    <path d="M22 29l8-7 4 3 8-8" fill="none" stroke="#17a074" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M38 16h5v5" fill="none" stroke="#17a074" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-car" viewBox="0 0 64 64">
+    <path d="M14 14h22m0 0-5-5m5 5-5 5M50 22H28m0 0 5-5m-5 5 5 5" fill="none" stroke="#17a074" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path fill="#1b5f86" d="M17 32h30l5 9h3a3 3 0 0 1 3 3v8a2 2 0 0 1-2 2h-3a6 6 0 0 1-12 0H23a6 6 0 0 1-12 0H8a2 2 0 0 1-2-2v-8a3 3 0 0 1 3-3h3z"/>
+    <path fill="#e3f3ee" d="M19.5 35h11v6H16.5zM33.5 35h11.5l3 6H33.5z"/>
+    <circle cx="17" cy="54" r="3.5" fill="#e3f3ee"/><circle cx="47" cy="54" r="3.5" fill="#e3f3ee"/>
+  </symbol>
+  <symbol id="i-cross" viewBox="0 0 64 64">
+    <g fill="#1b5f86"><ellipse cx="16" cy="12" rx="10" ry="4"/><path d="M6 12v6c0 2.2 4.5 4 10 4s10-1.8 10-4v-6c0 2.2-4.5 4-10 4S6 14.2 6 12z"/><path d="M6 20v6c0 2.2 4.5 4 10 4s10-1.8 10-4v-6c0 2.2-4.5 4-10 4S6 22.2 6 20z"/></g>
+    <g fill="#17a074"><ellipse cx="48" cy="40" rx="10" ry="4"/><path d="M38 40v6c0 2.2 4.5 4 10 4s10-1.8 10-4v-6c0 2.2-4.5 4-10 4s-10-1.8-10-4z"/><path d="M38 48v6c0 2.2 4.5 4 10 4s10-1.8 10-4v-6c0 2.2-4.5 4-10 4s-10-1.8-10-4z"/></g>
+    <path d="M26 38 54 10m0 0H42m12 0v12M38 26 10 54m0 0h12m-12 0V42" fill="none" stroke="url(#g)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-xml" viewBox="0 0 64 64">
+    <path d="M14 5h26l12 12v38a4 4 0 0 1-4 4H14a4 4 0 0 1-4-4V9a4 4 0 0 1 4-4z" fill="#fff" stroke="#1b5f86" stroke-width="3"/>
+    <path d="M40 5v12h12" fill="none" stroke="#1b5f86" stroke-width="3" stroke-linejoin="round"/>
+    <text x="30" y="38" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="13" fill="#1b5f86">XML</text>
+    <circle cx="48" cy="50" r="11" fill="#17a074"/>
+    <path d="M48 44v11m-4.5-4.5L48 55l4.5-4.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-receipt" viewBox="0 0 64 64">
+    <path d="M12 5h40v54l-6.7-4-6.6 4-6.7-4-6.7 4-6.6-4-6.7 4z" fill="#fff" stroke="#1b5f86" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M20 17h24M20 25h24M20 33h14" stroke="#1b5f86" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="44" cy="42" r="10" fill="#17a074"/>
+    <path d="m39.5 42 3.2 3.2 6-6.4" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-code" viewBox="0 0 64 64">
+    <rect x="5" y="9" width="40" height="46" rx="4" fill="#fff" stroke="#1b5f86" stroke-width="3"/>
+    <path d="M5 21h40M5 33h40M5 45h40M19 9v46" stroke="#1b5f86" stroke-width="2.2"/>
+    <g fill="#17a074"><rect x="44" y="16" width="3" height="32"/><rect x="49" y="16" width="1.6" height="32"/><rect x="52.5" y="16" width="3.4" height="32"/><rect x="57.8" y="16" width="1.6" height="32"/></g>
+    <rect x="41" y="12" width="21" height="40" rx="3" fill="none" stroke="url(#g)" stroke-width="3"/>
+  </symbol>
+</svg>
+
+<header class="topbar">
+  <div class="container">
+    <a class="brand" href="#" aria-label="e.contabil projetos, início">
+      <svg><use href="#i-logo"/></svg>
+      <div class="brand-txt"><b>e.contabil</b><span>projetos</span></div>
+    </a>
+    <nav class="menu" aria-label="Menu principal">
+      <a href="#ferramentas">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        <span>Ferramentas</span>
+      </a>
+      <a href="#ajuda">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/></svg>
+        <span>Como usar</span>
+      </a>
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="Alternar tema claro/escuro">
+        <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1>Central de Automações</h1>
+    <p>Gerencie e execute suas tarefas de forma automatizada</p>
+  </section>
+
+  <div class="tabs" role="tablist" id="ferramentas" aria-label="Ferramentas"></div>
+
+  <div class="layout">
+    <section class="panel" id="panel" role="tabpanel" aria-live="polite"></section>
+    <aside class="side">
+      <h3 class="label">Outras ferramentas</h3>
+      <div id="cards" class="side" style="gap:22px"></div>
+    </aside>
+  </div>
+
+  <section class="help" id="ajuda">
+    <h2>Como usar</h2>
+    <ul>
+      <li>Escolha uma ferramenta nas abas ou nos cartões e clique para abrir. Ela abre em uma página própria, com um botão para voltar aqui.</li>
+      <li>Os arquivos que você carrega (XML, OFX, PDF, planilhas) são lidos apenas no seu navegador. Nada é enviado para a internet nem fica salvo no site.</li>
+      <li>Os resultados podem ser baixados em Excel direto pela ferramenta.</li>
+      <li>Funciona em qualquer computador com Chrome, Edge ou Firefox atualizados.</li>
+    </ul>
+  </section>
+</main>
+<footer>e.contabil projetos · ferramentas internas de apoio contábil</footer>
+
+<script>
+/* =========================================================
+   LISTA DE FERRAMENTAS
+   Para acrescentar uma nova: copie um bloco { ... } abaixo,
+   troque os textos e o nome do arquivo (href), e suba o
+   arquivo .html da ferramenta na mesma pasta do site.
+   Ícones disponíveis: car, cross, xml, receipt, code
+   ========================================================= */
+const FERRAMENTAS = [
+  {
+    id: "conciliacao",
+    aba: "Conciliação Veículos",
+    curto: "Conciliação Veículos",
+    titulo: "Iniciar Conciliação de Veículos",
+    descricao: "Cruze as NF-e de venda, compra e permuta com os extratos bancários (OFX) e veja o que bate e o que fica pendente.",
+    resumo: "Notas de veículos × extrato bancário, com permutas.",
+    tags: ["XML NF-e", "OFX", "Excel"],
+    icone: "car",
+    href: "conciliacao-veiculos.html",
+    botao: "Carregar Novo Arquivo / Dados",
+    previa: "Histórico de Conciliações"
+  },
+  {
+    id: "piscofins",
+    aba: "Cruzamento PIS COFINS",
+    curto: "Cruzamento PIS COFINS",
+    titulo: "Iniciar Cruzamento PIS/COFINS",
+    descricao: "Cruze o relatório de Movimentação de Produtos com o de Informações PIS/COFINS e traga natureza da receita e códigos Rec. PIS e Rec. COFINS.",
+    resumo: "Movimento de produtos × código da receita.",
+    tags: ["PDF", "CFOP / NCM", "Excel"],
+    icone: "cross",
+    href: "cruzamento-pis-cofins.html",
+    botao: "Carregar Relatórios",
+    previa: "Itens cruzados"
+  },
+  {
+    id: "xml",
+    aba: "Extração XML Notas",
+    curto: "XML",
+    titulo: "Iniciar Extração de XML",
+    descricao: "Anexe os XMLs das notas (ou um .zip) e gere um relatório item a item com nota, emissão, natureza, NCM, CFOP, quantidade e valor.",
+    resumo: "XMLs de NF-e e NFC-e viram planilha item a item.",
+    tags: ["XML / ZIP", "NF-e e NFC-e", "Excel"],
+    icone: "xml",
+    href: "leitor-xml-nfe.html",
+    botao: "Anexar XMLs",
+    previa: "Itens das notas"
+  },
+  {
+    id: "cupons",
+    aba: "Conferência de Cupons",
+    curto: "Cupons",
+    titulo: "Iniciar Conferência de Cupons",
+    descricao: "Compare o relatório de vendas da empresa com o Acompanhamento de Saídas do sistema, nota a nota e por valor, e encontre faltas e diferenças.",
+    resumo: "Vendas da empresa × saídas do sistema (NFC-e).",
+    tags: ["PDF", "NFC-e", "Pendências"],
+    icone: "receipt",
+    href: "conferencia-cupons.html",
+    botao: "Carregar Relatórios",
+    previa: "Conferência nota a nota"
+  },
+  {
+    id: "codigos",
+    aba: "Cruzamento de Códigos",
+    curto: "Códigos",
+    titulo: "Iniciar Cruzamento de Códigos",
+    descricao: "Envie a contagem do mês e a ferramenta localiza o código de cada produto na base, sugerindo os mais parecidos para o que faltar.",
+    resumo: "Preenche códigos de produto na contagem do mês.",
+    tags: ["Excel", "Base de códigos", "Sugestões"],
+    icone: "code",
+    href: "cruzamento-codigos.html",
+    botao: "Carregar Planilha do Mês",
+    previa: "Conferência de códigos"
+  }
+];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const icon = n => `<svg aria-hidden="true"><use href="#i-${n}"/></svg>`;
+
+function previa(f){
+  const rows = Array.from({length:4}, (_,i) =>
+    `<div class="pv-row"><span class="ic"></span><span class="b" style="width:${38-i*5}%"></span><span class="b" style="width:14%"></span><span class="b" style="width:12%"></span><span class="ok"></span></div>`).join("");
+  return `<div class="preview" aria-hidden="true">
+    <div class="pv-bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+    <div class="pv-body">
+      <div class="pv-side">
+        <div class="pv-logo"><svg><use href="#i-logo"/></svg><span>e.contabil</span></div>
+        <div class="ln on"></div><div class="ln"></div><div class="ln" style="width:70%"></div><div class="ln" style="width:80%"></div>
+      </div>
+      <div class="pv-main">
+        <div class="t">${esc(f.aba)}</div>
+        <div class="pv-card"><div class="h">${esc(f.previa)}</div>${rows}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+let atual = 0;
+function render(){
+  $("ferramentas").innerHTML = FERRAMENTAS.map((f,i) =>
+    `<button class="tab" role="tab" id="tab-${f.id}" aria-selected="${i===atual}" aria-controls="panel" data-i="${i}">${icon(f.icone)}<span>${esc(f.aba)}</span></button>`).join("");
+
+  const f = FERRAMENTAS[atual];
+  $("panel").setAttribute("aria-labelledby", "tab-" + f.id);
+  $("panel").innerHTML = `<div class="panel-inner">
+      <h2>${esc(f.titulo)}</h2>
+      <p>${esc(f.descricao)}</p>
+      <div class="tags">${f.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div>
+      <a class="btn" href="${esc(f.href)}">${esc(f.botao)}</a>
+      ${previa(f)}
+    </div>`;
+
+  $("cards").innerHTML = FERRAMENTAS.map((g,i) => i===atual ? "" :
+    `<article class="card">
+      <div class="ico">${icon(g.icone)}<b>${esc(g.curto)}</b></div>
+      <div class="txt">
+        <h4>${esc(g.aba)}</h4>
+        <p>${esc(g.resumo)}</p>
+        <div class="actions">
+          <a class="btn" href="${esc(g.href)}">Acessar Ferramenta</a>
+          <button class="linklike" type="button" data-i="${i}">Ver detalhes</button>
+        </div>
+      </div>
+    </article>`).join("");
+}
+
+function selecionar(i, foco){
+  atual = i; render();
+  try { history.replaceState(null, "", "#" + FERRAMENTAS[i].id); } catch(e){}
+  if (foco) document.getElementById("tab-" + FERRAMENTAS[i].id).focus();
+}
+
+$("ferramentas").addEventListener("click", e => { const b = e.target.closest(".tab"); if (b) selecionar(+b.dataset.i); });
+$("ferramentas").addEventListener("keydown", e => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  const n = FERRAMENTAS.length;
+  selecionar((atual + (e.key === "ArrowRight" ? 1 : n - 1)) % n, true);
+});
+$("cards").addEventListener("click", e => {
+  const b = e.target.closest(".linklike");
+  if (b){ selecionar(+b.dataset.i); $("ferramentas").scrollIntoView({block:"start"}); }
+});
+
+// Abre direto na aba indicada no endereço (ex.: ...github.io/#xml)
+const inicial = FERRAMENTAS.findIndex(f => "#" + f.id === location.hash);
+if (inicial >= 0) atual = inicial;
+render();
+
+// Tema claro/escuro (lembrado neste navegador)
+const KEY = "econtabil-tema";
+try { const t = localStorage.getItem(KEY); if (t) document.documentElement.dataset.theme = t; } catch(e){}
+$("themeBtn").addEventListener("click", () => {
+  const dark = document.documentElement.dataset.theme
+    ? document.documentElement.dataset.theme === "dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  const novo = dark ? "light" : "dark";
+  document.documentElement.dataset.theme = novo;
+  try { localStorage.setItem(KEY, novo); } catch(e){}
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+[hidden]:not([hidden=until-found i]){display:none!important}
+img{max-width:100%}
+.ec-voltar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 20px;background:#ffffff;border-bottom:1px solid #dde4ec;font:500 14px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 2px 8px rgba(18,35,59,.05)}
+.ec-voltar a{color:#167a6e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px}
+.ec-voltar a:hover{background:#e3f3ee}
+.ec-voltar span{color:#4f5f73}
+@media (prefers-color-scheme:dark){.ec-voltar{background:#16212f;border-color:#26364a}.ec-voltar a{color:#3fc6a0}.ec-voltar a:hover{background:#16332c}.ec-voltar span{color:#9fb0c3}}
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+<div class="ec-voltar"><a href="index.html">&larr; Central de Automações</a><span>e.contabil projetos</span></div>
+<script>function ecBaixar(blob, nome){ const u=URL.createObjectURL(blob instanceof Blob?blob:new Blob([blob])); const a=document.createElement('a'); a.href=u; a.download=nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }</script>
+<title>Conferência de Cupons</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+/* Layout: livro-razão — cabeçalho curto, duas entradas lado a lado, resumo em faixa, tabela de conferência com status por linha */
+:root{
+  --bg:#f3f4f1; --surface:#ffffff; --line:#d9ddd6; --ink:#1f2622; --muted:#5f6a63;
+  --accent:#2f5d50; --accent-soft:#e3ece8;
+  --ok:#2e7d4f; --ok-bg:#e4f2e9; --warn:#a1620a; --warn-bg:#fbefd9; --crit:#b3261e; --crit-bg:#fbe3e1; --info:#4b5a6e; --info-bg:#e8ecf2;
+  --f-display:"IBM Plex Serif",Georgia,serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-num:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141917; --surface:#1c2320; --line:#2f3a35; --ink:#e4e9e5; --muted:#9aa69f;
+  --accent:#7fbfa9; --accent-soft:#22332d;
+  --ok:#6fcf97; --ok-bg:#1d3326; --warn:#e5b25d; --warn-bg:#382c17; --crit:#f08b84; --crit-bg:#3d1f1d; --info:#a9b8cc; --info-bg:#232b36; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --surface:#1c2320; --line:#2f3a35; --ink:#e4e9e5; --muted:#9aa69f;
+  --accent:#7fbfa9; --accent-soft:#22332d;
+  --ok:#6fcf97; --ok-bg:#1d3326; --warn:#e5b25d; --warn-bg:#382c17; --crit:#f08b84; --crit-bg:#3d1f1d; --info:#a9b8cc; --info-bg:#232b36; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body)}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 48px;display:flex;flex-direction:column;gap:24px}
+header h1{font:600 1.75rem/1.2 var(--f-display);margin:0;text-wrap:balance}
+header p{margin:.35rem 0 0;color:var(--muted);max-width:68ch}
+.eyebrow{font:500 .72rem var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.inputs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:700px){.inputs{grid-template-columns:1fr}}
+.drop{background:var(--surface);border:1.5px dashed var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:6px;cursor:pointer;position:relative;min-width:0}
+.drop:hover,.drop.over{border-color:var(--accent)}
+.drop:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop .t{font-weight:600}
+.drop .s{color:var(--muted);font-size:.85rem}
+.drop .f{font:.82rem var(--f-num);color:var(--accent);overflow-wrap:anywhere}
+.drop .f.err{color:var(--crit)}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.bar label{font-size:.85rem;color:var(--muted);display:flex;gap:6px;align-items:center}
+.bar input[type=text]{width:6.5em;font:.9rem var(--f-num);padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+button{font:500 .88rem var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:6px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.src{font-size:.82rem;color:var(--muted)}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
+@media (max-width:760px){.summary{grid-template-columns:repeat(2,1fr)}}
+.cell{padding:14px 16px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;min-width:0}
+.cell:last-child{border-right:0}
+@media (max-width:760px){.cell:nth-child(2n){border-right:0}.cell:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+.cell .k{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.cell .v{font:500 1.35rem var(--f-num);font-variant-numeric:tabular-nums}
+.cell .d{font:.8rem var(--f-num);color:var(--muted)}
+.verdict{border-radius:8px;padding:12px 16px;font-weight:500;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.verdict.ok{background:var(--ok-bg);color:var(--ok)}
+.verdict.bad{background:var(--crit-bg);color:var(--crit)}
+.verdict small{font-weight:400;color:var(--ink);opacity:.8}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border-radius:999px;padding:5px 12px;font-size:.84rem}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.chip b{font:500 .8rem var(--f-num);margin-left:4px}
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:.9rem}
+th{font:600 .74rem var(--f-body);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface)}
+td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.mono{font-family:var(--f-num);white-space:nowrap}
+td.cli{color:var(--muted);font-size:.85rem;max-width:22ch}
+tr.st-falta_sistema td:first-child,tr.st-falta_empresa td:first-child{box-shadow:inset 3px 0 0 var(--crit)}
+tr.st-valor td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+tr.st-pulada td:first-child{box-shadow:inset 3px 0 0 var(--info)}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.76rem;font-weight:500;white-space:nowrap}
+.p-ok{background:var(--ok-bg);color:var(--ok)}
+.p-valor{background:var(--warn-bg);color:var(--warn)}
+.p-falta_sistema,.p-falta_empresa{background:var(--crit-bg);color:var(--crit)}
+.p-outros,.p-pulada{background:var(--info-bg);color:var(--info)}
+.diff.neg{color:var(--crit)} .diff.pos{color:var(--warn)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.note{font-size:.84rem;color:var(--muted);max-width:80ch}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:.88rem}
+#copyArea{width:100%;height:120px;font:.8rem var(--f-num)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Cupons fiscais · NFC-e</div>
+    <h1>Conferência de Cupons</h1>
+    <p>Cruza o relatório de vendas da empresa (Movimento por Cliente, VDPDR007) com o Acompanhamento de Saídas do sistema, nota a nota (DOCTO) e por valor. Os arquivos são lidos só no seu navegador.</p>
+  </header>
+
+  <section class="inputs">
+    <label class="drop" id="dropEmp">
+      <input type="file" id="fileEmp" accept=".pdf,application/pdf" aria-label="Relatório da empresa em PDF">
+      <span class="t">Relatório da empresa</span>
+      <span class="s">Movimento por Cliente (VDPDR007). Arraste o PDF ou clique para escolher.</span>
+      <span class="f" id="infoEmp"></span>
+    </label>
+    <label class="drop" id="dropSis">
+      <input type="file" id="fileSis" accept=".pdf,application/pdf" aria-label="Relatório do sistema em PDF">
+      <span class="t">Relatório do sistema</span>
+      <span class="s">Acompanhamento de Saídas, gerado após importar os XML. Arraste o PDF ou clique para escolher.</span>
+      <span class="f" id="infoSis"></span>
+    </label>
+  </section>
+
+  <div class="bar">
+    <label for="tol">Tolerância de valor (R$) <input type="text" id="tol" value="0,00" inputmode="decimal"></label>
+    <label><input type="checkbox" id="gaps" checked> Apontar números pulados na sequência</label>
+    <span class="src" id="src"></span>
+  </div>
+
+  <div id="verdict"></div>
+  <section class="summary" id="summary"></section>
+
+  <div class="bar" style="justify-content:space-between">
+    <div class="filters" id="filters" role="group" aria-label="Filtrar por situação"></div>
+    <button id="copy">Copiar pendências</button>
+  </div>
+
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>Nota</th><th>Data</th><th class="n">Empresa</th><th class="n">Sistema</th><th class="n">Diferença</th><th>CFOP</th><th>Cliente</th><th>Situação</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <textarea id="copyArea" hidden readonly aria-label="Pendências para copiar"></textarea>
+
+  <p class="note">Notas com mais de uma linha no sistema (uma por CFOP, como 5.102 e 5.405) são somadas antes da comparação. Notas que só existem no sistema com CFOP 5.9xx/6.9xx (remessas, conserto, etc.) aparecem como "Não é venda", porque não entram no relatório de vendas da empresa.</p>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script>
+const MONEY = /\d{1,3}(?:\.\d{3})*,\d{2}/g;
+const num = s => parseFloat(s.replace(/\./g,'').replace(',','.'));
+const norm = l => l.replace(/\s+/g,' ').trim();
+function detectar(lines){
+  const t = lines.join('\n');
+  if (/TOTAL PED\.\/CLI\.|VDPDR007|MOVIMENTO POR CLIENTE/.test(t)) return 'empresa';
+  if (/ACOMPANHAMENTO DE SA[IÍ]DAS|Valor Cont[aá]bil/i.test(t)) return 'sistema';
+  return null;
+}
+function parseEmpresa(lines){
+  const docs = new Map(); let cur=null, grand=null, curData=null;
+  const itemRe = /\b\d{1,3}\s+(\d{3,9})\s+\d+\/\s*\d+\s+\d{3}-\d{5,7}-/;
+  for (let l of lines){ l = norm(l);
+    const dm = l.match(/^\d{3,5}\s+\d{3}\s+[A-Z]\s+(\d{2})(\d{2})(\d{2})\b/);
+    if (dm) curData = `${dm[1]}/${dm[2]}/20${dm[3]}`;
+    const m = l.match(itemRe);
+    if (m){ cur = String(parseInt(m[1],10));
+      if(!docs.has(cur)) docs.set(cur,{nota:cur,data:curData,itens:0,total:0,temTotal:false});
+      const v = l.slice(m.index).match(MONEY); if (v) docs.get(cur).itens += num(v[v.length-1]);
+    }
+    const t = l.match(/TOTAL PED\.\/CLI\.\s*(\d{1,3}(?:\.\d{3})*,\d{2})/);
+    if (t && cur){ const d=docs.get(cur); d.total += num(t[1]); d.temTotal=true; }
+    const g = l.match(/T\s?O\s?T\s?A\s?L\s*\.{2,}\s*(\d{1,3}(?:\.\d{3})*,\d{2})/);
+    if (g) grand = num(g[1]);
+  }
+  const lista=[...docs.values()].map(d=>({nota:d.nota,data:d.data,valor:Math.round((d.temTotal?d.total:d.itens)*100)/100}));
+  return {lista, totalRelatorio:grand};
+}
+function parseSistema(lines){
+  const re=/(\d{2}\/\d{2}\/\d{4})\s+(\d{2}\/\d{2}\/\d{4})\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.*?)\s*(\d\-\d{3})\s+\d+\s+([A-Z]{2})\s+(\d{1,3}(?:\.\d{3})*,\d{2})/;
+  const notas=new Map(); let grand=null;
+  for (let l of lines){ l=norm(l);
+    const m=l.match(re);
+    if (m){ const nota=String(parseInt(m[3],10));
+      let cli=m[7].replace(/\s+[\d.\/-]{11,}.*$/,'').replace(/\s+\d+$/,'').trim();
+      if(!notas.has(nota)) notas.set(nota,{nota,data:m[1],serie:m[4],especie:m[5],cliente:cli,cfops:[],valor:0});
+      const n=notas.get(nota); n.valor=Math.round((n.valor+num(m[10]))*100)/100;
+      const c=m[8].replace('-','.'); if(!n.cfops.includes(c)) n.cfops.push(c);
+    }
+  }
+  return {lista:[...notas.values()], totalRelatorio:grand};
+}
+if (typeof module!=='undefined') module.exports={parseEmpresa,parseSistema,detectar};
+
+
+const SAMPLE = {"empresa":{"lista":[{"nota":"5968","data":"02/09/2026","valor":216.76},{"nota":"5969","data":"02/09/2026","valor":404},{"nota":"5970","data":"02/09/2026","valor":929.7},{"nota":"5971","data":"03/09/2026","valor":282.8},{"nota":"5972","data":"03/09/2026","valor":496.95},{"nota":"5973","data":"04/09/2026","valor":288.17},{"nota":"5974","data":"09/09/2026","valor":480},{"nota":"5975","data":"09/09/2026","valor":96},{"nota":"5976","data":"10/09/2026","valor":489.5},{"nota":"5977","data":"10/09/2026","valor":884.73},{"nota":"5978","data":"11/09/2026","valor":146.03},{"nota":"5979","data":"11/09/2026","valor":496.95},{"nota":"5980","data":"11/09/2026","valor":289.77},{"nota":"5981","data":"11/09/2026","valor":171.96},{"nota":"5982","data":"14/09/2026","valor":38.52},{"nota":"5983","data":"14/09/2026","valor":135},{"nota":"5984","data":"14/09/2026","valor":216.76},{"nota":"5985","data":"14/09/2026","valor":120.72},{"nota":"5986","data":"14/09/2026","valor":408.66},{"nota":"5987","data":"14/09/2026","valor":114.64},{"nota":"5988","data":"21/09/2026","valor":84},{"nota":"5989","data":"21/09/2026","valor":599.34},{"nota":"5990","data":"21/09/2026","valor":99.39},{"nota":"5991","data":"21/09/2026","valor":173.86},{"nota":"5992","data":"21/09/2026","valor":269.64},{"nota":"5993","data":"21/09/2026","valor":65},{"nota":"5994","data":"21/09/2026","valor":202},{"nota":"5995","data":"22/09/2026","valor":652.36},{"nota":"5996","data":"28/09/2026","valor":38.52},{"nota":"5997","data":"28/09/2026","valor":249.1},{"nota":"5998","data":"28/09/2026","valor":152.59},{"nota":"5999","data":"29/09/2026","valor":331.4},{"nota":"6000","data":"29/09/2026","valor":480.47},{"nota":"6001","data":"29/09/2026","valor":21.8},{"nota":"6002","data":"29/09/2026","valor":136.99},{"nota":"6003","data":"30/09/2026","valor":216.76},{"nota":"6004","data":"30/09/2026","valor":180.54},{"nota":"6005","data":"30/09/2026","valor":38.52},{"nota":"6006","data":"30/09/2026","valor":429.53},{"nota":"6007","data":"30/09/2026","valor":876},{"nota":"6008","data":"30/09/2026","valor":438}],"totalRelatorio":12443.43},"sistema":{"lista":[{"nota":"5968","data":"02/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":216.76},{"nota":"5969","data":"02/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":404},{"nota":"5970","data":"02/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":929.7},{"nota":"5971","data":"03/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":282.8},{"nota":"5972","data":"03/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":496.95},{"nota":"5973","data":"04/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":288.17},{"nota":"5974","data":"09/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":480},{"nota":"5975","data":"09/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":96},{"nota":"5976","data":"10/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.102","5.405"],"valor":489.5},{"nota":"5977","data":"10/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":884.73},{"nota":"5978","data":"11/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":146.03},{"nota":"5979","data":"11/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":496.95},{"nota":"5980","data":"11/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":289.77},{"nota":"5981","data":"11/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":171.96},{"nota":"5982","data":"14/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":38.52},{"nota":"5983","data":"14/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":135},{"nota":"5984","data":"14/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":216.76},{"nota":"5985","data":"14/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.102","5.405"],"valor":120.72},{"nota":"5986","data":"14/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":408.66},{"nota":"5987","data":"14/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":114.64},{"nota":"5988","data":"21/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":84},{"nota":"5989","data":"21/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":599.34},{"nota":"5990","data":"21/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":99.39},{"nota":"5991","data":"21/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":173.86},{"nota":"5992","data":"21/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":269.64},{"nota":"5993","data":"21/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":65},{"nota":"5994","data":"21/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":202},{"nota":"5995","data":"22/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.102","5.405"],"valor":652.36},{"nota":"5996","data":"28/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":38.52},{"nota":"5997","data":"28/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":249.1},{"nota":"5998","data":"28/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":152.59},{"nota":"5999","data":"29/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":331.4},{"nota":"6000","data":"29/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":480.47},{"nota":"6001","data":"29/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":21.8},{"nota":"6002","data":"29/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":136.99},{"nota":"6003","data":"30/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":216.76},{"nota":"6004","data":"30/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":180.54},{"nota":"6005","data":"30/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":38.52},{"nota":"6006","data":"30/09/2026","serie":"3","especie":"41","cliente":"CLIENTES DIVERSOS","cfops":["5.405"],"valor":429.53},{"nota":"6008","data":"30/09/2026","serie":"3","especie":"41","cliente":"JEANDERSON REZZADORI","cfops":["5.405"],"valor":438},{"nota":"11","data":"03/09/2026","serie":"3","especie":"36","cliente":"RECON ELETRO REVERSA LTDA","cfops":["5.915"],"valor":27000},{"nota":"6007","data":"30/09/2026","serie":"3","especie":"41","cliente":"SERGIO GABRIEL N MODAFARES","cfops":["5.405"],"valor":876}],"totalRelatorio":null}};
+const state = { empresa: SAMPLE.empresa, sistema: SAMPLE.sistema, filtro: 'pend', fonte: 'Carregado: relatórios de 01/09/2026 a 30/09/2026 (Comércio de Bebidas Jardim). Envie novos PDFs para conferir outro período.' };
+const $ = id => document.getElementById(id);
+const brl = v => v == null ? '—' : v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const LABEL = { ok: 'Confere', valor: 'Valor diferente', falta_sistema: 'Falta no sistema', falta_empresa: 'Falta na empresa', outros: 'Não é venda', pulada: 'Número pulado' };
+
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+async function pdfLines(file) {
+  const buf = await file.arrayBuffer();
+  const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+  const out = [];
+  for (let p = 1; p <= doc.numPages; p++) {
+    const page = await doc.getPage(p);
+    const tc = await page.getTextContent();
+    const rows = [];
+    for (const it of tc.items) {
+      if (!it.str || !it.str.trim()) continue;
+      const x = it.transform[4], y = it.transform[5];
+      let r = rows.find(r => Math.abs(r.y - y) < 2.5);
+      if (!r) { r = { y, items: [] }; rows.push(r); }
+      r.items.push({ x, s: it.str });
+    }
+    rows.sort((a, b) => b.y - a.y);
+    for (const r of rows) out.push(r.items.sort((a, b) => a.x - b.x).map(i => i.s).join(' '));
+  }
+  return out;
+}
+
+async function handle(file, slot) {
+  const info = slot === 'empresa' ? $('infoEmp') : $('infoSis');
+  info.className = 'f'; info.textContent = 'Lendo ' + file.name + '…';
+  try {
+    if (!window.pdfjsLib) throw new Error('O leitor de PDF não carregou. Recarregue a página.');
+    const lines = await pdfLines(file);
+    const tipo = detectar(lines);
+    if (!tipo) throw new Error('Não reconheci o layout. Esperava o Movimento por Cliente ou o Acompanhamento de Saídas. Se o PDF for imagem escaneada, gere-o de novo pelo sistema.');
+    const res = tipo === 'empresa' ? parseEmpresa(lines) : parseSistema(lines);
+    if (!res.lista.length) throw new Error('O arquivo foi reconhecido, mas nenhuma nota foi encontrada.');
+    if (tipo !== slot) {
+      const other = tipo === 'empresa' ? $('infoEmp') : $('infoSis');
+      other.className = 'f'; other.textContent = file.name + ' · ' + res.lista.length + ' notas (movido para o campo certo)';
+      if (info !== other) info.textContent = '';
+    } else info.textContent = file.name + ' · ' + res.lista.length + ' notas';
+    state[tipo] = res;
+    state.fonte = 'Conferindo os arquivos enviados.';
+    render();
+  } catch (e) { info.className = 'f err'; info.textContent = e.message; }
+}
+
+function comparar() {
+  const tol = Math.max(0, parseFloat(($('tol').value || '0').replace(/\./g, '').replace(',', '.')) || 0) + 0.004;
+  const E = new Map(state.empresa.lista.map(d => [d.nota, d]));
+  const S = new Map(state.sistema.lista.map(d => [d.nota, d]));
+  const keys = new Set([...E.keys(), ...S.keys()]);
+  const linhas = [];
+  for (const k of keys) {
+    const e = E.get(k), s = S.get(k);
+    let st;
+    if (e && s) st = Math.abs(e.valor - s.valor) <= tol ? 'ok' : 'valor';
+    else if (e) st = 'falta_sistema';
+    else st = s.cfops.length && s.cfops.every(c => /^[56]\.9/.test(c)) ? 'outros' : 'falta_empresa';
+    linhas.push({ nota: k, data: (e && e.data) || (s && s.data) || '', ve: e ? e.valor : null, vs: s ? s.valor : null, cfop: s ? s.cfops.join(', ') : '', cli: s ? s.cliente : '', st });
+  }
+  if ($('gaps').checked && E.size) {
+    const nums = [...E.keys()].map(Number).sort((a, b) => a - b);
+    const lo = nums[0], hi = nums[nums.length - 1];
+    if (hi - lo < 5000) for (let n = lo; n <= hi; n++) if (!keys.has(String(n))) linhas.push({ nota: String(n), data: '', ve: null, vs: null, cfop: '', cli: '', st: 'pulada' });
+  }
+  linhas.sort((a, b) => Number(a.nota) - Number(b.nota));
+  return linhas;
+}
+
+function render() {
+  const L = comparar();
+  const c = k => L.filter(l => l.st === k).length;
+  const totE = state.empresa.lista.reduce((a, b) => a + b.valor, 0);
+  const vendasS = L.filter(l => l.vs != null && l.st !== 'outros').reduce((a, b) => a + b.vs, 0);
+  const totS = state.sistema.lista.reduce((a, b) => a + b.valor, 0);
+  const pend = c('valor') + c('falta_sistema') + c('falta_empresa') + c('pulada');
+  const dif = Math.round((vendasS - totE) * 100) / 100;
+
+  $('src').textContent = state.fonte;
+  $('verdict').innerHTML = pend === 0
+    ? `<div class="verdict ok">Tudo confere. <small>${c('ok')} notas batem em número e valor${c('outros') ? `; ${c('outros')} nota(s) do sistema não são de venda` : ''}.</small></div>`
+    : `<div class="verdict bad">${pend} pendência(s) encontrada(s). <small>${[c('falta_sistema') && c('falta_sistema') + ' faltando no sistema', c('falta_empresa') && c('falta_empresa') + ' faltando no relatório da empresa', c('valor') && c('valor') + ' com valor diferente', c('pulada') && c('pulada') + ' número(s) pulado(s)'].filter(Boolean).join(' · ')}</small></div>`;
+
+  $('summary').innerHTML = [
+    ['Relatório da empresa', 'R$ ' + brl(totE), state.empresa.lista.length + ' notas' + (state.empresa.totalRelatorio != null && Math.abs(state.empresa.totalRelatorio - totE) > 0.004 ? ' · total impresso ' + brl(state.empresa.totalRelatorio) : '')],
+    ['Sistema · vendas', 'R$ ' + brl(vendasS), (state.sistema.lista.length - c('outros')) + ' notas'],
+    ['Diferença', 'R$ ' + brl(dif), dif === 0 ? 'sistema − empresa' : (dif > 0 ? 'sistema maior' : 'sistema menor')],
+    ['Sistema · total geral', 'R$ ' + brl(totS), c('outros') ? 'inclui ' + c('outros') + ' não-venda' : 'só vendas'],
+  ].map(([k, v, d]) => `<div class="cell"><span class="k">${k}</span><span class="v">${v}</span><span class="d">${d}</span></div>`).join('');
+
+  const F = [['pend', 'Pendências', pend], ['todas', 'Todas', L.length], ['ok', 'Confere', c('ok')], ['falta_sistema', 'Falta no sistema', c('falta_sistema')], ['falta_empresa', 'Falta na empresa', c('falta_empresa')], ['valor', 'Valor diferente', c('valor')], ['outros', 'Não é venda', c('outros')]];
+  if ($('gaps').checked) F.push(['pulada', 'Número pulado', c('pulada')]);
+  $('filters').innerHTML = F.map(([k, t, n]) => `<button class="chip" data-f="${k}" aria-pressed="${state.filtro === k}">${t}<b>${n}</b></button>`).join('');
+
+  const pendSet = new Set(['valor', 'falta_sistema', 'falta_empresa', 'pulada']);
+  const vis = L.filter(l => state.filtro === 'todas' || (state.filtro === 'pend' ? pendSet.has(l.st) : l.st === state.filtro));
+  $('rows').innerHTML = vis.length ? vis.map(l => {
+    const d = l.ve != null && l.vs != null ? Math.round((l.vs - l.ve) * 100) / 100 : null;
+    return `<tr class="st-${l.st}"><td class="mono">${esc(l.nota)}</td><td class="mono">${esc(l.data)}</td><td class="n">${brl(l.ve)}</td><td class="n">${brl(l.vs)}</td><td class="n diff ${d ? (d < 0 ? 'neg' : 'pos') : ''}">${d == null ? '—' : brl(d)}</td><td class="mono">${esc(l.cfop) || '—'}</td><td class="cli">${esc(l.cli) || '—'}</td><td><span class="pill p-${l.st}">${LABEL[l.st]}</span></td></tr>`;
+  }).join('') : `<tr><td colspan="8" class="empty">${state.filtro === 'pend' ? 'Nenhuma pendência. Todas as notas do relatório da empresa estão no sistema com o mesmo valor.' : 'Nenhuma nota nesta situação.'}</td></tr>`;
+  state.ultimas = L;
+}
+
+$('filters').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (b) { state.filtro = b.dataset.f; render(); } });
+$('tol').addEventListener('input', render);
+$('gaps').addEventListener('change', render);
+$('fileEmp').addEventListener('change', e => e.target.files[0] && handle(e.target.files[0], 'empresa'));
+$('fileSis').addEventListener('change', e => e.target.files[0] && handle(e.target.files[0], 'sistema'));
+for (const [id, slot] of [['dropEmp', 'empresa'], ['dropSis', 'sistema']]) {
+  const el = $(id);
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('over'));
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('over'); const f = e.dataTransfer.files[0]; if (f) handle(f, slot); });
+}
+function toast(m) { const t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2200); }
+$('copy').addEventListener('click', () => {
+  const P = (state.ultimas || []).filter(l => !['ok', 'outros'].includes(l.st));
+  if (!P.length) { toast('Não há pendências para copiar'); return; }
+  const txt = ['Nota\tData\tValor empresa\tValor sistema\tSituação', ...P.map(l => [l.nota, l.data, brl(l.ve), brl(l.vs), LABEL[l.st]].join('\t'))].join('\n');
+  const area = $('copyArea');
+  navigator.clipboard.writeText(txt).then(() => toast(P.length + ' pendência(s) copiadas. Cole no Excel.')).catch(() => { area.value = txt; area.hidden = false; area.select(); toast('Selecionei o texto abaixo. Use Ctrl+C.'); });
+});
+render();
+</script>
+</body>
+</html>

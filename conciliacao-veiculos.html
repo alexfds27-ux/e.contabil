@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+[hidden]:not([hidden=until-found i]){display:none!important}
+img{max-width:100%}
+.ec-voltar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 20px;background:#ffffff;border-bottom:1px solid #dde4ec;font:500 14px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 2px 8px rgba(18,35,59,.05)}
+.ec-voltar a{color:#167a6e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px}
+.ec-voltar a:hover{background:#e3f3ee}
+.ec-voltar span{color:#4f5f73}
+@media (prefers-color-scheme:dark){.ec-voltar{background:#16212f;border-color:#26364a}.ec-voltar a{color:#3fc6a0}.ec-voltar a:hover{background:#16332c}.ec-voltar span{color:#9fb0c3}}
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Conciliação de Vendas de Veículos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #F4F5F1; --surface: #FFFFFF; --surface-2: #ECEEE8;
+    --text: #1B1F27; --muted: #62697A; --border: #D8DBD2;
+    --accent: #B87A2E; --accent-ink: #ffffff;
+    --ok: #3E7A5C; --ok-bg: #E4EFE7;
+    --warn: #A6472C; --warn-bg: #F5E5E0;
+    --mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+    --sans: 'Space Grotesk', -apple-system, 'Segoe UI', sans-serif;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14181F; --surface: #1B2029; --surface-2: #232936;
+      --text: #E7E9EE; --muted: #8B92A3; --border: #323A49;
+      --accent: #D79A4D; --accent-ink: #14181F;
+      --ok: #7FBE9C; --ok-bg: #1E2E27;
+      --warn: #E08669; --warn-bg: #33231F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14181F; --surface: #1B2029; --surface-2: #232936;
+    --text: #E7E9EE; --muted: #8B92A3; --border: #323A49;
+    --accent: #D79A4D; --accent-ink: #14181F;
+    --ok: #7FBE9C; --ok-bg: #1E2E27;
+    --warn: #E08669; --warn-bg: #33231F;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.5; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 36px 20px 80px; }
+  header { margin-bottom: 28px; }
+  header .kicker { color: var(--accent); font-family: var(--mono); font-size: 13px; margin: 0 0 6px; }
+  h1 { font-size: 26px; margin: 0 0 8px; font-weight: 700; letter-spacing: -0.01em; }
+  header p { color: var(--muted); max-width: 64ch; margin: 0; font-size: 15px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 22px; margin-bottom: 18px; }
+  .card h2 { font-size: 15px; margin: 0 0 14px; font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 5px; }
+  input[type=text], input[type=number] {
+    width: 100%; background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 9px 10px; font-family: var(--mono); font-size: 13.5px;
+  }
+  input[type=text]:focus, input[type=number]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .field { margin-bottom: 0; }
+  .drop {
+    border: 1.5px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center;
+    cursor: pointer; transition: border-color .15s; background: var(--surface-2);
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); }
+  .drop input { display: none; }
+  .drop .lbl { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+  .drop .sub { color: var(--muted); font-size: 12.5px; }
+  .filelist { margin-top: 10px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .filelist div { padding: 2px 0; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  button.primary {
+    background: var(--accent); color: var(--accent-ink); border: none; border-radius: 7px;
+    padding: 12px 22px; font-family: var(--sans); font-weight: 600; font-size: 14.5px; cursor: pointer;
+  }
+  button.primary:disabled { opacity: .45; cursor: not-allowed; }
+  button.secondary {
+    background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: 7px;
+    padding: 10px 18px; font-family: var(--sans); font-weight: 600; font-size: 13.5px; cursor: pointer;
+  }
+  .privacy { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--muted); margin-top: 14px; }
+  .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; margin-bottom: 18px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .stat .n { font-family: var(--mono); font-size: 24px; font-weight: 600; }
+  .stat .l { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .stat.ok .n { color: var(--ok); }
+  .stat.warn .n { color: var(--warn); }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
+  td.num, th.num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+  .tablewrap { overflow-x: auto; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .tag.ok { background: var(--ok-bg); color: var(--ok); }
+  .tag.warn { background: var(--warn-bg); color: var(--warn); }
+  .section-title { font-size: 14px; font-weight: 600; margin: 26px 0 10px; }
+  .empty { color: var(--muted); font-size: 13.5px; padding: 20px 0; }
+  .hidden { display: none; }
+  .log { font-family: var(--mono); font-size: 11.5px; color: var(--muted); white-space: pre-wrap; max-height: 160px; overflow-y: auto; background: var(--surface-2); border-radius: 6px; padding: 10px; margin-top: 10px; }
+  .errbox { background: var(--warn-bg); color: var(--warn); border-radius: 6px; padding: 10px 12px; font-size: 13px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="ec-voltar"><a href="index.html">&larr; Central de Automações</a><span>e.contabil projetos</span></div>
+<script>function ecBaixar(blob, nome){ const u=URL.createObjectURL(blob instanceof Blob?blob:new Blob([blob])); const a=document.createElement('a'); a.href=u; a.download=nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }</script>
+
+<div class="wrap">
+  <header>
+    <p class="kicker">CONCILIAÇÃO CONTÁBIL — REVENDA DE VEÍCULOS</p>
+    <h1>Conciliação de vendas × banco × permuta</h1>
+    <p>Suba todas as NF-e do mês (venda, compra de estoque, entradas e saídas por permuta) e os extratos OFX dos bancos. A ferramenta monta duas trilhas — vendas e compras de veículo — cruzando com o banco e com veículos dados/recebidos em troca; notas de remessa/retorno e compras de uso e consumo são descartadas automaticamente. A busca no banco prioriza o valor sobre a data informada na nota, já que o vencimento no rodapé às vezes vem digitado errado.</p>
+  </header>
+
+  <div class="card">
+    <h2>1. Premissas</h2>
+    <div class="grid">
+      <div class="field">
+        <label for="cnpj">CNPJ da sua empresa (define venda × compra)</label>
+        <input type="text" id="cnpj" placeholder="00.000.000/0000-00">
+      </div>
+      <div class="field">
+        <label for="tolDias">Tolerância de data (dias)</label>
+        <input type="number" id="tolDias" value="3" min="0">
+      </div>
+      <div class="field">
+        <label for="tolValor">Tolerância de valor (R$)</label>
+        <input type="number" id="tolValor" value="0.02" min="0" step="0.01">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2. Arquivos deste mês</h2>
+    <div class="row2">
+      <div class="drop" id="dropXml">
+        <input type="file" id="fileXml" accept=".xml" multiple>
+        <div class="lbl">Notas fiscais (XML da NF-e)</div>
+        <div class="sub">Venda, compra de estoque, entradas/saídas por permuta — pode misturar tudo. Remessa/retorno e uso e consumo são filtrados automaticamente.</div>
+        <div class="filelist" id="listXml"></div>
+      </div>
+      <div class="drop" id="dropOfx">
+        <input type="file" id="fileOfx" accept=".ofx,.OFX" multiple>
+        <div class="lbl">Extratos bancários (OFX)</div>
+        <div class="sub">Pode subir de bancos diferentes ao mesmo tempo</div>
+        <div class="filelist" id="listOfx"></div>
+      </div>
+    </div>
+    <div class="drop" id="dropPend" style="margin-top:14px;">
+      <input type="file" id="filePend" accept=".json">
+      <div class="lbl">Pendências do mês anterior (opcional)</div>
+      <div class="sub">O .json exportado no fechamento passado — a ferramenta tenta localizar esses itens no extrato deste mês</div>
+      <div class="filelist" id="listPend"></div>
+    </div>
+    <div class="privacy">🔒 Todo o processamento acontece no seu navegador. Nenhum arquivo é enviado para nenhum servidor.</div>
+    <div class="actions">
+      <button class="primary" id="btnProcess" disabled>Processar conciliação</button>
+      <button class="secondary hidden" id="btnExport">Exportar Excel</button>
+      <button class="secondary hidden" id="btnExportPend">Exportar pendências (.json)</button>
+      <span id="statusMsg" style="font-size:13px;color:var(--muted);"></span>
+    </div>
+    <div id="errBox" class="errbox hidden"></div>
+    <div id="log" class="log hidden"></div>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="summary" id="summary"></div>
+
+    <div class="section-title">Conciliação por venda</div>
+    <div class="card"><div class="tablewrap"><table id="tblVendas"></table></div></div>
+
+    <div class="section-title">Conciliação por compra de veículo (estoque)</div>
+    <div class="card"><div class="tablewrap"><table id="tblCompras"></table></div></div>
+
+    <div class="section-title">Resolvido agora (era pendência de mês anterior)</div>
+    <div class="card"><div class="tablewrap"><table id="tblResolvidas"></table></div></div>
+
+    <div class="section-title">Pendências (precisam de conferência manual)</div>
+    <div class="card"><div class="tablewrap"><table id="tblPend"></table></div></div>
+
+    <div class="section-title">Lançamentos bancários não utilizados</div>
+    <div class="card"><div class="tablewrap"><table id="tblBanco"></table></div></div>
+
+    <div class="section-title">Notas com CNPJ não reconhecido</div>
+    <div class="card"><div class="tablewrap"><table id="tblIndef"></table></div></div>
+  </div>
+</div>
+
+<script>
+const CFG_KEY = 'conciliacao_veiculos_cfg_v3';
+const $ = id => document.getElementById(id);
+let xmlFiles = [], ofxFiles = [], pendFile = null;
+let lastLinhas = [], lastComprasVeiculo = [], lastResolvidas = [], lastPendentes = [], lastBanco = [], lastIndef = [];
+const logLines = [];
+function log(msg) { logLines.push(msg); const el = $('log'); el.classList.remove('hidden'); el.textContent = logLines.join('\n'); }
+function showError(msg) { const el = $('errBox'); el.classList.remove('hidden'); el.textContent = msg; }
+function clearError() { $('errBox').classList.add('hidden'); $('errBox').textContent = ''; }
+
+function loadCfg() {
+  try {
+    const raw = localStorage.getItem(CFG_KEY);
+    if (!raw) return;
+    const c = JSON.parse(raw);
+    ['cnpj','tolDias','tolValor'].forEach(k => { if (c[k] !== undefined) $(k).value = c[k]; });
+  } catch (e) {}
+}
+function saveCfg() {
+  try {
+    const c = {}; ['cnpj','tolDias','tolValor'].forEach(k => c[k] = $(k).value);
+    localStorage.setItem(CFG_KEY, JSON.stringify(c));
+  } catch (e) {}
+}
+loadCfg();
+document.querySelectorAll('.card input[type=text], .card input[type=number]').forEach(el => el.addEventListener('change', saveCfg));
+
+function setupDrop(dropId, inputId, onFiles) {
+  const drop = $(dropId), input = $(inputId);
+  drop.addEventListener('click', () => input.click());
+  input.addEventListener('change', () => onFiles(Array.from(input.files)));
+  ['dragover','dragleave','drop'].forEach(evt => drop.addEventListener(evt, e => e.preventDefault()));
+  drop.addEventListener('dragover', () => drop.classList.add('over'));
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => { drop.classList.remove('over'); onFiles(Array.from(e.dataTransfer.files)); });
+}
+setupDrop('dropXml','fileXml', files => { xmlFiles = files; $('listXml').innerHTML = files.map(f=>`<div>${f.name}</div>`).join(''); updateBtn(); });
+setupDrop('dropOfx','fileOfx', files => { ofxFiles = files; $('listOfx').innerHTML = files.map(f=>`<div>${f.name}</div>`).join(''); updateBtn(); });
+setupDrop('dropPend','filePend', files => { pendFile = files[0] || null; $('listPend').innerHTML = pendFile ? `<div>${pendFile.name}</div>` : ''; });
+function updateBtn() { $('btnProcess').disabled = !(xmlFiles.length && ofxFiles.length); }
+
+function readFileText(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = () => rej(new Error('falha ao ler ' + file.name));
+    r.readAsText(file, 'ISO-8859-1');
+  });
+}
+
+// ---------- regex-based NF-e parsing (robust: no DOMParser / namespaces involved) ----------
+function tagVal(text, name) {
+  const m = text.match(new RegExp('<' + name + '(?:\\s[^>]*)?>([\\s\\S]*?)</' + name + '>', 'i'));
+  return m ? m[1].trim() : '';
+}
+function firstBlock(text, name) {
+  const m = text.match(new RegExp('<' + name + '(?:\\s[^>]*)?>([\\s\\S]*?)</' + name + '>', 'i'));
+  return m ? m[1] : '';
+}
+function allBlocks(text, name) {
+  const re = new RegExp('<' + name + '(?:\\s[^>]*)?>([\\s\\S]*?)</' + name + '>', 'gi');
+  const out = []; let m;
+  while ((m = re.exec(text))) out.push(m[1]);
+  return out;
+}
+
+function parseNFe(xmlText, fileName, cnpjEmpresa) {
+  try {
+    const idMatch = xmlText.match(/<infNFe\s+[^>]*\bId="([^"]+)"/i);
+    const chave = idMatch ? idMatch[1].replace(/^NFe/i, '') : '';
+    const infNFeBlock = firstBlock(xmlText, 'infNFe') || xmlText;
+    const ideBlock = firstBlock(infNFeBlock, 'ide');
+    const num = tagVal(ideBlock, 'nNF');
+    const natOp = tagVal(ideBlock, 'natOp');
+    const dh = tagVal(ideBlock, 'dhEmi') || tagVal(ideBlock, 'dEmi');
+    const data = dh.slice(0, 10);
+    const nfRefs = allBlocks(ideBlock, 'refNFe').map(s => s.trim()).filter(Boolean);
+
+    const emitBlock = firstBlock(infNFeBlock, 'emit');
+    const destBlock = firstBlock(infNFeBlock, 'dest');
+    const emitCnpj = tagVal(emitBlock, 'CNPJ').replace(/\D/g, '');
+    const destCnpj = tagVal(destBlock, 'CNPJ').replace(/\D/g, '');
+    const destCpf = tagVal(destBlock, 'CPF').replace(/\D/g, '');
+    const emitNome = tagVal(emitBlock, 'xNome');
+    const destNome = tagVal(destBlock, 'xNome');
+    const totalBlock = firstBlock(infNFeBlock, 'total');
+    const icmsTotBlock = firstBlock(totalBlock, 'ICMSTot');
+    const valor = parseFloat(tagVal(icmsTotBlock, 'vNF'));
+    const infAdicBlock = firstBlock(infNFeBlock, 'infAdic');
+    const infCpl = tagVal(infAdicBlock, 'infCpl');
+    const detBlock = firstBlock(infNFeBlock, 'det'); // primeiro item — usado para placa/modelo do veículo principal
+    const infAdProd = tagVal(detBlock, 'infAdProd');
+    const placaMatch = infAdProd.match(/Placa:;?\s*([A-Z0-9-]{6,8})/i);
+    const modeloMatch = infAdProd.match(/Marca\/Modelo:;?\s*([^;]+)/i);
+    const placa = placaMatch ? placaMatch[1] : '';
+    const modelo = modeloMatch ? modeloMatch[1].trim() : '';
+
+    // Verifica se algum item da nota é veículo (NCM capítulo 87 ou menção a chassi) — usado
+    // para filtrar, nas compras de terceiros, só as compras de veículo (descarta peças,
+    // combustível, material de uso e consumo etc., que não entram nesta conciliação). Também
+    // lê o CFOP de cada item: CFOPs no padrão "_9xx" (ex.: 5912, 1913, 2949...) são a faixa
+    // reservada pelo Fisco para remessas/retornos que não são compra/venda de fato (demons-
+    // tração, consignação, comodato, conserto...) — sinal mais confiável que o texto do natOp,
+    // que às vezes vem abreviado ("REM." em vez de "remessa").
+    const detBlocksAll = allBlocks(infNFeBlock, 'det');
+    let isVeiculo = false, ncmPrincipal = '', cfopPrincipal = '', algumCfopRemessa = false;
+    detBlocksAll.forEach(db => {
+      const prodBlock = firstBlock(db, 'prod');
+      const ncm = tagVal(prodBlock, 'NCM');
+      const cfop = tagVal(prodBlock, 'CFOP');
+      const xProd = tagVal(prodBlock, 'xProd');
+      const infAdProdItem = tagVal(db, 'infAdProd');
+      if (!ncmPrincipal) ncmPrincipal = ncm;
+      if (!cfopPrincipal) cfopPrincipal = cfop;
+      if (/^87/.test(ncm) || /chassi/i.test(xProd) || /chassi/i.test(infAdProdItem)) isVeiculo = true;
+      if (/^.9\d{2}$/.test(cfop)) algumCfopRemessa = true;
+    });
+
+    // Notas de remessa/retorno (demonstração, consignação, comodato, conserto, brinde etc.)
+    // não são operação comercial de compra/venda — não circulam pagamento, então são
+    // descartadas aqui. Checa tanto o texto do natOp (inclusive abreviado, "REM.") quanto o
+    // CFOP dos itens, que é o campo estruturado e não depende de como cada emitente escreveu.
+    if (/rem(essa|\.)|retorno|devolu[cç][aã]o|demonstra|consigna|comodato/i.test(natOp) || algumCfopRemessa) {
+      log(`↷ ${fileName}: NF ${num || '?'} ignorada — natureza "${natOp || '?'}" (CFOP ${cfopPrincipal || '?'}) não é operação comercial`);
+      return null;
+    }
+
+    if (!num || !data || isNaN(valor) || !chave) {
+      log(`⚠ ${fileName}: não consegui ler campos essenciais (nota ignorada)`);
+      return null;
+    }
+
+    // Classificação: por padrão, quem emite = venda, quem recebe = compra. A exceção é a
+    // nota AUTOEMITIDA pela própria revenda (empresa aparece como emitente e destinatário
+    // ao mesmo tempo não existe, mas aqui ela é emitente de uma nota cujo cliente é pessoa
+    // física ou fornecedor) — nesse caso o natOp da própria nota é o critério confiável,
+    // pois cobre tanto a entrada de um veículo recebido em troca (natOp "Compra", mesmo com
+    // a revenda como emitente, já que o particular não emite NF-e) quanto a saída de um
+    // veículo próprio dado como troca numa compra de estoque (natOp "Venda"). Quando a
+    // empresa é DESTINATÁRIA de nota de terceiro, o natOp reflete a operação do lado de
+    // quem emitiu (ex.: fornecedor chama de "Venda de veículo novo" a própria venda) e não
+    // deve ser usado — do nosso lado isso é sempre COMPRA.
+    const cnpjLimpo = (cnpjEmpresa || '').replace(/\D/g, '');
+    const empresaEhEmit = !!(cnpjLimpo && emitCnpj === cnpjLimpo);
+    const empresaEhDest = !!(cnpjLimpo && destCnpj === cnpjLimpo);
+    let tipo = 'indefinido', contraparte = '', cnpjContraparte = '';
+    if (empresaEhEmit || empresaEhDest) {
+      contraparte = empresaEhEmit ? destNome : emitNome;
+      cnpjContraparte = empresaEhEmit ? destCnpj : emitCnpj;
+      if (empresaEhEmit) {
+        tipo = /compra/i.test(natOp) ? 'compra' : 'venda';
+      } else {
+        tipo = 'compra';
+      }
+    } else {
+      contraparte = emitNome || destNome;
+    }
+
+    // Entre as compras de terceiro, mantém só as de veículo (descarta uso e consumo).
+    if (empresaEhDest && tipo === 'compra' && !isVeiculo) {
+      log(`↷ ${fileName}: NF ${num} ignorada — compra de terceiro sem item de veículo (NCM ${ncmPrincipal || '?'}), provável uso e consumo`);
+      return null;
+    }
+
+    const pagBlock = firstBlock(infNFeBlock, 'pag');
+    const detPags = allBlocks(pagBlock, 'detPag').map(b => ({
+      tPag: tagVal(b, 'tPag'), xPag: tagVal(b, 'xPag'), vPag: parseFloat(tagVal(b, 'vPag'))
+    })).filter(p => !isNaN(p.vPag));
+
+    // Duplicatas de fatura (<cobr><dup>) — algumas compras de terceiro detalham o
+    // parcelamento aqui em vez de em <pag><detPag>.
+    const cobrBlock = firstBlock(infNFeBlock, 'cobr');
+    const duplicatas = allBlocks(cobrBlock, 'dup').map(b => ({
+      num: tagVal(b, 'nDup'), venc: tagVal(b, 'dVenc'), valor: parseFloat(tagVal(b, 'vDup'))
+    })).filter(d => !isNaN(d.valor));
+
+    // Marca notas de "venda" autoemitidas pela própria empresa que na verdade são um
+    // veículo próprio dado como TROCA dentro de uma compra de estoque (não é venda a
+    // cliente final): destinatário é pessoa jurídica (tem CNPJ, não CPF) e o texto
+    // complementar menciona troca.
+    const provavelTrocaDada = tipo === 'venda' && empresaEhEmit && !!destCnpj && !destCpf && /troca/i.test(infCpl);
+
+    log(`✓ ${fileName}: NF ${num} (${tipo}${provavelTrocaDada ? ' — veículo dado em troca' : ''}) — ${data} — R$ ${valor.toFixed(2)}`);
+    return {
+      numero: num, chave, data, valor, tipo, contraparte, cnpjContraparte, arquivo: fileName,
+      nfRefs, detPags, duplicatas, infCpl, placa, modelo, isVeiculo,
+      empresaEhEmit, empresaEhDest, provavelTrocaDada
+    };
+  } catch (e) {
+    log(`✗ ${fileName}: erro ao processar (${e.message})`);
+    return null;
+  }
+}
+
+function linkPermutas(notas) {
+  const porChave = new Map(notas.map(n => [n.chave, n]));
+  notas.forEach(n => {
+    if (n.tipo === 'compra' && n.nfRefs.length) {
+      for (const ref of n.nfRefs) {
+        const vendaLigada = porChave.get(ref);
+        if (vendaLigada && vendaLigada.tipo === 'venda') {
+          n.permutaDeVenda = vendaLigada;
+          vendaLigada.permutaEntradas = vendaLigada.permutaEntradas || [];
+          vendaLigada.permutaEntradas.push(n);
+        }
+      }
+    }
+  });
+}
+
+// ---------- OFX parsing ----------
+function parseOFX(text, fileName) {
+  const orgMatch = text.match(/<ORG>\s*([^\r\n<]+)/i);
+  const banco = orgMatch ? orgMatch[1].trim() : fileName.replace(/\.[^/.]+$/, '');
+  const blocks = text.split(/<STMTTRN>/i).slice(1);
+  const out = [];
+  blocks.forEach(b => {
+    const chunk = b.split(/<\/STMTTRN>/i)[0];
+    const get = t => { const m = chunk.match(new RegExp('<' + t + '>([^\\r\\n<]+)', 'i')); return m ? m[1].trim() : ''; };
+    const dtRaw = get('DTPOSTED');
+    const amtRaw = get('TRNAMT');
+    if (!dtRaw || !amtRaw) return;
+    const data = dtRaw.slice(0,4) + '-' + dtRaw.slice(4,6) + '-' + dtRaw.slice(6,8);
+    const valor = parseFloat(amtRaw.replace(',', '.'));
+    if (isNaN(valor)) return;
+    out.push({ data, valor, banco, memo: get('MEMO') || get('NAME') || '', fitid: get('FITID') || '' });
+  });
+  log(`✓ ${fileName}: ${out.length} lançamento(s) — banco: ${banco}`);
+  return out;
+}
+
+function diffDias(d1, d2) { return Math.abs((new Date(d1) - new Date(d2)) / 86400000); }
+function fmtBRL(v) { return (v||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
+function fmtData(d) { const [y,m,dd] = (d||'').split('-'); return dd && m && y ? `${dd}/${m}/${y}` : (d||'—'); }
+
+function tentarMatchJanela(transacoes, usados, valorAlvo, dataRef, tolDias, tolValor, isCredito) {
+  const candidatos = transacoes
+    .map((t, idx) => ({t, idx}))
+    .filter(({idx}) => !usados.has(idx))
+    .filter(({t}) => isCredito ? t.valor > 0 : t.valor < 0)
+    .filter(({t}) => Math.abs(Math.abs(t.valor) - valorAlvo) <= tolValor)
+    .filter(({t}) => diffDias(t.data, dataRef) <= tolDias)
+    .sort((a,b) => {
+      const sa = diffDias(a.t.data, dataRef) * 1000 + Math.abs(Math.abs(a.t.valor) - valorAlvo);
+      const sb = diffDias(b.t.data, dataRef) * 1000 + Math.abs(Math.abs(b.t.valor) - valorAlvo);
+      return sa - sb;
+    });
+  if (!candidatos.length) return null;
+  usados.add(candidatos[0].idx);
+  return candidatos[0].t;
+}
+// Busca no banco: primeiro dentro da tolerância de dias configurada; se não achar, amplia a
+// janela para todo o período dos extratos carregados. A data de vencimento informada no
+// rodapé da nota às vezes é digitada errada (ex.: mês trocado por quem lança a nota) — o
+// valor é o critério mais confiável, então nunca descartamos um match só pela distância de
+// data, apenas sinalizamos para conferência quando a diferença for grande.
+function tentarMatch(transacoes, usados, valorAlvo, dataRef, tolDias, tolValor, isCredito) {
+  const direto = tentarMatchJanela(transacoes, usados, valorAlvo, dataRef, tolDias, tolValor, isCredito);
+  if (direto) return { t: direto, dataDivergente: false };
+  const amplo = tentarMatchJanela(transacoes, usados, valorAlvo, dataRef, 3650, tolValor, isCredito);
+  if (amplo) return { t: amplo, dataDivergente: true };
+  return null;
+}
+function descBanco(t) { return `${t.banco}: ${t.memo || t.fitid}`; }
+function descRec(r) { return r.desc + (r.dataDivergente ? ' ⚠ data no banco diverge da nota — confira' : ''); }
+
+function buildReport(notas, transacoes, usados, tolDias, tolValor) {
+  const linhas = [], pendentes = [], indefinidas = [];
+  notas.forEach(n => { if (n.tipo === 'indefinido') indefinidas.push(n); });
+
+  const vendas = notas.filter(n => n.tipo === 'venda' && !n.provavelTrocaDada);
+  vendas.forEach(v => {
+    const entradas = v.permutaEntradas || [];
+    const valorEntradaTotal = entradas.reduce((s,e)=>s+e.valor,0);
+    const recebimentos = [];
+    let temPendencia = false;
+
+    v.detPags.forEach(dp => {
+      if (/troca/i.test(dp.xPag)) return; // não-cash, já coberto pela entrada
+      const achouDireto = tentarMatch(transacoes, usados, dp.vPag, v.data, tolDias, tolValor, true);
+      if (achouDireto) {
+        recebimentos.push({ desc: descRec({desc: descBanco(achouDireto.t), dataDivergente: achouDireto.dataDivergente}), data: achouDireto.t.data, valor: dp.vPag });
+        return;
+      }
+      if (valorEntradaTotal > 0 && dp.vPag < valorEntradaTotal - tolValor) {
+        const quitacaoCalc = valorEntradaTotal - dp.vPag;
+        const achouQuit = tentarMatch(transacoes, usados, quitacaoCalc, v.data, tolDias, tolValor, false);
+        if (achouQuit) {
+          recebimentos.push({ desc: descRec({desc: 'Quitação financ. veículo recebido em troca — ' + descBanco(achouQuit.t), dataDivergente: achouQuit.dataDivergente}), data: achouQuit.t.data, valor: -quitacaoCalc });
+          return;
+        }
+        temPendencia = true;
+        pendentes.push({ nota: v.numero, data: v.data, tipo: 'venda', formaPagto: dp.xPag, valor: dp.vPag,
+          valorSugerido: quitacaoCalc, infCpl: v.infCpl, motivo: 'possivel_quitacao_nao_localizada' });
+        return;
+      }
+      temPendencia = true;
+      pendentes.push({ nota: v.numero, data: v.data, tipo: 'venda', formaPagto: dp.xPag, valor: dp.vPag,
+        valorSugerido: null, infCpl: v.infCpl, motivo: 'sem_match' });
+    });
+
+    const totalRecebidoBanco = recebimentos.reduce((s,r)=>s+r.valor, 0);
+    const saldo = v.valor - valorEntradaTotal - totalRecebidoBanco;
+
+    linhas.push({
+      nfVenda: v.numero, dataVenda: v.data, comprador: v.contraparte || '—', valorVenda: v.valor,
+      nfEntrada: entradas.map(e => e.numero).join(', ') || '—',
+      veiculoEntrada: entradas.map(e => [e.modelo, e.placa].filter(Boolean).join(' - ')).join('; ') || '—',
+      valorEntrada: valorEntradaTotal,
+      recebimentosTexto: recebimentos.map(r => `${r.desc} (${fmtData(r.data)}): ${fmtBRL(r.valor)}`).join('; ') || '—',
+      totalRecebidoBanco, saldo, pendente: temPendencia
+    });
+  });
+
+  return { linhas, pendentes, indefinidas };
+}
+
+// Trilha 2: compras de veículo para estoque. Cobre dois casos:
+//  (a) compra de terceiro com CNPJ (empresaEhDest, filtrada por NCM de veículo);
+//  (b) nota de entrada autoemitida pela própria KR que NÃO está ligada por permuta a uma
+//      venda específica — ou seja, é compra direta de um particular (pessoa física, que não
+//      emite NF-e) ou de estoque, e não a troca de um veículo recebido numa venda em curso
+//      (essas já são contabilizadas dentro da própria linha de venda, na coluna de entrada).
+// Em ambos os casos, parte pode ter sido paga dando outro veículo próprio como troca — a KR
+// emite uma nota de SAÍDA (marcada em provavelTrocaDada) sem NFref para a compra atual; o
+// vínculo é por valor batendo com uma parcela/duplicata + mesma contraparte. O restante é
+// buscado no banco.
+function buildComprasVeiculo(notas, transacoes, usados, tolDias, tolValor) {
+  const linhas = [], pendentes = [];
+  const trocasDadas = notas.filter(n => n.provavelTrocaDada);
+  const trocasUsadas = new Set();
+
+  const compras = notas.filter(n => n.tipo === 'compra' && !n.permutaDeVenda && (n.empresaEhDest || n.empresaEhEmit));
+  compras.forEach(c => {
+    const parcelas = c.duplicatas.length ? c.duplicatas.map(d => ({ valor: d.valor, venc: d.venc || c.data }))
+      : (c.detPags.length ? c.detPags.map(dp => ({ valor: dp.vPag, venc: c.data })) : [{ valor: c.valor, venc: c.data }]);
+
+    const pagamentos = [];
+    let temPendencia = false, trocaUsada = null;
+
+    parcelas.forEach(parc => {
+      const troca = c.cnpjContraparte ? trocasDadas.find(t => !trocasUsadas.has(t.chave) && t.cnpjContraparte === c.cnpjContraparte && Math.abs(t.valor - parc.valor) <= tolValor) : null;
+      if (troca) {
+        trocasUsadas.add(troca.chave);
+        trocaUsada = troca;
+        pagamentos.push({ desc: `Veículo dado em troca — NF ${troca.numero}`, data: troca.data, valor: parc.valor });
+        return;
+      }
+      const achou = tentarMatch(transacoes, usados, parc.valor, parc.venc, tolDias, tolValor, false);
+      if (achou) {
+        pagamentos.push({ desc: descRec({desc: descBanco(achou.t), dataDivergente: achou.dataDivergente}), data: achou.t.data, valor: parc.valor });
+        return;
+      }
+      temPendencia = true;
+      pendentes.push({ nota: c.numero, data: c.data, tipo: 'compra_veiculo', formaPagto: parc.venc ? ('venc. ' + fmtData(parc.venc)) : '', valor: parc.valor,
+        valorSugerido: null, infCpl: c.infCpl, motivo: 'sem_match' });
+    });
+
+    const totalPago = pagamentos.reduce((s,p) => s + p.valor, 0);
+    const valorTroca = trocaUsada ? trocaUsada.valor : 0;
+    const totalBanco = totalPago - valorTroca;
+    const saldo = c.valor - totalPago;
+
+    linhas.push({
+      nfCompra: c.numero, dataCompra: c.data, fornecedor: c.contraparte, valorCompra: c.valor,
+      nfTroca: trocaUsada ? trocaUsada.numero : '—',
+      veiculoTroca: trocaUsada ? [trocaUsada.modelo, trocaUsada.placa].filter(Boolean).join(' - ') : '—',
+      valorTroca,
+      pagamentosTexto: pagamentos.map(p => `${p.desc} (${fmtData(p.data)}): ${fmtBRL(p.valor)}`).join('; ') || '—',
+      totalBanco, saldo, pendente: temPendencia
+    });
+  });
+
+  return { linhas, pendentes };
+}
+
+function tentarResolverImportados(itensImportados, transacoes, usados, tolValorBase) {
+  const resolvidas = [], aindaPendentes = [];
+  const tolDiasImport = 60; // mês seguinte: janela mais larga
+  itensImportados.forEach(item => {
+    const alvo = item.valorSugerido != null ? item.valorSugerido : item.valor;
+    const isCredito = item.tipo === 'venda';
+    const achou = tentarMatch(transacoes, usados, alvo, item.data, tolDiasImport, tolValorBase, isCredito);
+    if (achou) {
+      resolvidas.push({ ...item, resolvidoEm: achou.t.data, resolvidoDesc: descBanco(achou.t), valorResolvido: alvo });
+    } else {
+      aindaPendentes.push(item);
+    }
+  });
+  return { resolvidas, aindaPendentes };
+}
+
+$('btnProcess').addEventListener('click', async () => {
+  clearError();
+  logLines.length = 0; $('log').classList.add('hidden'); $('log').textContent = '';
+  $('statusMsg').textContent = 'Processando…';
+  $('btnProcess').disabled = true;
+  try {
+    const cnpj = $('cnpj').value;
+    const tolDias = parseFloat($('tolDias').value) || 0;
+    const tolValor = parseFloat($('tolValor').value) || 0;
+
+    if (!cnpj || !cnpj.replace(/\D/g,'')) {
+      showError('Informe o CNPJ da sua empresa em "Premissas" — sem ele não dá para saber quais notas são venda e quais são compra.');
+      $('btnProcess').disabled = false;
+      return;
+    }
+
+    const notas = [];
+    for (const f of xmlFiles) {
+      let txt;
+      try { txt = await readFileText(f); } catch (e) { log(`✗ ${f.name}: não foi possível ler o arquivo`); continue; }
+      const n = parseNFe(txt, f.name, cnpj);
+      if (n) notas.push(n);
+    }
+    linkPermutas(notas);
+
+    let transacoes = [];
+    for (const f of ofxFiles) {
+      let txt;
+      try { txt = await readFileText(f); } catch (e) { log(`✗ ${f.name}: não foi possível ler o arquivo`); continue; }
+      transacoes = transacoes.concat(parseOFX(txt, f.name));
+    }
+
+    if (!notas.length) {
+      showError('Não consegui interpretar nenhuma nota XML. Confira se os arquivos são NF-e (XML) válidos — o log abaixo mostra o que aconteceu com cada arquivo.');
+    }
+    if (!transacoes.length) {
+      showError((($('errBox').textContent) ? $('errBox').textContent + ' ' : '') + 'Não encontrei lançamentos em nenhum OFX enviado.');
+    }
+
+    const usados = new Set();
+    const { linhas, pendentes, indefinidas } = buildReport(notas, transacoes, usados, tolDias, tolValor);
+    const { linhas: linhasCompras, pendentes: pendentesCompras } = buildComprasVeiculo(notas, transacoes, usados, tolDias, tolValor);
+    const pendentesTotal = pendentes.concat(pendentesCompras);
+
+    let resolvidas = [], pendentesFinal = pendentesTotal;
+    if (pendFile) {
+      let txt;
+      try {
+        txt = await readFileText(pendFile);
+        const dados = JSON.parse(txt);
+        const itensImportados = Array.isArray(dados.itens) ? dados.itens : [];
+        const r = tentarResolverImportados(itensImportados, transacoes, usados, tolValor);
+        resolvidas = r.resolvidas;
+        pendentesFinal = pendentesTotal.concat(r.aindaPendentes);
+        log(`Pendências importadas: ${itensImportados.length} — resolvidas agora: ${resolvidas.length}`);
+      } catch (e) {
+        log(`✗ ${pendFile.name}: não foi possível ler o JSON de pendências (${e.message})`);
+      }
+    }
+
+    lastLinhas = linhas; lastComprasVeiculo = linhasCompras; lastResolvidas = resolvidas; lastPendentes = pendentesFinal;
+    lastBanco = transacoes.filter((t, idx) => !usados.has(idx)); lastIndef = indefinidas;
+
+    renderResults();
+    $('statusMsg').textContent = `${notas.length} nota(s) lida(s) · ${transacoes.length} lançamento(s) bancário(s) · ${linhas.length} venda(s) e ${linhasCompras.length} compra(s) de veículo processada(s).`;
+    if (linhas.length || linhasCompras.length || pendentesFinal.length) {
+      $('btnExport').classList.remove('hidden');
+      $('btnExportPend').classList.remove('hidden');
+    }
+  } catch (e) {
+    showError('Erro inesperado ao processar: ' + e.message);
+    console.error(e);
+  } finally {
+    $('btnProcess').disabled = false;
+  }
+});
+
+function renderResults() {
+  $('results').classList.remove('hidden');
+  const okCount = lastLinhas.filter(l => !l.pendente && Math.abs(l.saldo) < 0.05).length;
+  const okCountCompras = lastComprasVeiculo.filter(l => !l.pendente && Math.abs(l.saldo) < 0.05).length;
+  $('summary').innerHTML = `
+    <div class="stat"><div class="n">${lastLinhas.length}</div><div class="l">Vendas processadas</div></div>
+    <div class="stat"><div class="n">${lastComprasVeiculo.length}</div><div class="l">Compras de veículo processadas</div></div>
+    <div class="stat ok"><div class="n">${okCount + okCountCompras}</div><div class="l">Saldo fechado (≈0)</div></div>
+    <div class="stat warn"><div class="n">${lastPendentes.length}</div><div class="l">Itens pendentes</div></div>
+    <div class="stat warn"><div class="n">${lastBanco.length}</div><div class="l">Bancários sem uso</div></div>
+  `;
+
+  const tv = $('tblVendas');
+  if (lastLinhas.length) {
+    tv.innerHTML = `<thead><tr><th>Nº NF Venda</th><th>Data</th><th>Comprador</th><th class="num">Valor Venda</th><th>Nº NF Entrada</th><th>Veículo em troca</th><th class="num">Valor Entrada</th><th>Recebimentos bancários</th><th class="num">Total Banco</th><th class="num">Saldo</th></tr></thead>
+      <tbody>${lastLinhas.map(l => `<tr>
+        <td>${l.nfVenda}</td><td>${fmtData(l.dataVenda)}</td><td>${l.comprador}</td><td class="num">${fmtBRL(l.valorVenda)}</td>
+        <td>${l.nfEntrada}</td><td>${l.veiculoEntrada}</td><td class="num">${fmtBRL(l.valorEntrada)}</td>
+        <td>${l.recebimentosTexto}</td><td class="num">${fmtBRL(l.totalRecebidoBanco)}</td>
+        <td class="num"><span class="tag ${Math.abs(l.saldo)<0.05 ? 'ok':'warn'}">${fmtBRL(l.saldo)}</span></td>
+      </tr>`).join('')}</tbody>`;
+  } else { tv.outerHTML = '<div class="empty">Nenhuma venda encontrada com o CNPJ informado.</div>'; }
+
+  const tc = $('tblCompras');
+  if (lastComprasVeiculo.length) {
+    tc.innerHTML = `<thead><tr><th>Nº NF Compra</th><th>Data</th><th>Fornecedor</th><th class="num">Valor Compra</th><th>Nº NF Troca Dada</th><th>Veículo dado em troca</th><th class="num">Valor Troca</th><th>Pagamentos</th><th class="num">Total Banco</th><th class="num">Saldo</th></tr></thead>
+      <tbody>${lastComprasVeiculo.map(l => `<tr>
+        <td>${l.nfCompra}</td><td>${fmtData(l.dataCompra)}</td><td>${l.fornecedor||'—'}</td><td class="num">${fmtBRL(l.valorCompra)}</td>
+        <td>${l.nfTroca}</td><td>${l.veiculoTroca}</td><td class="num">${fmtBRL(l.valorTroca)}</td>
+        <td>${l.pagamentosTexto}</td><td class="num">${fmtBRL(l.totalBanco)}</td>
+        <td class="num"><span class="tag ${Math.abs(l.saldo)<0.05 ? 'ok':'warn'}">${fmtBRL(l.saldo)}</span></td>
+      </tr>`).join('')}</tbody>`;
+  } else { tc.outerHTML = '<div class="empty">Nenhuma compra de veículo de terceiro encontrada (excluindo uso e consumo e permutas ligadas a vendas).</div>'; }
+
+  const tr = $('tblResolvidas');
+  if (lastResolvidas.length) {
+    tr.innerHTML = `<thead><tr><th>Nota</th><th>Data original</th><th>Situação</th><th class="num">Valor</th><th>Localizado em</th></tr></thead>
+      <tbody>${lastResolvidas.map(r => `<tr><td>${r.nota}</td><td>${fmtData(r.data)}</td><td>${r.formaPagto||'—'}</td>
+        <td class="num">${fmtBRL(r.valorResolvido)}</td><td>${fmtData(r.resolvidoEm)} — ${r.resolvidoDesc}</td></tr>`).join('')}</tbody>`;
+  } else { tr.outerHTML = '<div class="empty">Nenhuma pendência de mês anterior foi resolvida agora.</div>'; }
+
+  const tp = $('tblPend');
+  if (lastPendentes.length) {
+    tp.innerHTML = `<thead><tr><th>Nota</th><th>Data</th><th>Tipo</th><th>Forma Pagto</th><th class="num">Valor</th><th class="num">Sugestão quitação</th><th>Obs.</th></tr></thead>
+      <tbody>${lastPendentes.map(p => `<tr>
+        <td>${p.nota}</td><td>${fmtData(p.data)}</td><td><span class="tag ${p.tipo==='venda'?'ok':'warn'}">${p.tipo}</span></td>
+        <td>${p.formaPagto||'—'}</td><td class="num">${fmtBRL(p.valor)}</td>
+        <td class="num">${p.valorSugerido!=null ? fmtBRL(p.valorSugerido) : '—'}</td>
+        <td style="max-width:280px;font-family:var(--mono);font-size:11px;">${p.infCpl||'—'}</td>
+      </tr>`).join('')}</tbody>`;
+  } else { tp.outerHTML = '<div class="empty">Nenhum item pendente.</div>'; }
+
+  const tb = $('tblBanco');
+  if (lastBanco.length) {
+    tb.innerHTML = `<thead><tr><th>Banco</th><th>Data</th><th>Descrição</th><th class="num">Valor</th></tr></thead>
+      <tbody>${lastBanco.map(t => `<tr><td>${t.banco}</td><td>${fmtData(t.data)}</td><td>${t.memo||'—'}</td><td class="num">${fmtBRL(t.valor)}</td></tr>`).join('')}</tbody>`;
+  } else { tb.outerHTML = '<div class="empty">Todos os lançamentos bancários foram utilizados.</div>'; }
+
+  const ti = $('tblIndef');
+  if (lastIndef.length) {
+    ti.innerHTML = `<thead><tr><th>Nota</th><th>Data</th><th>Contraparte</th><th class="num">Valor</th></tr></thead>
+      <tbody>${lastIndef.map(n => `<tr><td>${n.numero}</td><td>${fmtData(n.data)}</td><td>${n.contraparte||'—'}</td><td class="num">${fmtBRL(n.valor)}</td></tr>`).join('')}</tbody>`;
+  } else { ti.outerHTML = '<div class="empty">Todas as notas bateram com o CNPJ informado.</div>'; }
+}
+
+async function getDownloads() {
+  if (!window.claude || typeof window.claude.use !== 'function') return null;
+  try { return await window.claude.use('downloads'); } catch (e) { return null; }
+}
+async function offerDownload(filename, blob) {
+  const downloads = await getDownloads();
+  if (!downloads) { ecBaixar(blob, filename); $('statusMsg').textContent = `Arquivo "${filename}" baixado (veja a pasta Downloads).`; return; }
+  try {
+    await downloads.save({ filename, data: blob });
+    $('statusMsg').textContent = `Arquivo "${filename}" enviado para download.`;
+  } catch (e) {
+    if (e && e.code === 'declined') return;
+    $('statusMsg').textContent = 'Não foi possível salvar o arquivo: ' + ((e && e.message) || 'erro desconhecido');
+  }
+}
+
+$('btnExport').addEventListener('click', async () => {
+  const wb = XLSX.utils.book_new();
+  const wsV = XLSX.utils.json_to_sheet(lastLinhas.map(l => ({
+    'Nº NF Venda': l.nfVenda, 'Data Venda': fmtData(l.dataVenda), 'Comprador': l.comprador, 'Valor da Venda': l.valorVenda,
+    'Nº NF Entrada': l.nfEntrada, 'Veículo recebido em troca': l.veiculoEntrada, 'Valor da Entrada': l.valorEntrada,
+    'Recebimentos bancários': l.recebimentosTexto, 'Total recebido banco': l.totalRecebidoBanco, 'Saldo': l.saldo
+  })));
+  XLSX.utils.book_append_sheet(wb, wsV, 'Conciliação por Venda');
+
+  const wsC = XLSX.utils.json_to_sheet(lastComprasVeiculo.map(l => ({
+    'Nº NF Compra': l.nfCompra, 'Data Compra': fmtData(l.dataCompra), Fornecedor: l.fornecedor, 'Valor da Compra': l.valorCompra,
+    'Nº NF Troca Dada': l.nfTroca, 'Veículo dado em troca': l.veiculoTroca, 'Valor da Troca': l.valorTroca,
+    Pagamentos: l.pagamentosTexto, 'Total pago via banco': l.totalBanco, Saldo: l.saldo
+  })));
+  XLSX.utils.book_append_sheet(wb, wsC, 'Conciliação por Compra');
+
+  const wsR = XLSX.utils.json_to_sheet(lastResolvidas.map(r => ({
+    Nota: r.nota, 'Data original': fmtData(r.data), Tipo: r.tipo, 'Forma Pagto': r.formaPagto,
+    Valor: r.valorResolvido, 'Localizado em': fmtData(r.resolvidoEm), Descrição: r.resolvidoDesc
+  })));
+  XLSX.utils.book_append_sheet(wb, wsR, 'Resolvidas neste mês');
+
+  const wsP = XLSX.utils.json_to_sheet(lastPendentes.map(p => ({
+    Nota: p.nota, Data: fmtData(p.data), Tipo: p.tipo, 'Forma Pagto': p.formaPagto, Valor: p.valor,
+    'Sugestão quitação': p.valorSugerido, Observação: p.infCpl
+  })));
+  XLSX.utils.book_append_sheet(wb, wsP, 'Pendências');
+
+  const wsB = XLSX.utils.json_to_sheet(lastBanco.map(t => ({ Banco: t.banco, Data: fmtData(t.data), Descrição: t.memo, Valor: t.valor })));
+  XLSX.utils.book_append_sheet(wb, wsB, 'Banco não utilizado');
+
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  await offerDownload('conciliacao_' + new Date().toISOString().slice(0,10) + '.xlsx', blob);
+});
+
+$('btnExportPend').addEventListener('click', async () => {
+  const payload = { exportadoEm: new Date().toISOString(), itens: lastPendentes };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  await offerDownload('pendencias_' + new Date().toISOString().slice(0,10) + '.json', blob);
+});
+</script>
+</body>
+</html>
+
+</body></html>

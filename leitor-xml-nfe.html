@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+[hidden]:not([hidden=until-found i]){display:none!important}
+img{max-width:100%}
+.ec-voltar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 20px;background:#ffffff;border-bottom:1px solid #dde4ec;font:500 14px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 2px 8px rgba(18,35,59,.05)}
+.ec-voltar a{color:#167a6e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px}
+.ec-voltar a:hover{background:#e3f3ee}
+.ec-voltar span{color:#4f5f73}
+@media (prefers-color-scheme:dark){.ec-voltar{background:#16212f;border-color:#26364a}.ec-voltar a{color:#3fc6a0}.ec-voltar a:hover{background:#16332c}.ec-voltar span{color:#9fb0c3}}
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+<div class="ec-voltar"><a href="index.html">&larr; Central de Automações</a><span>e.contabil projetos</span></div>
+<script>function ecBaixar(blob, nome){ const u=URL.createObjectURL(blob instanceof Blob?blob:new Blob([blob])); const a=document.createElement('a'); a.href=u; a.download=nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }</script>
+<title>Leitor de XML de NF-e</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Code+Pro:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/* Layout: one working column — drop zone, summary strip, item table (scrolls on its own) */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --ink:#18231f; --muted:#5b6964; --line:#d6ddda;
+  --accent:#0f6b4f; --accent-ink:#ffffff; --accent-soft:#e2f0ea; --warn:#a4501a; --warn-soft:#fbeee4;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"Source Code Pro",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111816; --surface:#18211e; --ink:#e3ebe7; --muted:#97a6a0; --line:#2b3733;
+  --accent:#4cc39a; --accent-ink:#0c1512; --accent-soft:#1c3129; --warn:#f0a26b; --warn-soft:#3a271b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111816; --surface:#18211e; --ink:#e3ebe7; --muted:#97a6a0; --line:#2b3733;
+  --accent:#4cc39a; --accent-ink:#0c1512; --accent-soft:#1c3129; --warn:#f0a26b; --warn-soft:#3a271b; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:flex;flex-direction:column;gap:20px}
+header h1{margin:0;font-size:1.6rem;font-weight:700;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:4px 0 0;color:var(--muted);max-width:68ch}
+.drop{border:2px dashed var(--line);background:var(--surface);border-radius:10px;padding:26px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:16px;justify-content:space-between;transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop strong{display:block;font-size:1.05rem}
+.drop span{color:var(--muted);font-size:.92rem}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+button,.btn{font:inherit;font-weight:600;border-radius:7px;padding:9px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,.btn:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stat{background:var(--surface);padding:12px 16px}
+.stat small{display:block;text-transform:uppercase;letter-spacing:.06em;font-size:.72rem;color:var(--muted);font-weight:600}
+.stat b{font-family:var(--f-mono);font-weight:500;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.tag{font-size:.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--warn-soft);color:var(--warn)}
+.msg{font-size:.92rem;color:var(--muted)}
+.msg.err{color:var(--warn)}
+.tablebox{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:62vh}
+table{border-collapse:collapse;width:100%;min-width:980px;font-size:.9rem}
+th{position:sticky;top:0;background:var(--surface);text-align:left;font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right}
+td.m{font-family:var(--f-mono);font-size:.85rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.d{min-width:240px}
+details{background:var(--warn-soft);border-radius:8px;padding:10px 14px;color:var(--warn)}
+details ul{margin:6px 0 0;padding-left:18px;font-size:.9rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Leitor de XML de NF-e</h1>
+    <p>Anexe os XMLs das notas (ou um .zip com eles). Cada item de produto vira uma linha do relatório, com número da nota, emissão, natureza da operação, descrição, NCM, CFOP, unidade, quantidade e valor total.</p>
+  </header>
+
+  <label class="drop" id="drop" for="file">
+    <div>
+      <strong>Arraste os arquivos aqui</strong>
+      <span>Aceita .xml de NF-e e NFC-e (modelos 55 e 65) e arquivos .zip. Nada sai do seu navegador.</span>
+    </div>
+    <div class="actions">
+      <span class="btn">Escolher arquivos</span>
+    </div>
+    <input type="file" id="file" multiple accept=".xml,.zip,text/xml,application/zip">
+  </label>
+
+  <div class="stats">
+    <div class="stat"><small>Notas</small><b id="sNotas">0</b></div>
+    <div class="stat"><small>Itens</small><b id="sItens">0</b></div>
+    <div class="stat"><small>Soma dos itens</small><b id="sValor">R$ 0,00</b></div>
+    <div class="stat"><small>Arquivos ignorados</small><b id="sErros">0</b></div>
+  </div>
+
+  <div class="bar">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span class="tag" id="exTag">Dados de exemplo</span>
+      <span class="msg" id="msg">A tabela abaixo é só um exemplo. Ao anexar seus XMLs, ela é substituída.</span>
+    </div>
+    <div class="actions">
+      <button id="btnClear" type="button">Limpar</button>
+      <button id="btnXlsx" type="button" class="primary">Gerar Excel</button>
+    </div>
+  </div>
+
+  <details id="errBox" hidden><summary id="errSum">Arquivos ignorados</summary><ul id="errList"></ul></details>
+
+  <div class="tablebox">
+    <table>
+      <thead><tr>
+        <th>Nº nota</th><th>Emissão</th><th>Natureza da operação</th><th>Descrição do produto</th>
+        <th>NCM</th><th>CFOP</th><th>Unid.</th><th class="n">Quantidade</th><th class="n">Valor total</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const EXAMPLE = [
+  {nota:"1543",data:"2026-09-02",natOp:"VENDA DE VEICULO USADO",desc:"HONDA CIVIC EXL 2.0 2019/2020 CHASSI 93HFC2630LZ100231",ncm:"87032310",cfop:"5102",un:"UN",qtd:1,valor:112900},
+  {nota:"1544",data:"2026-09-03",natOp:"COMPRA PARA COMERCIALIZACAO",desc:"TOYOTA COROLLA XEI 2.0 2018/2019 CHASSI 9BRBDWHE4K0412875",ncm:"87032310",cfop:"1102",un:"UN",qtd:1,valor:89500},
+  {nota:"1547",data:"2026-09-05",natOp:"VENDA DE MERCADORIA",desc:"JOGO DE TAPETES BORRACHA",ncm:"40169100",cfop:"5102",un:"JG",qtd:2,valor:318},
+  {nota:"1547",data:"2026-09-05",natOp:"VENDA DE MERCADORIA",desc:"PELICULA INSULFILM APLICADA",ncm:"39199090",cfop:"5102",un:"UN",qtd:1,valor:450},
+];
+let rows = EXAMPLE.slice(), isExample = true, errors = [], seenKeys = new Set();
+
+const $ = id => document.getElementById(id);
+const brl = n => n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const num = (n,d) => n.toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:Math.max(d,4)});
+const fmtDate = s => s ? s.split("-").reverse().join("/") : "";
+const fmtNcm = s => s && s.length===8 ? s.slice(0,4)+"."+s.slice(4,6)+"."+s.slice(6) : (s||"");
+
+function render(){
+  const tb = $("tbody"); tb.textContent = "";
+  for(const r of rows){
+    const tr = document.createElement("tr");
+    const cells = [[r.nota,"m"],[fmtDate(r.data),"m"],[r.natOp,""],[r.desc,"d"],[fmtNcm(r.ncm),"m"],[r.cfop,"m"],[r.un,""],[num(r.qtd,0),"m n"],[brl(r.valor),"m n"]];
+    for(const [v,c] of cells){const td=document.createElement("td"); td.textContent=v; if(c) td.className=c; tr.appendChild(td);}
+    tb.appendChild(tr);
+  }
+  const notas = new Set(rows.map(r=>r.chave||r.nota)).size;
+  $("sNotas").textContent = notas;
+  $("sItens").textContent = rows.length;
+  $("sValor").textContent = brl(rows.reduce((a,r)=>a+r.valor,0));
+  $("sErros").textContent = errors.length;
+  $("exTag").hidden = !isExample;
+  $("btnXlsx").disabled = rows.length===0;
+  const box=$("errBox"); box.hidden = errors.length===0;
+  $("errSum").textContent = errors.length+" arquivo(s) ignorado(s)";
+  const ul=$("errList"); ul.textContent="";
+  errors.forEach(e=>{const li=document.createElement("li"); li.textContent=e.file+": "+e.why; ul.appendChild(li);});
+}
+
+function decode(buf){
+  const head = new TextDecoder("latin1").decode(buf.slice(0,200));
+  const m = head.match(/encoding=["']([^"']+)["']/i);
+  let enc = m ? m[1].toLowerCase() : "utf-8";
+  try { return new TextDecoder(enc).decode(buf); } catch { return new TextDecoder("utf-8").decode(buf); }
+}
+
+const tag = (el,name) => { const n = el.getElementsByTagNameNS("*",name)[0] || el.getElementsByTagName(name)[0]; return n ? n.textContent.trim() : ""; };
+
+function parseXml(text, file){
+  const doc = new DOMParser().parseFromString(text,"application/xml");
+  if(doc.getElementsByTagName("parsererror").length) throw "XML inválido ou corrompido";
+  const inf = doc.getElementsByTagNameNS("*","infNFe")[0];
+  if(!inf){
+    if(doc.getElementsByTagNameNS("*","infEvento")[0]) throw "é um evento (cancelamento, CC-e etc.), não uma nota";
+    throw "não é um XML de NF-e";
+  }
+  const chave = (inf.getAttribute("Id")||"").replace(/^NFe/,"");
+  if(chave && seenKeys.has(chave)) throw "nota repetida (já anexada)";
+  const ide = inf.getElementsByTagNameNS("*","ide")[0];
+  const nota = tag(ide,"nNF");
+  const data = (tag(ide,"dhEmi")||tag(ide,"dEmi")).slice(0,10);
+  const natOp = tag(ide,"natOp");
+  const dets = inf.getElementsByTagNameNS("*","det");
+  if(!dets.length) throw "nota sem itens";
+  const out=[];
+  for(const det of dets){
+    const p = det.getElementsByTagNameNS("*","prod")[0];
+    out.push({chave,nota,data,natOp,desc:tag(p,"xProd"),ncm:tag(p,"NCM"),cfop:tag(p,"CFOP"),un:tag(p,"uCom"),
+      qtd:parseFloat(tag(p,"qCom"))||0,valor:parseFloat(tag(p,"vProd"))||0});
+  }
+  if(chave) seenKeys.add(chave);
+  return out;
+}
+
+async function handleFiles(list){
+  if(isExample){rows=[];isExample=false;}
+  let added=0;
+  $("msg").className="msg"; $("msg").textContent="Lendo arquivos…";
+  const queue=[];
+  for(const f of list){
+    const lower=f.name.toLowerCase();
+    if(lower.endsWith(".zip")){
+      try{
+        const zip = await JSZip.loadAsync(f);
+        for(const e of Object.values(zip.files)){
+          if(!e.dir && e.name.toLowerCase().endsWith(".xml")) queue.push({name:f.name+" › "+e.name.split("/").pop(), get:()=>e.async("arraybuffer")});
+        }
+      }catch{errors.push({file:f.name,why:"não foi possível abrir o .zip"});}
+    } else if(lower.endsWith(".xml")){
+      queue.push({name:f.name, get:()=>f.arrayBuffer()});
+    } else errors.push({file:f.name,why:"formato não suportado (use .xml ou .zip)"});
+  }
+  for(const q of queue){
+    try{ const items=parseXml(decode(await q.get()),q.name); rows.push(...items); added++; }
+    catch(e){ errors.push({file:q.name,why:typeof e==="string"?e:"erro ao ler o arquivo"}); }
+  }
+  rows.sort((a,b)=> (a.data<b.data?-1:a.data>b.data?1:0) || (parseInt(a.nota)-parseInt(b.nota)));
+  $("msg").textContent = added ? added+" nota(s) lida(s) agora. Pode anexar mais; notas repetidas são ignoradas." : "Nenhuma nota nova foi lida.";
+  render();
+}
+
+function serial(iso){ if(!iso) return null; const [y,m,d]=iso.split("-").map(Number); return (Date.UTC(y,m-1,d)-Date.UTC(1899,11,30))/86400000; }
+
+function buildWorkbook(){
+  const head=["Nº da nota","Data de emissão","Natureza da operação","Descrição do produto","NCM","CFOP","Unidade comercial","Quantidade","Valor total"];
+  const aoa=[head];
+  for(const r of rows) aoa.push([r.nota,null,r.natOp,r.desc,r.ncm,r.cfop,r.un,r.qtd,r.valor]);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  rows.forEach((r,i)=>{
+    const R=i+1;
+    const nNum=parseInt(r.nota,10);
+    ws[XLSX.utils.encode_cell({r:R,c:0})] = isNaN(nNum)?{t:"s",v:r.nota}:{t:"n",v:nNum,z:"0"};
+    const s=serial(r.data);
+    ws[XLSX.utils.encode_cell({r:R,c:1})] = s==null?{t:"s",v:""}:{t:"n",v:s,z:"dd/mm/yyyy"};
+    ws[XLSX.utils.encode_cell({r:R,c:4})] = {t:"s",v:r.ncm};
+    ws[XLSX.utils.encode_cell({r:R,c:5})] = {t:"s",v:r.cfop};
+    ws[XLSX.utils.encode_cell({r:R,c:7})].z = "#,##0.0000";
+    ws[XLSX.utils.encode_cell({r:R,c:8})].z = "#,##0.00";
+  });
+  ws["!cols"]=[{wch:11},{wch:14},{wch:34},{wch:52},{wch:11},{wch:7},{wch:10},{wch:13},{wch:15}];
+  ws["!autofilter"]={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rows.length,c:8}})};
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Itens das notas");
+  if(errors.length){
+    const we=XLSX.utils.aoa_to_sheet([["Arquivo","Motivo"],...errors.map(e=>[e.file,e.why])]);
+    we["!cols"]=[{wch:60},{wch:50}];
+    XLSX.utils.book_append_sheet(wb,we,"Arquivos ignorados");
+  }
+  return XLSX.write(wb,{bookType:"xlsx",type:"array"});
+}
+
+let downloads=null;
+(async()=>{ try{ downloads = window.claude?.use ? await window.claude.use("downloads") : null; }catch{} })();
+
+$("btnXlsx").addEventListener("click", async()=>{
+  const data = new Uint8Array(buildWorkbook());
+  const d=new Date(), stamp=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const filename = (isExample?"exemplo-":"")+"relatorio-nfe-"+stamp+".xlsx";
+  const m=$("msg");
+  if(downloads){
+    try{ await downloads.save({filename,data}); m.className="msg"; m.textContent="Excel gerado: "+filename; }
+    catch(e){ m.className="msg err"; m.textContent = e?.code==="declined" ? "Download cancelado." : "Não foi possível salvar o arquivo aqui ("+(e?.code||"erro")+")."; }
+  } else {
+    try{
+      const url=URL.createObjectURL(new Blob([data],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+      const a=document.createElement("a"); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),4000);
+      m.className="msg"; m.textContent="Excel gerado: "+filename;
+    }catch{ m.className="msg err"; m.textContent="Este navegador bloqueou o download."; }
+  }
+});
+
+$("btnClear").addEventListener("click",()=>{rows=[];errors=[];seenKeys.clear();isExample=false;$("msg").className="msg";$("msg").textContent="Lista limpa. Anexe os XMLs para começar.";render();});
+$("file").addEventListener("change",e=>{ if(e.target.files.length) handleFiles([...e.target.files]); e.target.value=""; });
+const drop=$("drop");
+["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add("over");}));
+["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove("over");}));
+drop.addEventListener("drop",e=>{ if(e.dataTransfer.files.length) handleFiles([...e.dataTransfer.files]); });
+document.addEventListener("dragover",e=>e.preventDefault());
+document.addEventListener("drop",e=>e.preventDefault());
+render();
+</script>
+</body>
+</html>
