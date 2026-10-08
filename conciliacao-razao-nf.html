@@ -153,7 +153,7 @@ h2{font-family:var(--f-display);font-size:18px;margin:0}
       <button id="copy">Copiar para Excel</button>
       <button id="xlsx">Baixar .xlsx</button>
       <label for="empresa" style="font-size:12.5px;color:var(--muted)">Empresa</label><input id="empresa" value="KR" aria-label="Sigla da empresa no título do PDF">
-      <button id="pdf" class="primary">Imprimir / PDF</button>
+      <button id="pdf" class="primary">Baixar PDF</button>
     </div>
   </div>
 
@@ -182,6 +182,7 @@ h2{font-family:var(--f-display);font-size:18px;margin:0}
 <div class="toast" id="toast" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script>
 const SAMPLE = null;
 const fmt = v => (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -391,17 +392,89 @@ function mesRef(){
   const ks=Object.keys(cont).sort((a,b)=>cont[b]-cont[a]||b-a); if(!ks.length) return '';
   const k=+ks[0]; return MESES[k%12]+'/'+Math.floor(k/12);
 }
-document.getElementById('pdf').addEventListener('click',()=>{
-  if(!state.res.list.length){toast('Carregue o razão antes de imprimir.');return;}
+/* Gera o PDF direto (A4 paisagem), sem depender da impressora */
+async function gerarPDF(){
+  if(!state.res.list.length){toast('Carregue o razão antes de gerar o PDF.');return;}
+  if(typeof PDFLib==='undefined'){toast('A biblioteca de PDF não carregou. Recarregue a página.');return;}
+  const {PDFDocument,StandardFonts,rgb}=PDFLib;
   const emp=document.getElementById('empresa').value.trim().toUpperCase();
   const mes=mesRef();
-  document.getElementById('pTitle').textContent='RELATÓRIO DE CONFERÊNCIA DE RECEBIMENTOS'+(emp?' '+emp:'')+(mes?' MÊS '+mes:'');
+  const titulo='RELATÓRIO DE CONFERÊNCIA DE RECEBIMENTOS'+(emp?' '+emp:'')+(mes?' MÊS '+mes:'');
   const lab={all:'todas as notas',pend:'somente pendentes',over:'somente recebido a maior',ok:'somente quitadas',none:'somente sem venda no período'};
-  document.getElementById('pSub').textContent='Arquivo: '+document.getElementById('srcName').textContent+' · Notas: '+lab[state.filter]+(state.q?' · Busca: "'+state.q+'"':'');
-  document.getElementById('pFoot').textContent='Emitido em '+new Date().toLocaleString('pt-BR')+' · e.contabil projetos';
-  const t=document.title; document.title=document.getElementById('pTitle').textContent;
-  window.print(); setTimeout(()=>document.title=t,500);
-});
+  const sub='Arquivo: '+document.getElementById('srcName').textContent+'   ·   Notas: '+lab[state.filter]+(state.q?'   ·   Busca: "'+state.q+'"':'');
+  const emitido='Emitido em '+new Date().toLocaleString('pt-BR')+'  ·  e.contabil projetos';
+  const doc=await PDFDocument.create();
+  doc.setTitle(titulo);
+  const R=await doc.embedFont(StandardFonts.Helvetica), B=await doc.embedFont(StandardFonts.HelveticaBold);
+  const C={ink:rgb(.07,.1,.13),mut:rgb(.33,.39,.43),line:rgb(.79,.82,.85),head:rgb(.93,.95,.96),acc:rgb(.11,.36,.47),
+    ok:rgb(.12,.48,.3),okS:rgb(.89,.95,.92),pend:rgb(.64,.36,0),pendS:rgb(.98,.94,.86),over:rgb(.42,.25,.63),overS:rgb(.94,.91,.97),none:rgb(.33,.39,.43),noneS:rgb(.91,.93,.94)};
+  const W=841.89,H=595.28,M=30;
+  const clean=t=>String(t??'').replace(/[^\x20-\x7E -ÿ—–·]/g,'');
+  const fit=(t,f,sz,w)=>{t=clean(t); if(f.widthOfTextAtSize(t,sz)<=w) return t; while(t.length&&f.widthOfTextAtSize(t+'…',sz)>w) t=t.slice(0,-1); return t+'…';};
+  let pg,y;
+  const txt=(t,x,yy,o={})=>{const f=o.f||R,sz=o.sz||8.5; t=o.w?fit(t,f,sz,o.w):clean(t); const tw=f.widthOfTextAtSize(t,sz);
+    pg.drawText(t,{x:o.al==='r'?x-tw:x,y:yy,size:sz,font:f,color:o.c||C.ink});};
+  const ln=(x1,y1,x2,y2,c=C.line,t=.6)=>pg.drawLine({start:{x:x1,y:y1},end:{x:x2,y:y2},thickness:t,color:c});
+  const cols=[{k:'NF',w:44},{k:'CLIENTE',w:205},{k:'EMISSÃO',w:58},{k:'VALOR DA NF',w:72,r:1},{k:'DEVOL./AJUSTES',w:72,r:1},{k:'RECEBIDO',w:72,r:1},{k:'VEÍCULO NA TROCA',w:80,r:1},{k:'SALDO',w:72,r:1},{k:'SITUAÇÃO',w:0}];
+  let x0=M; cols.forEach(c=>{c.x=x0; x0+=c.w;}); cols[8].w=W-M-cols[8].x;
+  const cx=(i)=>cols[i].r?cols[i].x+cols[i].w-6:cols[i].x+6;
+  const tabHead=()=>{pg.drawRectangle({x:M,y:y-16,width:W-2*M,height:18,color:C.head});
+    cols.forEach((c,i)=>txt(c.k,cx(i),y-10,{f:B,sz:6.8,c:C.mut,al:c.r?'r':'l'})); y-=18;};
+  const novaPag=(primeira)=>{pg=doc.addPage([W,H]); y=H-M;
+    txt(titulo,M,y-12,{f:B,sz:primeira?14:10.5}); y-=primeira?18:14;
+    if(primeira){txt(sub,M,y-9,{sz:8,c:C.mut,w:W-2*M}); y-=14;}
+    ln(M,y,W-M,y,C.ink,1.4); y-=8;};
+  const precisa=h=>{if(y-h<M+22){novaPag(false); tabHead();}};
+  novaPag(true);
+  // Resumo
+  const L=state.res.list, sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
+  const vend=L.filter(n=>n.temVenda), pend=L.filter(n=>n.status==='pend'), over=L.filter(n=>n.status==='over'), ok=L.filter(n=>n.status==='ok');
+  const tiles=[['NOTAS EMITIDAS',String(vend.length),'R$ '+fmt(sum(vend,n=>n.venda)),C.ink],['RECEBIDO + TROCA','R$ '+fmt(sum(vend,n=>n.receb+n.troca)),'nas notas do período',C.ink],
+    ['QUITADAS',String(ok.length),'saldo zerado',C.ok],['PENDENTE A RECEBER','R$ '+fmt(sum(pend,n=>n.saldo)),pend.length+' nota(s)',C.pend],['RECEBIDO A MAIOR','R$ '+fmt(-sum(over,n=>n.saldo)),over.length+' nota(s) a verificar',C.over]];
+  const tw=(W-2*M-4*8)/5;
+  tiles.forEach((t,i)=>{const x=M+i*(tw+8); pg.drawRectangle({x,y:y-46,width:tw,height:46,borderColor:C.line,borderWidth:.7});
+    txt(t[0],x+8,y-12,{sz:6.8,c:C.mut}); txt(t[1],x+8,y-27,{f:B,sz:11.5,c:t[3]}); txt(t[2],x+8,y-39,{sz:7,c:C.mut});});
+  y-=58;
+  tabHead();
+  const F=filtered(); const stc={ok:[C.ok,C.okS],pend:[C.pend,C.pendS],over:[C.over,C.overS],none:[C.none,C.noneS]};
+  const val=v=>v?fmt(v):'—';
+  for(const n of F){
+    precisa(17);
+    const yy=y-11.5;
+    txt(n.nf,cx(0),yy,{f:B}); txt(n.cliente||'—',cx(1),yy,{f:B,w:cols[1].w-10}); txt(fmtD(n.emissao),cx(2),yy);
+    txt(val(n.venda),cx(3),yy,{al:'r'}); txt(val(n.ajuste),cx(4),yy,{al:'r'}); txt(val(n.receb),cx(5),yy,{al:'r'}); txt(val(n.troca),cx(6),yy,{al:'r'});
+    const [sc,sb]=stc[n.status]; txt(fmt(n.saldo),cx(7),yy,{al:'r',f:n.status==='ok'?R:B,c:n.status==='ok'?C.ink:sc});
+    const sl=ST[n.status][0], sw=B.widthOfTextAtSize(sl,7)+10;
+    pg.drawRectangle({x:cx(8),y:yy-3.5,width:sw,height:12,color:sb}); txt(sl,cx(8)+5,yy,{f:B,sz:7,c:sc});
+    y-=17;
+    if(state.open.has(n.nf)){
+      for(const m of n.movs){
+        precisa(12);
+        const my=y-8.5;
+        txt(fmtD(m.data),cx(0)+8,my,{sz:7,c:C.mut}); txt(m.rot,cx(1)+40,my,{sz:7,f:B,c:m.tipo==='receb'?C.ok:m.tipo==='troca'?C.over:m.tipo==='ajuste'?C.pend:C.acc});
+        txt(m.hist,cols[2].x+20,my,{sz:7,c:C.mut,w:cols[6].x+cols[6].w-cols[2].x-28});
+        txt(m.deb?fmt(m.deb)+' D':(m.cred?fmt(m.cred)+' C':''),cx(7),my,{sz:7,al:'r',c:C.mut});
+        y-=12;
+      }
+      y-=2;
+    }
+    ln(M,y,W-M,y);
+  }
+  precisa(18);
+  ln(M,y,W-M,y,C.ink,1); const ty=y-12;
+  txt('Total ('+F.length+' nota'+(F.length>1?'s':'')+')',cx(0),ty,{f:B});
+  [[3,'venda'],[4,'ajuste'],[5,'receb'],[6,'troca'],[7,'saldo']].forEach(([i,k])=>txt(fmt(sum(F,n=>n[k])),cx(i),ty,{f:B,al:'r'}));
+  // Rodapé com paginação
+  const pages=doc.getPages();
+  pages.forEach((p,i)=>{pg=p; ln(M,M+8,W-M,M+8); txt(emitido,M,M-2,{sz:7,c:C.mut}); txt('Página '+(i+1)+' de '+pages.length,W-M,M-2,{sz:7,c:C.mut,al:'r'});});
+  const bytes=await doc.save();
+  const nome=('Conferencia_Recebimentos'+(emp?'_'+emp:'')+(mes?'_'+mes.replace('/','-'):'')+'.pdf').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'_');
+  const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
+  const a=document.createElement('a'); a.href=url; a.download=nome; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
+  toast('PDF gerado: '+nome);
+}
+document.getElementById('pdf').addEventListener('click',()=>{gerarPDF().catch(e=>toast('Não consegui gerar o PDF: '+e.message));});
 render();
 </script>
 
