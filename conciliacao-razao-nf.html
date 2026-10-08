@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Conciliação do Razão por NF</title>
+<style>
+.ec-voltar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 20px;background:#ffffff;border-bottom:1px solid #dde4ec;font:500 14px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 2px 8px rgba(18,35,59,.05)}
+.ec-voltar a{color:#167a6e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px}
+.ec-voltar a:hover{background:#e3f3ee}
+.ec-voltar span{color:#4f5f73}
+@media (prefers-color-scheme:dark){.ec-voltar{background:#16212f;border-color:#26364a}.ec-voltar a{color:#3fc6a0}.ec-voltar a:hover{background:#16332c}.ec-voltar span{color:#9fb0c3}}
+</style>
+</head>
+<body>
+<div class="ec-voltar"><a href="index.html">&larr; Central de Automações</a><span>e.contabil projetos</span></div>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ferramenta de conferência — cabeçalho compacto, faixa de totais, tabela por nota com movimentos expansíveis */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --fg:#17232b; --muted:#5b6b75; --line:#dbe2e6;
+  --accent:#1d5d78; --accent-soft:#e1edf2;
+  --ok:#1f7a4d; --ok-soft:#e2f2ea; --warn:#a35d00; --warn-soft:#fbefdc; --over:#6a3fa0; --over-soft:#efe7f8; --none:#5b6b75; --none-soft:#e9edef;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10171b; --surface:#172127; --fg:#e4ebee; --muted:#93a4ad; --line:#2a3840;
+  --accent:#6fb3d0; --accent-soft:#1c3340;
+  --ok:#5fcf95; --ok-soft:#173527; --warn:#f0b35a; --warn-soft:#3a2b14; --over:#b99af0; --over-soft:#2c2340; --none:#93a4ad; --none-soft:#222d33;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10171b; --surface:#172127; --fg:#e4ebee; --muted:#93a4ad; --line:#2a3840;
+  --accent:#6fb3d0; --accent-soft:#1c3340;
+  --ok:#5fcf95; --ok-soft:#173527; --warn:#f0b35a; --warn-soft:#3a2b14; --over:#b99af0; --over-soft:#2c2340; --none:#93a4ad; --none-soft:#222d33;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{font-family:var(--f-display);font-size:28px;line-height:1.15;margin:4px 0 6px;text-wrap:balance}
+.sub{color:var(--muted);max-width:62ch;margin:0}
+.drop{border:1.5px dashed var(--line);border-radius:10px;background:var(--surface);padding:14px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop .src{min-width:0}
+.drop .src b{display:block;font-weight:600;overflow-wrap:anywhere}
+.drop .src span{color:var(--muted);font-size:12.5px}
+button,.btn{font:inherit;font-weight:500;border-radius:7px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:7px 13px;cursor:pointer}
+button:hover,.btn:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible,.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.primary:hover{filter:brightness(1.08)}
+.btn input{position:absolute;width:1px;height:1px;opacity:0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.tile .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tile .v{font-family:var(--f-mono);font-size:19px;font-weight:500;font-variant-numeric:tabular-nums;margin-top:2px}
+.tile .n{font-size:12px;color:var(--muted)}
+.tile.warn .v{color:var(--warn)} .tile.over .v{color:var(--over)} .tile.ok .v{color:var(--ok)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border-radius:999px;padding:5px 11px;font-size:13px}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#q{font:inherit;padding:7px 11px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--fg);min-width:0;width:220px;max-width:100%}
+.tablebox{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:860px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface);position:sticky;top:0}
+td.num,th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.nf{cursor:pointer}
+tr.nf:hover td{background:var(--accent-soft)}
+tr.nf td:first-child{font-family:var(--f-mono);font-weight:500;white-space:nowrap}
+.caret{display:inline-block;width:12px;color:var(--muted);transition:transform .15s}
+tr.open .caret{transform:rotate(90deg)}
+.cli{font-weight:500}
+.pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.s-ok{background:var(--ok-soft);color:var(--ok)} .s-pend{background:var(--warn-soft);color:var(--warn)}
+.s-over{background:var(--over-soft);color:var(--over)} .s-none{background:var(--none-soft);color:var(--none)}
+td.saldo.pend{color:var(--warn);font-weight:600} td.saldo.over{color:var(--over);font-weight:600}
+tr.det>td{background:var(--bg);padding:0}
+.mov{width:100%;min-width:0;border-collapse:collapse}
+.mov td{border-bottom:1px dashed var(--line);font-size:13px;padding:6px 12px}
+.mov tr:last-child td{border-bottom:0}
+.mov td.d{white-space:nowrap;color:var(--muted);font-family:var(--f-mono);width:96px}
+.mov td.t{width:190px;white-space:nowrap}
+.tag{font-size:11.5px;font-weight:600;letter-spacing:.02em}
+.tag.venda{color:var(--accent)} .tag.receb{color:var(--ok)} .tag.troca{color:var(--over)} .tag.ajuste{color:var(--warn)}
+.mov td.h{color:var(--muted);overflow-wrap:anywhere}
+tfoot td{font-weight:600;border-bottom:0}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.note{font-size:12.5px;color:var(--muted);max-width:90ch}
+.note b{color:var(--fg);font-weight:600}
+h2{font-family:var(--f-display);font-size:18px;margin:0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px}
+@media (prefers-reduced-motion:reduce){.caret{transition:none}}
+@media (max-width:520px){h1{font-size:23px}#q{width:100%}.tools{width:100%}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Clientes · Razão contábil</div>
+      <h1>Conciliação do Razão por NF</h1>
+      <p class="sub">Agrupa os lançamentos pelo número da nota no histórico: débito é a venda, crédito é o que entrou (PIX, TED ou veículo recebido na troca). Mostra o que foi recebido e o que ficou pendente de cada cliente.</p>
+    </div>
+  </header>
+
+  <div class="drop" id="drop">
+    <div class="src"><b id="srcName">Nenhum razão carregado</b><span id="srcInfo">Arraste aqui o razão em Excel (.xlsx, .xls ou .csv) ou escolha o arquivo.</span></div>
+    <label class="btn primary">Escolher razão<input type="file" id="file" accept=".xlsx,.xls,.csv"></label>
+  </div>
+
+  <section class="tiles" id="tiles"></section>
+
+  <div class="bar">
+    <div class="chips" id="chips" role="group" aria-label="Filtrar por situação"></div>
+    <div class="tools">
+      <input id="q" type="search" placeholder="Buscar NF ou cliente" aria-label="Buscar NF ou cliente">
+      <button id="expand">Abrir todas</button>
+      <button id="copy">Copiar para Excel</button>
+      <button id="xlsx">Baixar .xlsx</button>
+    </div>
+  </div>
+
+  <div class="tablebox">
+    <table id="tbl">
+      <thead><tr>
+        <th>NF</th><th>Cliente</th><th>Emissão</th>
+        <th class="num">Valor da NF</th><th class="num">Devol./ajustes</th>
+        <th class="num">Recebido</th><th class="num">Veículo na troca</th>
+        <th class="num">Saldo</th><th>Situação</th>
+      </tr></thead>
+      <tbody id="body"></tbody>
+      <tfoot id="foot"></tfoot>
+    </table>
+  </div>
+
+  <section id="semNf" hidden>
+    <h2>Lançamentos sem número de nota</h2>
+    <p class="note">Estes lançamentos não têm número no histórico e ficaram fora da conciliação.</p>
+    <div class="tablebox"><table class="mov" id="semNfTbl" style="min-width:600px"></table></div>
+  </section>
+
+  <p class="note"><b>Como a ferramenta lê o histórico.</b> Linha a débito com "VENDA" abre a nota e o nome após "P/" é o cliente. Créditos com "COMPRA" são o veículo recebido como parte do pagamento; o número considerado é o da nota de venda citada no fim do histórico (ex.: "COMPRA … NF Nº 4447 … NF 4446" vai para a 4446). Outros débitos da mesma nota (devolução de valor ao cliente) aumentam o valor a receber. Saldo positivo é pendência; saldo negativo é valor recebido a maior. Recebimentos de notas sem venda no período aparecem como "Sem venda no período".</p>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const SAMPLE = null;
+const fmt = v => (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtD = d => d ? d.toLocaleDateString('pt-BR',{timeZone:'UTC'}) : '';
+const norm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const EPS = 0.005;
+
+function toNum(v){
+  if(v==null||v==='') return 0;
+  if(typeof v==='number') return v;
+  let s=String(v).trim().replace(/[R$\s]/g,'');
+  if(!s) return 0;
+  let neg=/^\(.*\)$/.test(s)||/-$/.test(s); s=s.replace(/[()\-]/g,'');
+  if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+  const n=parseFloat(s); return isNaN(n)?0:(neg?-n:n);
+}
+function toDate(v){
+  if(!v) return null;
+  if(v instanceof Date) return new Date(Date.UTC(v.getFullYear(),v.getMonth(),v.getDate()));
+  if(typeof v==='number'){const d=new Date(Math.round((v-25569)*864e5));return isNaN(d)?null:d;}
+  const s=String(v).trim(); let m;
+  if(m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)){let y=+m[3]; if(y<100)y+=2000; return new Date(Date.UTC(y,m[2]-1,+m[1]));}
+  if(m=s.match(/^(\d{4})-(\d{2})-(\d{2})/)) return new Date(Date.UTC(+m[1],m[2]-1,+m[3]));
+  return null;
+}
+
+/* Converte as linhas da planilha em lançamentos {data, hist, deb, cred} */
+function readRows(rows){
+  let hi=-1, c={};
+  for(let i=0;i<Math.min(rows.length,40);i++){
+    const r=(rows[i]||[]).map(norm);
+    const h=r.findIndex(x=>x.includes('HISTOR'));
+    if(h>=0){hi=i; c.h=h; c.d=r.findIndex(x=>x.trim()==='DATA'||x.startsWith('DATA'));
+      c.db=r.findIndex(x=>x.startsWith('DEBITO')); c.cr=r.findIndex(x=>x.startsWith('CREDITO')); break;}
+  }
+  if(hi<0||c.db<0||c.cr<0) throw new Error('Não encontrei o cabeçalho com as colunas Histórico, Débito e Crédito.');
+  const out=[]; let lastDate=null;
+  for(let i=hi+1;i<rows.length;i++){
+    const r=rows[i]||[]; const hist=String(r[c.h]??'').trim();
+    if(!hist) continue;
+    const d=c.d>=0?toDate(r[c.d]):null; if(d) lastDate=d;
+    const deb=toNum(r[c.db]), cred=toNum(r[c.cr]);
+    if(!deb&&!cred) continue;
+    if(/^SALDO|^TOTAL/.test(norm(hist))) continue;
+    out.push({data:d||lastDate, hist, deb, cred});
+  }
+  return out;
+}
+
+function nums(h){return [...norm(h).matchAll(/(?<![\d\/.,])(\d{3,9})(?![\d\/.,])/g)].map(m=>m[1].replace(/^0+/,''));}
+function saleNF(h){const m=norm(h).match(/N\s*F[\s.:]*(?:N[º°O.]*\s*)?(\d{3,9})/); if(m) return m[1].replace(/^0+/,''); const n=nums(h); return n[0];}
+function clientFromSale(h){const m=h.match(/\bP\/\s*(.+)$/i); return m?m[1].trim().replace(/\s+/g,' '):'';}
+function clientFromText(h,nf){
+  const i=h.search(new RegExp('\\b0*'+nf+'\\b')); if(i<0) return '';
+  let s=h.slice(i+String(nf).length).replace(/\bNF\b.*$/i,'').replace(/^[\s\-–:]+/,'').trim();
+  return s.replace(/\s+/g,' ');
+}
+
+function reconcile(lancs){
+  const notas=new Map(), semNf=[];
+  const get=nf=>{if(!notas.has(nf)) notas.set(nf,{nf,cliente:'',emissao:null,venda:0,ajuste:0,receb:0,troca:0,movs:[],temVenda:false}); return notas.get(nf);};
+  const outros=[];
+  for(const l of lancs){
+    const H=norm(l.hist);
+    if(l.deb>0 && /\bVENDA\b/.test(H)){
+      const nf=saleNF(l.hist); if(!nf){semNf.push(l);continue;}
+      const n=get(nf); n.temVenda=true; n.venda+=l.deb; n.emissao=n.emissao||l.data;
+      n.cliente=n.cliente||clientFromSale(l.hist);
+      n.movs.push({...l,tipo:'venda',rot:'Venda (NF emitida)'});
+    } else outros.push(l);
+  }
+  const vendas=new Set([...notas.keys()]);
+  for(const l of outros){
+    const ns=nums(l.hist); if(!ns.length){semNf.push(l);continue;}
+    const hits=ns.filter(x=>vendas.has(x));
+    const nf=hits.length?hits[hits.length-1]:ns[ns.length-1];
+    const n=get(nf); const H=norm(l.hist);
+    if(l.cred){
+      if(/\bCOMPRA\b/.test(H)){n.troca+=l.cred; n.movs.push({...l,tipo:'troca',rot:'Veículo recebido na troca'});}
+      else{n.receb+=l.cred; n.movs.push({...l,tipo:'receb',rot:'Recebimento'});}
+    }
+    if(l.deb){n.ajuste+=l.deb; n.movs.push({...l,tipo:'ajuste',rot:/DEVOL/.test(H)?'Devolução ao cliente':'Ajuste a débito'});}
+    if(!n.cliente && !/\bCOMPRA\b/.test(H)) n.cliente=clientFromText(l.hist,nf);
+  }
+  const list=[...notas.values()].map(n=>{
+    n.movs.sort((a,b)=>(a.data||0)-(b.data||0));
+    n.saldo=+(n.venda+n.ajuste-n.receb-n.troca).toFixed(2);
+    n.status=!n.temVenda?'none':Math.abs(n.saldo)<EPS?'ok':n.saldo>0?'pend':'over';
+    return n;
+  }).sort((a,b)=>(+a.nf)-(+b.nf));
+  return {list,semNf};
+}
+
+const ST={ok:['Quitada','s-ok'],pend:['Pendente','s-pend'],over:['Recebido a maior','s-over'],none:['Sem venda no período','s-none']};
+let state={res:{list:[],semNf:[]},filter:'all',q:'',open:new Set()};
+
+function filtered(){
+  const q=norm(state.q).trim();
+  return state.res.list.filter(n=>(state.filter==='all'||n.status===state.filter)&&(!q||n.nf.includes(q)||norm(n.cliente).includes(q)));
+}
+
+function render(){
+  const L=state.res.list, sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
+  const pend=L.filter(n=>n.status==='pend'), over=L.filter(n=>n.status==='over'), ok=L.filter(n=>n.status==='ok'), none=L.filter(n=>n.status==='none');
+  const vend=L.filter(n=>n.temVenda);
+  document.getElementById('tiles').innerHTML=`
+    <div class="tile"><div class="k">Notas emitidas</div><div class="v">${vend.length}</div><div class="n">R$ ${fmt(sum(vend,n=>n.venda))}</div></div>
+    <div class="tile"><div class="k">Recebido + troca</div><div class="v">R$ ${fmt(sum(vend,n=>n.receb+n.troca))}</div><div class="n">nas notas do período</div></div>
+    <div class="tile ok"><div class="k">Quitadas</div><div class="v">${ok.length}</div><div class="n">saldo zerado</div></div>
+    <div class="tile warn"><div class="k">Pendente a receber</div><div class="v">R$ ${fmt(sum(pend,n=>n.saldo))}</div><div class="n">${pend.length} nota(s)</div></div>
+    <div class="tile over"><div class="k">Recebido a maior</div><div class="v">R$ ${fmt(-sum(over,n=>n.saldo))}</div><div class="n">${over.length} nota(s) a verificar</div></div>
+    ${none.length?`<div class="tile"><div class="k">Sem venda no período</div><div class="v">R$ ${fmt(sum(none,n=>n.receb+n.troca-n.ajuste))}</div><div class="n">${none.length} nota(s)</div></div>`:''}`;
+  const counts={all:L.length,pend:pend.length,over:over.length,ok:ok.length,none:none.length};
+  const lab={all:'Todas',pend:'Pendentes',over:'Recebido a maior',ok:'Quitadas',none:'Sem venda'};
+  document.getElementById('chips').innerHTML=Object.keys(lab).filter(k=>k==='all'||counts[k]).map(k=>`<button class="chip" data-f="${k}" aria-pressed="${state.filter===k}">${lab[k]} · ${counts[k]}</button>`).join('');
+  const F=filtered(), body=document.getElementById('body');
+  if(!F.length){body.innerHTML=`<tr><td colspan="9" class="empty">${L.length?'Nenhuma nota com esse filtro.':(state.loaded?'Nenhum lançamento com número de nota encontrado no arquivo.':'Carregue o razão em Excel para ver a conciliação por nota.')}</td></tr>`;document.getElementById('foot').innerHTML='';}
+  else{
+    body.innerHTML=F.map(n=>{
+      const o=state.open.has(n.nf), [sl,sc]=ST[n.status];
+      const row=`<tr class="nf${o?' open':''}" data-nf="${n.nf}" tabindex="0" aria-expanded="${o}">
+        <td><span class="caret">▸</span> ${esc(n.nf)}</td><td class="cli">${esc(n.cliente)||'<span style="color:var(--muted)">—</span>'}</td>
+        <td>${fmtD(n.emissao)}</td><td class="num">${n.venda?fmt(n.venda):'—'}</td><td class="num">${n.ajuste?fmt(n.ajuste):'—'}</td>
+        <td class="num">${n.receb?fmt(n.receb):'—'}</td><td class="num">${n.troca?fmt(n.troca):'—'}</td>
+        <td class="num saldo ${n.status}">${fmt(n.saldo)}</td><td><span class="pill ${sc}">${sl}</span></td></tr>`;
+      const det=o?`<tr class="det"><td colspan="9"><table class="mov">${n.movs.map(m=>`<tr><td class="d">${fmtD(m.data)}</td><td class="t"><span class="tag ${m.tipo}">${m.rot}</span></td><td class="h">${esc(m.hist)}</td><td class="num">${m.deb?fmt(m.deb)+' D':''}</td><td class="num">${m.cred?fmt(m.cred)+' C':''}</td></tr>`).join('')}</table></td></tr>`:'';
+      return row+det;
+    }).join('');
+    document.getElementById('foot').innerHTML=`<tr><td colspan="3">Total (${F.length} nota${F.length>1?'s':''})</td>
+      <td class="num">${fmt(sum(F,n=>n.venda))}</td><td class="num">${fmt(sum(F,n=>n.ajuste))}</td><td class="num">${fmt(sum(F,n=>n.receb))}</td>
+      <td class="num">${fmt(sum(F,n=>n.troca))}</td><td class="num">${fmt(sum(F,n=>n.saldo))}</td><td></td></tr>`;
+  }
+  const s=state.res.semNf, sec=document.getElementById('semNf'); sec.hidden=!s.length;
+  document.getElementById('semNfTbl').innerHTML=s.map(m=>`<tr><td class="d">${fmtD(m.data)}</td><td class="h">${esc(m.hist)}</td><td class="num">${m.deb?fmt(m.deb)+' D':''}</td><td class="num">${m.cred?fmt(m.cred)+' C':''}</td></tr>`).join('');
+  document.getElementById('expand').textContent=F.length&&F.every(n=>state.open.has(n.nf))?'Fechar todas':'Abrir todas';
+}
+
+function load(rows,name,info){
+  try{
+    const l=readRows(rows); state.res=reconcile(l); state.open=new Set(); state.filter='all';
+    document.getElementById('srcName').textContent=name;
+    document.getElementById('srcInfo').textContent=info||`${l.length} lançamentos lidos · ${state.res.list.length} notas`;
+    state.loaded=true; render();
+  }catch(e){toast(e.message);}
+}
+
+function handleFile(f){
+  if(!f) return;
+  if(typeof XLSX==='undefined'){toast('A leitura de Excel não carregou. Recarregue a página.');return;}
+  const rd=new FileReader();
+  rd.onload=ev=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
+      load(rows,f.name);
+    }catch(e){toast('Não consegui ler o arquivo: '+e.message);}
+  };
+  rd.readAsArrayBuffer(f);
+}
+
+function exportRows(){
+  const out=[['NF','Cliente','Emissão','Valor da NF','Devoluções/ajustes','Recebido','Veículo na troca','Saldo','Situação']];
+  filtered().forEach(n=>out.push([n.nf,n.cliente,fmtD(n.emissao),n.venda,n.ajuste,n.receb,n.troca,n.saldo,ST[n.status][0]]));
+  return out;
+}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,3200);}
+
+document.getElementById('file').addEventListener('change',e=>handleFile(e.target.files[0]));
+const drop=document.getElementById('drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop',e=>handleFile(e.dataTransfer.files[0]));
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{e.preventDefault();if(!drop.contains(e.target))handleFile(e.dataTransfer.files[0]);});
+
+document.getElementById('chips').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(b){state.filter=b.dataset.f;render();}});
+document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value;render();});
+function toggle(tr){const nf=tr.dataset.nf;state.open.has(nf)?state.open.delete(nf):state.open.add(nf);render();}
+document.getElementById('body').addEventListener('click',e=>{const tr=e.target.closest('tr.nf');if(tr)toggle(tr);});
+document.getElementById('body').addEventListener('keydown',e=>{const tr=e.target.closest('tr.nf');if(tr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();toggle(tr);document.querySelector(`tr.nf[data-nf="${tr.dataset.nf}"]`)?.focus();}});
+document.getElementById('expand').addEventListener('click',()=>{const F=filtered();const all=F.every(n=>state.open.has(n.nf));state.open=all?new Set():new Set(F.map(n=>n.nf));render();});
+document.getElementById('copy').addEventListener('click',()=>{
+  const tsv=exportRows().map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v??'')).join('\t')).join('\n');
+  navigator.clipboard.writeText(tsv).then(()=>toast('Tabela copiada. Cole no Excel com Ctrl+V.'),()=>toast('Não foi possível copiar aqui. Use "Baixar .xlsx".'));
+});
+document.getElementById('xlsx').addEventListener('click',()=>{
+  try{
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.aoa_to_sheet(exportRows()); ws['!cols']=[{wch:8},{wch:38},{wch:11},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:20}];
+    XLSX.utils.book_append_sheet(wb,ws,'Conciliação');
+    const det=[['NF','Cliente','Data','Tipo','Histórico','Débito','Crédito']];
+    filtered().forEach(n=>n.movs.forEach(m=>det.push([n.nf,n.cliente,fmtD(m.data),m.rot,m.hist,m.deb||'',m.cred||''])));
+    const ws2=XLSX.utils.aoa_to_sheet(det); ws2['!cols']=[{wch:8},{wch:34},{wch:11},{wch:24},{wch:70},{wch:14},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,ws2,'Movimentos');
+    XLSX.writeFile(wb,'conciliacao_por_nf.xlsx');
+  }catch(e){toast('O download não está disponível nesta visualização. Use "Copiar para Excel".');}
+});
+
+render();
+</script>
+
+</body>
+</html>
