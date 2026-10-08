@@ -179,16 +179,6 @@ function parseXml(nome,texto){
     const tp=txt(ev,'tpEvento');const ch=txt(ev,'chNFe')||txt(ev,'chCTe');
     return {tipo:'evento',nome,cancel:tp==='110111'||tp==='110115',chave:ch};
   }
-  const nfe=tag(d,'infNFe');
-  if(nfe){
-    const ide=tag(nfe,'ide'),emit=tag(nfe,'emit'),dest=tag(nfe,'dest');
-    let chave=txt(d,'chNFe')||(nfe.getAttribute('Id')||'').replace(/^NFe/,'');
-    return {tipo:'NF-e',nome,chave,numero:parseInt(txt(ide,'nNF'),10),serie:parseInt(txt(ide,'serie'),10),
-      emissao:(txt(ide,'dhEmi')||txt(ide,'dEmi')).slice(0,10),tpNF:txt(ide,'tpNF'),
-      emitDoc:txt(emit,'CNPJ')||txt(emit,'CPF'),emitNome:txt(emit,'xNome'),
-      destDoc:dest?(txt(dest,'CNPJ')||txt(dest,'CPF')):'',natOp:txt(ide,'natOp'),
-      valor:parseFloat(txt(tag(nfe,'ICMSTot'),'vNF')||'NaN'),cStat:txt(tag(d,'infProt'),'cStat')};
-  }
   const cte=tag(d,'infCte');
   if(cte){
     const ide=tag(cte,'ide'),emit=tag(cte,'emit');
@@ -196,6 +186,16 @@ function parseXml(nome,texto){
     return {tipo:'CT-e',nome,chave,numero:parseInt(txt(ide,'nCT'),10),serie:parseInt(txt(ide,'serie'),10),
       emissao:(txt(ide,'dhEmi')||'').slice(0,10),tpNF:'',emitDoc:txt(emit,'CNPJ')||txt(emit,'CPF'),emitNome:txt(emit,'xNome'),
       destDoc:'',natOp:txt(ide,'natOp'),valor:parseFloat(txt(tag(cte,'vPrest'),'vTPrest')||'NaN'),cStat:txt(tag(d,'infProt'),'cStat')};
+  }
+  const nfe=tag(d,'infNFe');
+  if(nfe&&tag(nfe,'ide')){
+    const ide=tag(nfe,'ide'),emit=tag(nfe,'emit'),dest=tag(nfe,'dest');
+    let chave=txt(d,'chNFe')||(nfe.getAttribute('Id')||'').replace(/^NFe/,'');
+    return {tipo:'NF-e',nome,chave,numero:parseInt(txt(ide,'nNF'),10),serie:parseInt(txt(ide,'serie'),10),
+      emissao:(txt(ide,'dhEmi')||txt(ide,'dEmi')).slice(0,10),tpNF:txt(ide,'tpNF'),
+      emitDoc:txt(emit,'CNPJ')||txt(emit,'CPF'),emitNome:txt(emit,'xNome'),
+      destDoc:dest?(txt(dest,'CNPJ')||txt(dest,'CPF')):'',natOp:txt(ide,'natOp'),
+      valor:parseFloat(txt(tag(nfe,'ICMSTot'),'vNF')||'NaN'),cStat:txt(tag(d,'infProt'),'cStat')};
   }
   return {tipo:'outro',nome};
 }
@@ -218,6 +218,7 @@ function cruzar(){
   const docs=[],ign=[],vistos=new Set();
   for(const x of st.xmls){
     if(x.tipo==='NF-e'||x.tipo==='CT-e'){
+      if(isNaN(x.numero)){ign.push({...x,motivo:'Não foi possível ler o número do documento'});continue;}
       if(x.chave&&vistos.has(x.chave)){ign.push({...x,motivo:'XML duplicado'});continue;}
       vistos.add(x.chave);
       if(ignSaida&&x.tipo==='NF-e'&&x.tpNF==='1'&&cnpj&&x.emitDoc===cnpj){ign.push({...x,motivo:'Saída da própria empresa'});continue;}
