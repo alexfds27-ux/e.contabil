@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>SPED H010 Conta Contábil</title>
+<style>
+.ec-voltar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 20px;background:#ffffff;border-bottom:1px solid #dde4ec;font:500 14px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 2px 8px rgba(18,35,59,.05)}
+.ec-voltar a{color:#167a6e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px}
+.ec-voltar a:hover{background:#e3f3ee}
+.ec-voltar span{color:#4f5f73}
+@media (prefers-color-scheme:dark){.ec-voltar{background:#16212f;border-color:#26364a}.ec-voltar a{color:#3fc6a0}.ec-voltar a:hover{background:#16332c}.ec-voltar span{color:#9fb0c3}}
+</style>
+</head>
+<body>
+<div class="ec-voltar"><a href="index.html">&larr; Central de Automações</a><span>e.contabil projetos</span></div>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: coluna única de ferramenta — entrada, resumo, tabela de linhas alteradas */
+:root{
+  --bg:#f5f6f4; --surface:#ffffff; --fg:#1d2420; --muted:#5d6b63; --line:#d9ded9;
+  --accent:#1e6a4f; --accent-fg:#ffffff; --add:#e3f2ea; --add-fg:#145238; --warn:#8a5a00; --warn-bg:#fbf1dc;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141917; --surface:#1c2320; --fg:#e4ebe7; --muted:#9aa8a0; --line:#2f3934;
+  --accent:#4fb58c; --accent-fg:#0d1512; --add:#173a2c; --add-fg:#9fe0c3; --warn:#e8b65a; --warn-bg:#3a2e14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --surface:#1c2320; --fg:#e4ebe7; --muted:#9aa8a0; --line:#2f3934;
+  --accent:#4fb58c; --accent-fg:#0d1512; --add:#173a2c; --add-fg:#9fe0c3; --warn:#e8b65a; --warn-bg:#3a2e14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:grid;gap:22px}
+header h1{font-size:1.55rem;font-weight:600;margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--muted);max-width:68ch}
+code,.mono{font-family:var(--mono);font-size:.88em}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;display:grid;gap:14px}
+.drop{border:2px dashed var(--line);border-radius:8px;padding:26px 16px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over,.drop:focus-visible{border-color:var(--accent);outline:none}
+.drop strong{display:block;font-weight:600}
+.drop span{color:var(--muted);font-size:.9rem}
+.opts{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+.opts label{display:flex;gap:8px;align-items:center}
+input[type=text]{font-family:var(--mono);font-size:1rem;width:7.5em;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{border-left:3px solid var(--line);padding:2px 0 2px 12px}
+.stat b{display:block;font-size:1.6rem;font-weight:600;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+.stat.hl{border-color:var(--accent)}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.file{font-family:var(--mono);font-size:.88rem;color:var(--muted);min-width:0;overflow-wrap:anywhere}
+button{font:inherit;font-weight:600;padding:9px 16px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-fg);cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--mono);font-size:.82rem;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.note{font-size:.88rem;padding:8px 12px;border-radius:6px;background:var(--warn-bg);color:var(--warn)}
+.msg{font-size:.9rem;color:var(--muted)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:500}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+td.mono{font-family:var(--mono)}
+td .new{background:var(--add);color:var(--add-fg);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-weight:500}
+tr:last-child td{border-bottom:0}
+.raw{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+h2{font-size:1rem;margin:0;font-weight:600}
+.tag{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--warn);background:var(--warn-bg);padding:2px 8px;border-radius:4px;margin-left:8px;vertical-align:middle}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>SPED Fiscal · Conta contábil no H010</h1>
+    <p>Envie o arquivo da EFD ICMS/IPI. A ferramenta encontra os registros <code>|H010|</code> (inventário) com o campo COD_CTA vazio, preenche com a conta informada e devolve o TXT pronto para importar no PVA. O restante do arquivo fica byte a byte igual.</p>
+  </header>
+
+  <section class="panel">
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Selecionar arquivo do SPED">
+      <strong>Arraste o arquivo .txt do SPED aqui</strong>
+      <span>ou clique para escolher</span>
+      <input type="file" id="fileIn" accept=".txt,text/plain" hidden>
+    </div>
+    <div class="opts">
+      <label for="conta">Conta contábil <input type="text" id="conta" value="175" inputmode="numeric"></label>
+      <label for="todas"><input type="checkbox" id="todas"> Substituir também as linhas que já têm outra conta</label>
+    </div>
+  </section>
+
+  <section class="panel" id="result">
+    <div class="row">
+      <h2 id="resTitle">Resultado</h2>
+      <span class="file" id="fname"></span>
+    </div>
+    <div class="stats">
+      <div class="stat"><small>Linhas H010</small><b id="sTotal">0</b></div>
+      <div class="stat"><small>Já com conta</small><b id="sOk">0</b></div>
+      <div class="stat hl"><small>Corrigidas</small><b id="sFix">0</b></div>
+    </div>
+    <div id="contasBox" hidden>
+      <div class="msg" style="margin-bottom:6px">Contas encontradas no H010 antes da correção:</div>
+      <div class="chips" id="contas"></div>
+    </div>
+    <div class="note" id="note" hidden></div>
+    <div class="row">
+      <span class="msg" id="status"></span>
+      <button id="btnSave" disabled>Baixar arquivo corrigido</button>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:10px">
+    <h2>Linhas alteradas</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Linha</th><th>Item</th><th>Unid</th><th class="n">Qtd</th><th class="n">Vl. item</th><th>Conta antes</th><th>Conta depois</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const SAMPLE = "|H005|30092026|48780,19|01|\r\n|H010|052005|64|117,000|97,744400|11436,09|0|||175|11436,09|\r\n|H010|052006|64|370,000|100,930000|37344,10|0||||37344,10|\r\n";
+  let current = null; // {name, bytes(binary string), isSample}
+  let output = null;
+
+  const toBin = buf => { const u = new Uint8Array(buf); let s = ""; const C = 0x8000;
+    for (let i = 0; i < u.length; i += C) s += String.fromCharCode.apply(null, u.subarray(i, i + C)); return s; };
+  const toBytes = s => { const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255; return u; };
+
+  function process() {
+    if (!current) return;
+    const conta = $("conta").value.trim();
+    const todas = $("todas").checked;
+    const lines = current.bin.split("\n");
+    let total = 0, ok = 0, fixed = [], contas = {}, weird = 0;
+    for (let i = 0; i < lines.length; i++) {
+      let ln = lines[i];
+      if (!ln.startsWith("|H010|")) continue;
+      total++;
+      const cr = ln.endsWith("\r");
+      const body = cr ? ln.slice(0, -1) : ln;
+      const f = body.split("|");
+      // |H010|COD_ITEM|UNID|QTD|VL_UNIT|VL_ITEM|IND_PROP|COD_PART|TXT_COMPL|COD_CTA|VL_ITEM_IR|
+      if (f.length < 12) { weird++; continue; }
+      const antes = f[10].trim();
+      if (antes) contas[antes] = (contas[antes] || 0) + 1;
+      if (!conta) continue;
+      if (antes === "" || (todas && antes !== conta)) {
+        f[10] = conta;
+        lines[i] = f.join("|") + (cr ? "\r" : "");
+        fixed.push({ n: i + 1, item: f[2], un: f[3], qtd: f[4], vl: f[6], antes, depois: conta });
+      } else ok++;
+    }
+    output = fixed.length ? lines.join("\n") : null;
+    render(total, ok, fixed, contas, weird, conta);
+  }
+
+  function render(total, ok, fixed, contas, weird, conta) {
+    $("resTitle").innerHTML = current.isSample ? 'Resultado <span class="tag">Exemplo</span>' : "Resultado";
+    $("fname").textContent = current.isSample ? "duas linhas de exemplo" : current.name;
+    $("sTotal").textContent = total; $("sOk").textContent = ok; $("sFix").textContent = fixed.length;
+    const ks = Object.keys(contas).sort((a, b) => contas[b] - contas[a]);
+    $("contasBox").hidden = !ks.length;
+    $("contas").replaceChildren(...ks.map(k => { const c = document.createElement("span"); c.className = "chip"; c.textContent = k + " · " + contas[k]; return c; }));
+    const notes = [];
+    if (!conta) notes.push("Informe a conta contábil.");
+    if (weird) notes.push(weird + " linha(s) H010 com número de campos diferente do layout foram ignoradas.");
+    if (ks.some(k => k !== conta) && !$("todas").checked) notes.push("Há linhas com conta diferente de " + (conta || "?") + ". Elas foram mantidas; marque a opção acima se quiser padronizar.");
+    $("note").hidden = !notes.length; $("note").textContent = notes.join(" ");
+    $("status").textContent = !total ? "Nenhum registro H010 no arquivo." : fixed.length ? fixed.length + " linha(s) recebem a conta " + conta + ". Nenhuma linha foi incluída ou excluída, então o bloco 9 continua válido." : "Nada a corrigir: todas as linhas H010 já têm conta.";
+    $("btnSave").disabled = !output || current.isSample;
+    const tb = $("tbody");
+    if (!fixed.length) { tb.innerHTML = '<tr><td colspan="7" class="msg">Nenhuma linha alterada.</td></tr>'; return; }
+    tb.replaceChildren(...fixed.map(r => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td class="n"></td><td class="mono"></td><td></td><td class="n"></td><td class="n"></td><td class="mono"></td><td><span class="new"></span></td>`;
+      const t = tr.children; t[0].textContent = r.n; t[1].textContent = r.item; t[2].textContent = r.un;
+      t[3].textContent = r.qtd; t[4].textContent = r.vl; t[5].textContent = r.antes || "(vazio)"; t[6].firstChild.textContent = r.depois;
+      return tr;
+    }));
+  }
+
+  function loadFile(file) {
+    if (!file) return;
+    const rd = new FileReader();
+    rd.onload = () => { current = { name: file.name, bin: toBin(rd.result), isSample: false }; process(); };
+    rd.onerror = () => { $("status").textContent = "Não consegui ler o arquivo. Tente novamente."; };
+    rd.readAsArrayBuffer(file);
+  }
+
+  const drop = $("drop"), fin = $("fileIn");
+  drop.addEventListener("click", () => fin.click());
+  drop.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fin.click(); } });
+  fin.addEventListener("change", () => { loadFile(fin.files[0]); fin.value = ""; });
+  ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => loadFile(e.dataTransfer.files[0]));
+  $("conta").addEventListener("input", process);
+  $("todas").addEventListener("change", process);
+
+  function outName() {
+    const n = current.name.replace(/\.txt$/i, "");
+    return n + "_H010_conta" + ($("conta").value.trim() || "") + ".txt";
+  }
+
+  let dl = null;
+  const dlReady = (window.claude && window.claude.use) ? window.claude.use("downloads").then(d => (dl = d)).catch(() => null) : Promise.resolve(null);
+
+  $("btnSave").addEventListener("click", async () => {
+    if (!output) return;
+    const bytes = toBytes(output), name = outName();
+    if (window.claude && window.claude.use) {
+      await dlReady;
+      if (!dl) { $("status").textContent = "Download indisponível nesta visualização. Abra a ferramenta no navegador."; return; }
+      try { await dl.save({ filename: name, data: new Blob([bytes]) }); $("status").textContent = "Arquivo salvo: " + name; }
+      catch (e) { $("status").textContent = e && e.code === "declined" ? "Download cancelado." : "Não foi possível salvar o arquivo (" + (e && e.code || "erro") + ")."; }
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([bytes], { type: "text/plain" }));
+    a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    $("status").textContent = "Arquivo gerado: " + name;
+  });
+
+  current = { name: "exemplo.txt", bin: SAMPLE, isSample: true };
+  process();
+})();
+</script>
+
+</body>
+</html>

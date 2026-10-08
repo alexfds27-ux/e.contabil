@@ -352,6 +352,19 @@ const FERRAMENTAS = [
     botao: "Carregar Relatório e XMLs",
     previa: "Notas não lançadas"
   },
+  {
+    id: "spedh010",
+    aba: "SPED H010 Conta Contábil",
+    curto: "SPED H010",
+    titulo: "Corrigir Conta do Inventário (H010)",
+    descricao: "Suba o TXT do SPED Fiscal e a ferramenta preenche a conta contábil vazia nos registros H010 (padrão 175), sem mexer no restante do arquivo.",
+    resumo: "Preenche COD_CTA vazio no H010 do SPED Fiscal.",
+    tags: ["SPED ICMS/IPI", "Bloco H", "TXT"],
+    icone: "code",
+    href: "sped-h010-conta.html",
+    botao: "Carregar Arquivo do SPED",
+    previa: "Linhas H010 corrigidas"
+  },
 ];
 
 const $ = id => document.getElementById(id);
