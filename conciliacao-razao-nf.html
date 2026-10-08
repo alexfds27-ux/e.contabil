@@ -99,9 +99,37 @@ h2{font-family:var(--f-display);font-size:18px;margin:0}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px}
 @media (prefers-reduced-motion:reduce){.caret{transition:none}}
 @media (max-width:520px){h1{font-size:23px}#q{width:100%}.tools{width:100%}}
+.print-head,.print-foot{display:none}
+#empresa{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--fg);width:70px}
+@page{size:A4 landscape;margin:10mm}
+@media print{
+  :root,:root[data-theme="dark"],:root:not([data-theme="light"]){
+    --bg:#ffffff;--surface:#ffffff;--fg:#111a20;--muted:#4a5862;--line:#c9d2d8;
+    --accent:#1d5d78;--accent-soft:#e1edf2;--ok:#1f7a4d;--ok-soft:#e2f2ea;--warn:#a35d00;--warn-soft:#fbefdc;
+    --over:#6a3fa0;--over-soft:#efe7f8;--none:#4a5862;--none-soft:#e9edef;color-scheme:light}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff;font-size:11px}
+  .ec-voltar,header,.drop,.bar,.note,#toast,.caret{display:none!important}
+  .wrap{max-width:none;padding:0;gap:12px}
+  .print-head{display:block;border-bottom:2px solid var(--fg);padding-bottom:6px}
+  .print-head h1{font-size:17px;margin:0;letter-spacing:.02em}
+  .print-head div{color:var(--muted);font-size:10.5px;margin-top:2px}
+  .print-foot{display:block;font-size:9.5px;color:var(--muted);text-align:right}
+  .tiles{grid-template-columns:repeat(6,1fr);gap:6px}
+  .tile{padding:6px 8px;border-radius:6px}.tile .v{font-size:13px}
+  .tablebox{overflow:visible;border-radius:6px}
+  table{min-width:0}
+  th{position:static;font-size:9px}
+  th,td{padding:5px 7px}
+  tr{break-inside:avoid}
+  thead{display:table-header-group}
+  tr.nf:hover td{background:none}
+  .mov td{font-size:10px;padding:3px 7px}.mov td.d{width:80px}.mov td.t{width:150px}
+}
 </style>
 
 <div class="wrap">
+  <div class="print-head"><h1 id="pTitle">RELATÓRIO DE CONFERÊNCIA DE RECEBIMENTOS</h1><div id="pSub"></div></div>
   <header>
     <div>
       <div class="eyebrow">Clientes · Razão contábil</div>
@@ -124,6 +152,8 @@ h2{font-family:var(--f-display);font-size:18px;margin:0}
       <button id="expand">Abrir todas</button>
       <button id="copy">Copiar para Excel</button>
       <button id="xlsx">Baixar .xlsx</button>
+      <label for="empresa" style="font-size:12.5px;color:var(--muted)">Empresa</label><input id="empresa" value="KR" aria-label="Sigla da empresa no título do PDF">
+      <button id="pdf" class="primary">Imprimir / PDF</button>
     </div>
   </div>
 
@@ -146,6 +176,7 @@ h2{font-family:var(--f-display);font-size:18px;margin:0}
     <div class="tablebox"><table class="mov" id="semNfTbl" style="min-width:600px"></table></div>
   </section>
 
+  <div class="print-foot" id="pFoot"></div>
   <p class="note"><b>Como a ferramenta lê o histórico.</b> Linha a débito com "VENDA" abre a nota e o nome após "P/" é o cliente. Créditos com "COMPRA" são o veículo recebido como parte do pagamento; o número considerado é o da nota de venda citada no fim do histórico (ex.: "COMPRA … NF Nº 4447 … NF 4446" vai para a 4446). Outros débitos da mesma nota (devolução de valor ao cliente) aumentam o valor a receber. Saldo positivo é pendência; saldo negativo é valor recebido a maior. Recebimentos de notas sem venda no período aparecem como "Sem venda no período".</p>
 </div>
 <div class="toast" id="toast" hidden></div>
@@ -351,6 +382,26 @@ document.getElementById('xlsx').addEventListener('click',()=>{
   }catch(e){toast('O download não está disponível nesta visualização. Use "Copiar para Excel".');}
 });
 
+
+const MESES=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+function mesRef(){
+  const cont={}; let ds=state.res.list.filter(n=>n.temVenda&&n.emissao).map(n=>n.emissao);
+  if(!ds.length) ds=state.res.list.flatMap(n=>n.movs.map(m=>m.data)).filter(Boolean);
+  ds.forEach(d=>{const k=d.getUTCFullYear()*12+d.getUTCMonth(); cont[k]=(cont[k]||0)+1;});
+  const ks=Object.keys(cont).sort((a,b)=>cont[b]-cont[a]||b-a); if(!ks.length) return '';
+  const k=+ks[0]; return MESES[k%12]+'/'+Math.floor(k/12);
+}
+document.getElementById('pdf').addEventListener('click',()=>{
+  if(!state.res.list.length){toast('Carregue o razão antes de imprimir.');return;}
+  const emp=document.getElementById('empresa').value.trim().toUpperCase();
+  const mes=mesRef();
+  document.getElementById('pTitle').textContent='RELATÓRIO DE CONFERÊNCIA DE RECEBIMENTOS'+(emp?' '+emp:'')+(mes?' MÊS '+mes:'');
+  const lab={all:'todas as notas',pend:'somente pendentes',over:'somente recebido a maior',ok:'somente quitadas',none:'somente sem venda no período'};
+  document.getElementById('pSub').textContent='Arquivo: '+document.getElementById('srcName').textContent+' · Notas: '+lab[state.filter]+(state.q?' · Busca: "'+state.q+'"':'');
+  document.getElementById('pFoot').textContent='Emitido em '+new Date().toLocaleString('pt-BR')+' · e.contabil projetos';
+  const t=document.title; document.title=document.getElementById('pTitle').textContent;
+  window.print(); setTimeout(()=>document.title=t,500);
+});
 render();
 </script>
 
