@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Conferência XML × Entradas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ferramenta de livro fiscal — duas áreas de envio lado a lado, resumo em faixa, tabelas com abas */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18232b; --muted:#5c6b75; --line:#d9e0e4;
+  --accent:#1d5c7a; --accent-soft:#e3eef4;
+  --ok:#2d7a4f; --ok-soft:#e4f2ea; --warn:#9a6a00; --warn-soft:#fbf1d9; --bad:#b03a2e; --bad-soft:#f8e4e1;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12181c; --surface:#1a2228; --ink:#e4eaee; --muted:#93a3ad; --line:#2c3840;
+  --accent:#6fb3d6; --accent-soft:#1d3240;
+  --ok:#6cc391; --ok-soft:#173226; --warn:#e2b24c; --warn-soft:#352a12; --bad:#ef8a7e; --bad-soft:#3a1d1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12181c; --surface:#1a2228; --ink:#e4eaee; --muted:#93a3ad; --line:#2c3840;
+  --accent:#6fb3d6; --accent-soft:#1d3240;
+  --ok:#6cc391; --ok-soft:#173226; --warn:#e2b24c; --warn-soft:#352a12; --bad:#ef8a7e; --bad-soft:#3a1d1a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 48px;display:flex;flex-direction:column;gap:22px}
+header h1{font-size:1.6rem;margin:0 0 4px;font-weight:700;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted);max-width:68ch}
+.eyebrow{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:6px}
+.drops{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.drop{background:var(--surface);border:1.5px dashed var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px;cursor:pointer;transition:border-color .15s,background .15s;min-width:0}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.drop .step{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.drop strong{font-size:1.05rem}
+.drop small{color:var(--muted)}
+.drop .status{font-family:var(--mono);font-size:.82rem;color:var(--accent);word-break:break-word}
+.drop input{position:absolute;width:1px;height:1px;opacity:0}
+.opts{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;color:var(--muted);font-size:.9rem}
+.opts label{display:flex;gap:8px;align-items:center;cursor:pointer}
+button{font:inherit;cursor:pointer;border-radius:7px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
+button:disabled{opacity:.5;cursor:not-allowed}
+.banner{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:10px 14px;font-size:.9rem}
+.banner[data-kind="err"]{background:var(--bad-soft);color:var(--bad)}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tile{background:var(--surface);padding:14px 16px}
+.tile .n{font-size:1.7rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.tile .l{font-size:.8rem;color:var(--muted)}
+.tile.bad .n{color:var(--bad)} .tile.ok .n{color:var(--ok)} .tile.warn .n{color:var(--warn)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--line)}
+.tab{border:none;border-bottom:2px solid transparent;border-radius:0;background:none;padding:8px 12px;color:var(--muted);font-weight:500}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .c{font-family:var(--mono);font-size:.78rem;background:var(--accent-soft);color:var(--accent);border-radius:20px;padding:1px 7px;margin-left:6px}
+.panel{display:flex;flex-direction:column;gap:12px}
+.panel-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.panel-head p{margin:0;color:var(--muted);font-size:.9rem;max-width:70ch}
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:.86rem;font-variant-numeric:tabular-nums}
+th{text-align:left;font-weight:600;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.num{text-align:right;white-space:nowrap}
+.key{font-family:var(--mono);font-size:.78rem;white-space:nowrap}
+.copy{padding:2px 8px;font-size:.75rem;margin-left:6px}
+.pill{display:inline-block;font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.mut{background:var(--accent-soft);color:var(--accent)}
+.empty{padding:22px;color:var(--muted);text-align:center}
+.foot{color:var(--muted);font-size:.82rem;max-width:80ch}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Escrita fiscal · conferência mensal</div>
+    <h1>Conferência XML × Acompanhamento de Entradas</h1>
+    <p>Envie o PDF do relatório de Acompanhamento de Entradas e os XMLs do mês (NF-e e CT-e, soltos ou em .zip). A ferramenta cruza pelo número da nota e mostra o que está nos XMLs e não foi lançado.</p>
+  </header>
+
+  <div class="drops">
+    <label class="drop" id="dropPdf">
+      <span class="step">Passo 1</span>
+      <strong>Relatório de entradas (PDF)</strong>
+      <small>Acompanhamento de Entradas do sistema, período completo do mês.</small>
+      <span class="status" id="pdfStatus">Nenhum arquivo</span>
+      <input type="file" id="inPdf" accept="application/pdf,.pdf">
+    </label>
+    <label class="drop" id="dropXml">
+      <span class="step">Passo 2</span>
+      <strong>XMLs do mês</strong>
+      <small>Selecione vários arquivos .xml ou um .zip. Pode arrastar e soltar aqui.</small>
+      <span class="status" id="xmlStatus">Nenhum arquivo</span>
+      <input type="file" id="inXml" accept=".xml,.zip,text/xml,application/zip" multiple>
+    </label>
+  </div>
+
+  <div class="opts">
+    <label><input type="checkbox" id="optSaida" checked> Ignorar notas de saída emitidas pela própria empresa</label>
+    <label><input type="checkbox" id="optSerie"> Exigir série igual (além do número)</label>
+    <button class="primary" id="btnRun" disabled>Conferir</button>
+    <button id="btnClear">Limpar</button>
+  </div>
+
+  <div class="banner" id="banner"></div>
+
+  <div class="summary" id="summary"></div>
+
+  <div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+  </div>
+  <div class="panel" id="panel"></div>
+
+  <p class="foot">Tudo é processado no seu navegador; nenhum arquivo é enviado para fora. O cruzamento é pelo número da nota (sem zeros à esquerda). Quando o número aparece no relatório mas o valor do XML não aparece na mesma linha, a nota vai para "Conferir valor".</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function(){
+const $=s=>document.getElementById(s);
+const st={report:null,xmls:[],cancelados:new Set(),ignorados:[],tab:'falta',result:null,exemplo:true};
+
+try{ if(window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; } }catch(e){}
+
+const fmt=n=>(n==null||isNaN(n))?'—':n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtCnpj=d=>{d=(d||'').replace(/\D/g,'');if(d.length===14)return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5');if(d.length===11)return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,'$1.$2.$3-$4');return d;};
+const fmtData=s=>{if(!s)return'—';const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[3]}/${m[2]}/${m[1]}`:s;};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function banner(msg,kind){const b=$('banner');b.hidden=!msg;b.textContent=msg||'';b.dataset.kind=kind||'';}
+
+/* ---------- PDF ---------- */
+const ROW_RE=/(\d{2}\/\d{2}\/\d{4})\s+(\d{1,9})\s+(\d{1,3})\s+(\d{2})\b/g;
+async function lerPdf(file){
+  if(!window.pdfjsLib) throw new Error('Não foi possível carregar o leitor de PDF. Verifique a conexão e recarregue a página.');
+  const doc=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+  let porLinha=[],fluxo=[],cnpj='',empresa='';
+  for(let p=1;p<=doc.numPages;p++){
+    const tc=await (await doc.getPage(p)).getTextContent();
+    let s='';const linhas=[];
+    for(const it of tc.items){
+      if(!('str' in it))continue;
+      s+=it.str+(it.hasEOL?'\n':' ');
+      const y=it.transform[5],x=it.transform[4];
+      let L=linhas.find(l=>Math.abs(l.y-y)<2.5);
+      if(!L){L={y,its:[]};linhas.push(L);}
+      L.its.push({x,s:it.str});
+    }
+    fluxo.push(s);
+    linhas.sort((a,b)=>b.y-a.y);
+    for(const L of linhas){L.its.sort((a,b)=>a.x-b.x);porLinha.push(L.its.map(i=>i.s).join(' ').replace(/\s+/g,' ').trim());}
+    if(p===1){const m=s.match(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/);if(m)cnpj=m[0].replace(/\D/g,'');
+      const first=s.split('\n').map(x=>x.trim()).find(x=>x.length>3);empresa=first||'';}
+  }
+  const extrai=linhas=>{const rows=[];for(const ln of linhas){let m;ROW_RE.lastIndex=0;while((m=ROW_RE.exec(ln))){rows.push({data:m[1],nota:parseInt(m[2],10),serie:parseInt(m[3],10),especie:m[4],linha:ln});}}return rows;};
+  const a=extrai(porLinha);
+  const b=extrai(fluxo.join('\n').split('\n'));
+  const rows=a.length>=b.length?a:b;
+  const extra=a.length>=b.length?b:a;
+  const mapa=new Map();
+  for(const r of rows){if(!mapa.has(r.nota))mapa.set(r.nota,[]);mapa.get(r.nota).push(r);}
+  for(const r of extra){if(!mapa.has(r.nota))mapa.set(r.nota,[r]);}
+  return {rows,mapa,cnpj,empresa,paginas:doc.numPages};
+}
+
+/* ---------- XML ---------- */
+const tag=(el,n)=>el?el.getElementsByTagNameNS('*',n)[0]||null:null;
+const txt=(el,n)=>{const t=tag(el,n);return t?t.textContent.trim():'';};
+function parseXml(nome,texto){
+  const d=new DOMParser().parseFromString(texto,'text/xml');
+  if(d.getElementsByTagName('parsererror').length) return {tipo:'erro',nome};
+  const ev=tag(d,'infEvento');
+  if(ev && !tag(d,'infNFe') && !tag(d,'infCte')){
+    const tp=txt(ev,'tpEvento');const ch=txt(ev,'chNFe')||txt(ev,'chCTe');
+    return {tipo:'evento',nome,cancel:tp==='110111'||tp==='110115',chave:ch};
+  }
+  const nfe=tag(d,'infNFe');
+  if(nfe){
+    const ide=tag(nfe,'ide'),emit=tag(nfe,'emit'),dest=tag(nfe,'dest');
+    let chave=txt(d,'chNFe')||(nfe.getAttribute('Id')||'').replace(/^NFe/,'');
+    return {tipo:'NF-e',nome,chave,numero:parseInt(txt(ide,'nNF'),10),serie:parseInt(txt(ide,'serie'),10),
+      emissao:(txt(ide,'dhEmi')||txt(ide,'dEmi')).slice(0,10),tpNF:txt(ide,'tpNF'),
+      emitDoc:txt(emit,'CNPJ')||txt(emit,'CPF'),emitNome:txt(emit,'xNome'),
+      destDoc:dest?(txt(dest,'CNPJ')||txt(dest,'CPF')):'',natOp:txt(ide,'natOp'),
+      valor:parseFloat(txt(tag(nfe,'ICMSTot'),'vNF')||'NaN'),cStat:txt(tag(d,'infProt'),'cStat')};
+  }
+  const cte=tag(d,'infCte');
+  if(cte){
+    const ide=tag(cte,'ide'),emit=tag(cte,'emit');
+    let chave=txt(d,'chCTe')||(cte.getAttribute('Id')||'').replace(/^CTe/,'');
+    return {tipo:'CT-e',nome,chave,numero:parseInt(txt(ide,'nCT'),10),serie:parseInt(txt(ide,'serie'),10),
+      emissao:(txt(ide,'dhEmi')||'').slice(0,10),tpNF:'',emitDoc:txt(emit,'CNPJ')||txt(emit,'CPF'),emitNome:txt(emit,'xNome'),
+      destDoc:'',natOp:txt(ide,'natOp'),valor:parseFloat(txt(tag(cte,'vPrest'),'vTPrest')||'NaN'),cStat:txt(tag(d,'infProt'),'cStat')};
+  }
+  return {tipo:'outro',nome};
+}
+async function lerXmls(files){
+  const out=[];
+  for(const f of files){
+    if(/\.zip$/i.test(f.name)){
+      if(!window.JSZip) throw new Error('Não foi possível carregar o leitor de .zip. Envie os XMLs soltos.');
+      const z=await JSZip.loadAsync(await f.arrayBuffer());
+      const ents=Object.values(z.files).filter(e=>!e.dir&&/\.xml$/i.test(e.name));
+      for(const e of ents){out.push(parseXml(e.name.split('/').pop(),await e.async('string')));}
+    }else if(/\.xml$/i.test(f.name)){out.push(parseXml(f.name,await f.text()));}
+  }
+  return out;
+}
+
+/* ---------- Cruzamento ---------- */
+function cruzar(){
+  const R=st.report,cnpj=R.cnpj,porSerie=$('optSerie').checked,ignSaida=$('optSaida').checked;
+  const docs=[],ign=[],vistos=new Set();
+  for(const x of st.xmls){
+    if(x.tipo==='NF-e'||x.tipo==='CT-e'){
+      if(x.chave&&vistos.has(x.chave)){ign.push({...x,motivo:'XML duplicado'});continue;}
+      vistos.add(x.chave);
+      if(ignSaida&&x.tipo==='NF-e'&&x.tpNF==='1'&&cnpj&&x.emitDoc===cnpj){ign.push({...x,motivo:'Saída da própria empresa'});continue;}
+      docs.push(x);
+    }else if(x.tipo==='erro')ign.push({...x,motivo:'Arquivo inválido'});
+    else if(x.tipo==='outro')ign.push({...x,motivo:'Não é NF-e nem CT-e'});
+  }
+  const usados=new Set(),falta=[],valor=[],ok=[];
+  for(const x of docs){
+    const cancel=st.cancelados.has(x.chave)||x.cStat==='101';
+    let rows=R.mapa.get(x.numero)||[];
+    if(porSerie)rows=rows.filter(r=>r.serie===x.serie);
+    if(!rows.length){falta.push({...x,cancel});continue;}
+    rows.forEach(r=>usados.add(r));
+    const v=fmt(x.valor);
+    const bate=isNaN(x.valor)||rows.some(r=>r.linha.includes(v));
+    const serieOk=rows.some(r=>r.serie===x.serie);
+    const item={...x,cancel,rows,serieOk};
+    (bate?ok:valor).push(item);
+  }
+  const semXml=R.rows.filter(r=>!usados.has(r)&&!docs.some(x=>x.numero===r.nota));
+  falta.sort((a,b)=>(a.emissao||'').localeCompare(b.emissao||'')||a.numero-b.numero);
+  return {falta,valor,ok,semXml,ign};
+}
+
+/* ---------- Render ---------- */
+function copiar(texto,btn){
+  const done=()=>{if(btn){const t=btn.textContent;btn.textContent='Copiado';setTimeout(()=>btn.textContent=t,1200);}};
+  try{navigator.clipboard.writeText(texto).then(done,()=>fallback());}catch(e){fallback();}
+  function fallback(){const ta=document.createElement('textarea');ta.value=texto;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){}ta.remove();}
+}
+function render(){
+  const r=st.result;
+  if(!r){$('summary').innerHTML='';$('tabs').innerHTML='';$('panel').innerHTML='';return;}
+  $('summary').innerHTML=[
+    ['XMLs conferidos',r.falta.length+r.valor.length+r.ok.length,''],
+    ['Não lançados',r.falta.length,r.falta.length?'bad':'ok'],
+    ['Conferir valor',r.valor.length,r.valor.length?'warn':''],
+    ['Lançados',r.ok.length,'ok'],
+    ['No relatório sem XML',r.semXml.length,'']
+  ].map(([l,n,c])=>`<div class="tile ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+  const tabs=[['falta','Não lançados',r.falta.length],['valor','Conferir valor',r.valor.length],['ok','Lançados',r.ok.length],['sem','No relatório sem XML',r.semXml.length],['ign','Ignorados',r.ign.length]];
+  $('tabs').innerHTML=tabs.map(([k,l,n])=>`<button class="tab" role="tab" data-k="${k}" aria-selected="${st.tab===k}">${l}<span class="c">${n}</span></button>`).join('');
+  $('tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{st.tab=b.dataset.k;render();});
+  const P=$('panel');
+  const head=(desc,copyTxt)=>`<div class="panel-head"><p>${desc}</p>${copyTxt?'<button id="btnCopyAll">Copiar lista para o Excel</button>':''}</div>`;
+  const docRow=(x,extra)=>`<tr><td>${esc(x.tipo)}</td><td class="num"><b>${x.numero}</b></td><td class="num">${isNaN(x.serie)?'—':x.serie}</td><td>${fmtData(x.emissao)}</td><td>${esc(x.emitNome)}<br><small style="color:var(--muted)">${fmtCnpj(x.emitDoc)}</small></td><td class="num">${fmt(x.valor)}</td><td><span class="key">${esc(x.chave)}</span><button class="copy" data-c="${esc(x.chave)}">Copiar</button></td>${extra||''}</tr>`;
+  const docHead=extra=>`<tr><th>Tipo</th><th>Nº</th><th>Série</th><th>Emissão</th><th>Emitente</th><th>Valor XML</th><th>Chave de acesso</th>${extra||''}</tr>`;
+  let html='',lista=[];
+  if(st.tab==='falta'){
+    lista=r.falta;
+    html=head('Estes XMLs não têm o número correspondente no relatório. Use a chave de acesso para consultar a nota e ver por que ficou fora.',lista.length)+
+      (lista.length?`<div class="tablebox"><table>${docHead('<th>Situação</th>')}${lista.map(x=>docRow(x,`<td>${x.cancel?'<span class="pill mut">Cancelada</span>':x.tpNF==='1'&&x.emitDoc===st.report.cnpj?'<span class="pill mut">Saída própria</span>':'<span class="pill bad">Não lançada</span>'}</td>`)).join('')}</table></div>`:'<div class="tablebox"><div class="empty">Todos os XMLs estão no relatório.</div></div>');
+  }else if(st.tab==='valor'){
+    lista=r.valor;
+    html=head('O número foi encontrado no relatório, mas o valor total do XML não aparece na linha lançada. Pode ser outra nota com o mesmo número (outro fornecedor) ou valor digitado diferente.',lista.length)+
+      (lista.length?`<div class="tablebox"><table>${docHead('<th>Linha no relatório</th>')}${lista.map(x=>docRow(x,`<td style="min-width:260px"><small>${x.rows.map(r=>esc(r.linha)).join('<br>')}</small></td>`)).join('')}</table></div>`:'<div class="tablebox"><div class="empty">Nenhuma divergência de valor.</div></div>');
+  }else if(st.tab==='ok'){
+    lista=r.ok;
+    html=head('Número e valor encontrados no relatório.',false)+
+      (lista.length?`<div class="tablebox"><table>${docHead('<th>Lançado em</th>')}${lista.map(x=>docRow(x,`<td>${x.rows.map(r=>r.data).join(', ')}${x.serieOk?'':' <span class="pill warn">série difere</span>'}</td>`)).join('')}</table></div>`:'<div class="tablebox"><div class="empty">Nenhuma nota conferida.</div></div>');
+  }else if(st.tab==='sem'){
+    html=head('Lançamentos do relatório que não têm XML entre os arquivos enviados. Útil para ver se falta baixar algum XML.',false)+
+      (r.semXml.length?`<div class="tablebox"><table><tr><th>Data</th><th>Nº</th><th>Série</th><th>Espécie</th><th>Linha no relatório</th></tr>${r.semXml.map(x=>`<tr><td>${x.data}</td><td class="num"><b>${x.nota}</b></td><td class="num">${x.serie}</td><td>${x.especie}</td><td><small>${esc(x.linha)}</small></td></tr>`).join('')}</table></div>`:'<div class="tablebox"><div class="empty">Todos os lançamentos têm XML.</div></div>');
+  }else{
+    html=head('Arquivos que ficaram fora do cruzamento e o motivo.',false)+
+      (r.ign.length?`<div class="tablebox"><table><tr><th>Arquivo</th><th>Nº</th><th>Emitente</th><th>Motivo</th></tr>${r.ign.map(x=>`<tr><td><small>${esc(x.nome)}</small></td><td class="num">${x.numero||'—'}</td><td>${esc(x.emitNome||'')}</td><td>${esc(x.motivo)}</td></tr>`).join('')}</table></div>`:'<div class="tablebox"><div class="empty">Nenhum arquivo ignorado.</div></div>');
+  }
+  P.innerHTML=html;
+  P.querySelectorAll('.copy').forEach(b=>b.onclick=()=>copiar(b.dataset.c,b));
+  const all=$('btnCopyAll');
+  if(all)all.onclick=()=>copiar(['Tipo\tNúmero\tSérie\tEmissão\tEmitente\tCNPJ/CPF\tValor\tChave de acesso',...lista.map(x=>[x.tipo,x.numero,x.serie,fmtData(x.emissao),x.emitNome,fmtCnpj(x.emitDoc),fmt(x.valor),"'"+x.chave].join('\t'))].join('\n'),all);
+}
+
+/* ---------- Exemplo inicial ---------- */
+function exemplo(){
+  const linhas=[{data:'01/09/2026',nota:1338342,serie:1,especie:'36',linha:'6559 01/09/2026 1338342 1 36 INDIANA HARTMANN PR 1-411 319,20'},
+    {data:'02/09/2026',nota:2059436,serie:1,especie:'36',linha:'6742 02/09/2026 2059436 1 36 HNK BR INDUSTRIA DE BEBIDAS LTDA. 2-403 146.824,19'}];
+  const mapa=new Map(linhas.map(l=>[l.nota,[l]]));
+  st.report={rows:linhas,mapa,cnpj:'03625708000126'};
+  st.xmls=[
+    {tipo:'NF-e',nome:'exemplo1.xml',chave:'41260900000000000000550010013383421000000001',numero:1338342,serie:1,emissao:'2026-09-01',tpNF:'0',emitDoc:'03625708000126',emitNome:'(exemplo) Nota de entrada própria',valor:319.2},
+    {tipo:'NF-e',nome:'exemplo2.xml',chave:'35260900000000000000550010020594361000000002',numero:2059436,serie:1,emissao:'2026-09-02',tpNF:'1',emitDoc:'00000000000000',emitNome:'(exemplo) Fornecedor de bebidas',valor:146824.19},
+    {tipo:'NF-e',nome:'exemplo3.xml',chave:'41260900000000000000550010000045871000000003',numero:4587,serie:1,emissao:'2026-09-12',tpNF:'1',emitDoc:'00000000000000',emitNome:'(exemplo) Fornecedor não lançado',valor:1250}];
+  st.result=cruzar();render();
+  banner('Exemplo de resultado com dados fictícios. Envie o PDF e os XMLs para fazer a conferência real.');
+}
+
+/* ---------- Eventos ---------- */
+function pronto(){$('btnRun').disabled=!(st.pdfFile&&st.xmlFiles&&st.xmlFiles.length);}
+$('inPdf').onchange=e=>{st.pdfFile=e.target.files[0]||null;$('pdfStatus').textContent=st.pdfFile?st.pdfFile.name:'Nenhum arquivo';pronto();};
+$('inXml').onchange=e=>{st.xmlFiles=[...e.target.files];$('xmlStatus').textContent=st.xmlFiles.length?`${st.xmlFiles.length} arquivo(s) selecionado(s)`:'Nenhum arquivo';pronto();};
+[['dropPdf','inPdf'],['dropXml','inXml']].forEach(([d,i])=>{
+  const el=$(d);
+  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('over');});
+  el.addEventListener('dragleave',()=>el.classList.remove('over'));
+  el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('over');const fs=[...e.dataTransfer.files];
+    if(i==='inPdf'){st.pdfFile=fs.find(f=>/\.pdf$/i.test(f.name))||null;$('pdfStatus').textContent=st.pdfFile?st.pdfFile.name:'Nenhum PDF no que foi solto';}
+    else{st.xmlFiles=fs.filter(f=>/\.(xml|zip)$/i.test(f.name));$('xmlStatus').textContent=`${st.xmlFiles.length} arquivo(s) selecionado(s)`;}
+    pronto();});
+});
+$('btnRun').onclick=async()=>{
+  const b=$('btnRun');b.disabled=true;b.textContent='Conferindo…';banner('');
+  try{
+    st.report=await lerPdf(st.pdfFile);
+    if(!st.report.rows.length)throw new Error('Não encontrei lançamentos no PDF. Confira se é o relatório de Acompanhamento de Entradas gerado pelo sistema (PDF com texto, não digitalizado).');
+    const xs=await lerXmls(st.xmlFiles);
+    st.cancelados=new Set(xs.filter(x=>x.tipo==='evento'&&x.cancel).map(x=>x.chave));
+    st.xmls=xs.filter(x=>x.tipo!=='evento');
+    st.result=cruzar();st.tab='falta';st.exemplo=false;render();
+    const nNotas=st.report.mapa.size;
+    banner(`Relatório: ${st.report.rows.length} lançamentos (${nNotas} números de nota) em ${st.report.paginas} página(s)${st.report.cnpj?' · CNPJ '+fmtCnpj(st.report.cnpj):''}. Confira se a quantidade bate com o relatório.`);
+    $('banner').dataset.kind='';
+  }catch(e){banner(e.message||String(e),'err');}
+  b.textContent='Conferir';pronto();
+};
+$('optSerie').onchange=$('optSaida').onchange=()=>{if(st.report&&!st.exemplo){st.result=cruzar();render();}};
+$('btnClear').onclick=()=>{st.pdfFile=null;st.xmlFiles=[];$('inPdf').value='';$('inXml').value='';$('pdfStatus').textContent='Nenhum arquivo';$('xmlStatus').textContent='Nenhum arquivo';st.exemplo=true;st.tab='falta';exemplo();pronto();};
+exemplo();
+})();
+</script>
+
+</body>
+</html>
