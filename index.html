@@ -56,11 +56,11 @@ nav.menu svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1
 .hero p{margin:6px 0 0;font-size:1.15rem;color:var(--muted)}
 
 /* ---------- Abas ---------- */
-.tabs{display:flex;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin}
-.tab{flex:1 1 0;min-width:0;text-align:left;line-height:1.25;display:flex;align-items:center;gap:10px;padding:16px 16px;background:var(--surface);border:1px solid var(--line);border-bottom:none;margin-right:-1px;font:inherit;font-size:1.05rem;color:var(--ink);cursor:pointer;position:relative}
+.tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin}
+.tab{flex:1 1 220px;min-width:0;text-align:left;line-height:1.25;display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-bottom:none;margin-right:-1px;margin-bottom:-1px;font:inherit;font-size:.98rem;color:var(--ink);cursor:pointer;position:relative}
 .tab:first-child{border-top-left-radius:10px}
 .tab:last-child{border-top-right-radius:10px}
-.tab svg{width:30px;height:30px;flex:none}
+.tab svg{width:26px;height:26px;flex:none}
 .tab[aria-selected="true"]{background:var(--accent-soft)}
 .tab[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--grad)}
 .tab:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
@@ -127,6 +127,7 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding-bottom:30px
   nav.menu a span{display:none}
   .brand-txt b{font-size:1.35rem}
   .brand svg{width:40px;height:40px}
+  .tabs{flex-wrap:nowrap}
   .tab{flex:none;white-space:nowrap;padding:14px 16px;font-size:.95rem}
   .tab svg{width:26px;height:26px}
   .panel{padding:14px}
@@ -403,6 +404,19 @@ const FERRAMENTAS = [
     href: "alugueis-pdf-dominio.html",
     botao: "Carregar PDF dos Aluguéis",
     previa: "Aluguéis por empresa"
+  },
+  {
+    id: "contrato",
+    aba: "Contrato + Termo de Comissão",
+    curto: "Contrato",
+    titulo: "Gerar Contrato e Termo de Comissão",
+    descricao: "Preencha vendedor, comprador e produtos e baixe em Word o contrato de compra e venda e o termo de comissão no modelo AgroSomos, com totais, comissão e datas calculados.",
+    resumo: "Formulário gera o contrato e o termo de comissão em Word.",
+    tags: ["Word", "Contrato", "Comissão"],
+    icone: "receipt",
+    href: "contrato-termo-agrosomos.html",
+    botao: "Preencher Contrato",
+    previa: "Contrato de compra e venda"
   },
 ];
 
