@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Aluguéis PF para Domínio</title>
+<style>
+.ec-voltar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 20px;background:#ffffff;border-bottom:1px solid #dde4ec;font:500 14px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 2px 8px rgba(18,35,59,.05)}
+.ec-voltar a{color:#167a6e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px}
+.ec-voltar a:hover{background:#e3f3ee}
+.ec-voltar span{color:#4f5f73}
+@media (prefers-color-scheme:dark){.ec-voltar{background:#16212f;border-color:#26364a}.ec-voltar a{color:#3fc6a0}.ec-voltar a:hover{background:#16332c}.ec-voltar span{color:#9fb0c3}}
+</style>
+</head>
+<body>
+<div class="ec-voltar"><a href="index.html">&larr; Central de Automações</a><span>e.contabil projetos</span></div>
+<meta name="description" content="Gera o ServicoTomados.txt de aluguéis pagos a pessoas físicas, com IRRF, para importar no Domínio.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: uma coluna de trabalho — premissas do mês, tabela de locadores, arquivo gerado */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --fg:#17201e; --muted:#5d6b67; --line:#d7dedb;
+  --accent:#1d5e57; --accent-fg:#ffffff; --accent-soft:#e2eeeb;
+  --bad:#b3261e; --bad-soft:#fbe9e7; --ok:#2e7d4f;
+  --code-bg:#eef2f0;
+  --f-ui:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121816; --surface:#1a2220; --fg:#e4ebe8; --muted:#97a6a1; --line:#2d3936;
+  --accent:#5fb3a8; --accent-fg:#0d1513; --accent-soft:#1f3330;
+  --bad:#f08a80; --bad-soft:#3a1f1c; --ok:#7cc79a; --code-bg:#151c1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121816; --surface:#1a2220; --fg:#e4ebe8; --muted:#97a6a1; --line:#2d3936;
+  --accent:#5fb3a8; --accent-fg:#0d1513; --accent-soft:#1f3330;
+  --bad:#f08a80; --bad-soft:#3a1f1c; --ok:#7cc79a; --code-bg:#151c1a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-ui);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 48px;display:grid;gap:20px}
+header h1{font-size:1.6rem;margin:0;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted);max-width:70ch}
+.tag{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;min-width:0}
+h2{font-size:1rem;margin:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h2 small{font-weight:400;color:var(--muted);font-size:.85rem}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+label.f{display:grid;gap:4px;font-size:12px;color:var(--muted);font-weight:500}
+input,select{font:inherit;font-size:14px;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0}
+input:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button{font:600 14px var(--f-ui);border-radius:6px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:6px 8px}
+button.ghost:hover{color:var(--bad)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:980px;font-size:14px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;font-weight:600;padding:8px;background:var(--code-bg);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td input{width:100%}
+td.num,th.num{text-align:right}
+td input.num{text-align:right;font-variant-numeric:tabular-nums}
+.calc{font:500 13px var(--f-mono);font-variant-numeric:tabular-nums;padding-top:8px;display:block;white-space:nowrap}
+input.err{border-color:var(--bad);background:var(--bad-soft)}
+.msg{font-size:12px;color:var(--bad);margin-top:3px}
+tfoot td{font-weight:600;background:var(--code-bg)}
+.summary{display:flex;gap:22px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.summary b{color:var(--fg);font:600 15px var(--f-mono);font-variant-numeric:tabular-nums;display:block}
+pre{margin:0;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px;font:12.5px/1.6 var(--f-mono);overflow-x:auto;white-space:pre;max-height:260px}
+details{border-top:1px dashed var(--line);padding-top:12px}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+details .row{margin-top:12px}
+.note{font-size:13px;color:var(--muted);margin:0;max-width:80ch}
+.status{font-size:13px;font-weight:600}
+.status.ok{color:var(--ok)} .status.bad{color:var(--bad)}
+.filebtn{position:relative;overflow:hidden;display:inline-block}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+@media (max-width:560px){header h1{font-size:1.3rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="tag">Domínio · Escrita Fiscal · Serviços tomados</div>
+    <h1>Aluguéis PF para Domínio</h1>
+    <p>Preencha os locadores do mês e baixe o <code>ServicoTomados.txt</code> no mesmo layout da planilha modelo do Domínio, pronto para importar.</p>
+  </header>
+
+  <section aria-labelledby="t-mes">
+    <h2 id="t-mes">Premissas do mês <small>aplicadas a todas as linhas quando você clicar em "Aplicar a todos"</small></h2>
+    <div class="row">
+      <label class="f">Data do documento<input type="date" id="g-data"></label>
+      <label class="f">Acumulador<input type="text" id="g-acum" inputmode="numeric" style="width:110px"></label>
+      <button id="b-aplicar">Aplicar a todos</button>
+      <span class="filebtn"><button type="button" tabindex="-1">Carregar TXT anterior</button><input type="file" id="f-txt" accept=".txt" aria-label="Carregar ServicoTomados.txt de um mês anterior"></span>
+    </div>
+    <details>
+      <summary>Campos fixos do layout</summary>
+      <div class="row">
+        <label class="f">UF<input type="text" id="c-uf" style="width:60px" maxlength="2"></label>
+        <label class="f">Município<input type="text" id="c-mun" style="width:180px"></label>
+        <label class="f">Endereço<input type="text" id="c-end" style="width:180px"></label>
+        <label class="f">Série<input type="text" id="c-serie" style="width:70px"></label>
+        <label class="f">Situação<select id="c-sit"><option value="0">0 - Regular</option><option value="2">2 - Cancelada</option></select></label>
+        <label class="f">CFOP<input type="text" id="c-cfop" style="width:80px"></label>
+        <label class="f">Nº do documento repetido
+          <select id="c-seq"><option value="seq">Acrescentar sequência (926, 9261, 9262…)</option><option value="igual">Mesmo número para todos (926)</option></select>
+        </label>
+      </div>
+      <p class="note" style="margin-top:10px">Os demais campos do layout (descontos, ISS, PIS, COFINS, CSLL, CRF, INSS) saem zerados, e os campos de item ficam em branco. Valor contábil e base de cálculo repetem o valor do serviço.</p>
+    </details>
+  </section>
+
+  <section aria-labelledby="t-loc">
+    <h2 id="t-loc">Locadores <small id="s-count"></small></h2>
+    <div class="tbl">
+      <table>
+        <thead><tr>
+          <th style="width:150px">CPF</th><th>Razão social</th><th style="width:150px">Data</th><th style="width:100px">Acumulador</th>
+          <th class="num" style="width:130px">Valor do serviço</th><th class="num" style="width:110px">IRRF</th><th class="num" style="width:110px">Líquido</th><th class="num" style="width:90px">Nº doc.</th><th style="width:40px"></th>
+        </tr></thead>
+        <tbody id="tb"></tbody>
+        <tfoot><tr><td colspan="4">Total</td><td class="num"><span class="calc" id="t-val"></span></td><td class="num"><span class="calc" id="t-irrf"></span></td><td class="num"><span class="calc" id="t-liq"></span></td><td colspan="2"></td></tr></tfoot>
+      </table>
+    </div>
+    <div class="row" style="justify-content:space-between">
+      <button id="b-add">+ Adicionar locador</button>
+      <p class="note">A lista fica salva neste navegador. No próximo mês, ajuste a data e os valores que mudaram.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-arq">
+    <h2 id="t-arq">Arquivo para importar <span class="status" id="st"></span></h2>
+    <pre id="pv"></pre>
+    <div class="row">
+      <button class="primary" id="b-baixar">Baixar ServicoTomados.txt</button>
+      <button id="b-copiar">Copiar conteúdo</button>
+      <span class="note" id="dl-msg" aria-live="polite"></span>
+    </div>
+    <p class="note">O arquivo é gravado em ANSI (Windows-1252), com acentos e quebras de linha iguais aos da planilha do Domínio.</p>
+  </section>
+</div>
+
+<script>
+(function(){
+const KEY='alugueis-pf-dominio-v1';
+const $=id=>document.getElementById(id);
+
+const EXEMPLO={
+  fixos:{uf:'PR',mun:'CAMPO MOURÃO',end:'',serie:'1',sit:'0',cfop:'1933',seq:'seq'},
+  gData:'2026-09-01', gAcum:'1012',
+  rows:[
+    {cpf:'470.619.799-68',nome:'EVELI ROSANA TROMBINI',data:'2026-09-01',acum:'1012',valor:5048.47,irrf:479.6},
+    {cpf:'203.206.209-72',nome:'JOSE ANTUNES TEIXEIRA',data:'2026-09-01',acum:'1012',valor:5048.47,irrf:479.6}
+  ]
+};
+let st;
+try{const s=localStorage.getItem(KEY); st=s?JSON.parse(s):null;}catch(e){st=null}
+if(!st||!Array.isArray(st.rows)) st=JSON.parse(JSON.stringify(EXEMPLO));
+st.fixos=Object.assign({},EXEMPLO.fixos,st.fixos||{});
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+
+/* ---------- utilidades ---------- */
+const dig=s=>String(s||'').replace(/\D/g,'');
+function fmtDoc(s){const d=dig(s);
+  if(d.length===11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
+  if(d.length===14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5');
+  return String(s||'').trim();}
+function cpfOk(c){c=dig(c); if(c.length!==11||/^(\d)\1+$/.test(c))return false;
+  for(let t=9;t<11;t++){let s=0;for(let i=0;i<t;i++)s+=+c[i]*(t+1-i);let r=(s*10)%11%10;if(r!==+c[t])return false}return true}
+function cnpjOk(c){c=dig(c); if(c.length!==14||/^(\d)\1+$/.test(c))return false;
+  const calc=n=>{let s=0,p=n-7;for(let i=0;i<n;i++){s+=+c[i]*p--;if(p<2)p=9}const r=s%11;return r<2?0:11-r};
+  return calc(12)===+c[12]&&calc(13)===+c[13]}
+function parseNum(v){if(typeof v==='number')return v; let s=String(v||'').trim(); if(!s)return NaN;
+  s=s.replace(/[R$\s]/g,''); if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.'); const n=Number(s); return isFinite(n)?Math.round(n*100)/100:NaN}
+const brl=n=>isFinite(n)?n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+/* número no formato que a macro do Excel grava: sem milhar, vírgula decimal, sem zeros à direita */
+const txtNum=n=>String(Math.round((n||0)*100)/100).replace('.',',');
+function brDate(iso){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||'');return m?`${m[3]}/${m[2]}/${m[1]}`:''}
+function baseNum(iso){const m=/^(\d{4})-(\d{2})-\d{2}$/.exec(iso||'');return m?String(+m[2])+m[1].slice(2):''}
+const clean=s=>String(s||'').replace(/[;\r\n]/g,' ').trim();
+
+/* ---------- campos fixos e premissas ---------- */
+const fx={uf:'c-uf',mun:'c-mun',end:'c-end',serie:'c-serie',sit:'c-sit',cfop:'c-cfop',seq:'c-seq'};
+for(const k in fx){const el=$(fx[k]); el.value=st.fixos[k]; el.addEventListener('input',()=>{st.fixos[k]=el.value;save();refresh()})}
+$('g-data').value=st.gData||''; $('g-acum').value=st.gAcum||'';
+$('g-data').addEventListener('input',e=>{st.gData=e.target.value;save()});
+$('g-acum').addEventListener('input',e=>{st.gAcum=e.target.value;save()});
+$('b-aplicar').addEventListener('click',()=>{
+  st.rows.forEach(r=>{if(st.gData)r.data=st.gData; if(st.gAcum)r.acum=st.gAcum}); save(); render();
+});
+
+/* ---------- tabela ---------- */
+function render(){
+  const tb=$('tb'); tb.innerHTML='';
+  st.rows.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><input id="r${i}-cpf" inputmode="numeric" placeholder="000.000.000-00" aria-label="CPF"><div class="msg" hidden></div></td>
+      <td><input id="r${i}-nome" placeholder="Nome do locador" aria-label="Razão social"><div class="msg" hidden></div></td>
+      <td><input id="r${i}-data" type="date" aria-label="Data"><div class="msg" hidden></div></td>
+      <td><input id="r${i}-acum" inputmode="numeric" aria-label="Acumulador"><div class="msg" hidden></div></td>
+      <td><input id="r${i}-valor" class="num" inputmode="decimal" placeholder="0,00" aria-label="Valor do serviço"><div class="msg" hidden></div></td>
+      <td><input id="r${i}-irrf" class="num" inputmode="decimal" placeholder="0,00" aria-label="IRRF"><div class="msg" hidden></div></td>
+      <td class="num"><span class="calc" data-liq></span></td>
+      <td class="num"><span class="calc" data-num></span></td>
+      <td><button class="ghost" title="Remover linha" aria-label="Remover linha">✕</button></td>`;
+    const q=s=>tr.querySelector(s);
+    const cpf=q(`#r${i}-cpf`),nome=q(`#r${i}-nome`),data=q(`#r${i}-data`),acum=q(`#r${i}-acum`),val=q(`#r${i}-valor`),irrf=q(`#r${i}-irrf`);
+    cpf.value=r.cpf||''; nome.value=r.nome||''; data.value=r.data||''; acum.value=r.acum||'';
+    val.value=isFinite(parseNum(r.valor))?brl(parseNum(r.valor)):''; irrf.value=isFinite(parseNum(r.irrf))?brl(parseNum(r.irrf)):'';
+    cpf.addEventListener('input',()=>{r.cpf=cpf.value;upd()}); cpf.addEventListener('blur',()=>{cpf.value=r.cpf=fmtDoc(cpf.value);upd()});
+    nome.addEventListener('input',()=>{r.nome=nome.value;upd()}); nome.addEventListener('blur',()=>{nome.value=r.nome=nome.value.toUpperCase().trim();upd()});
+    data.addEventListener('input',()=>{r.data=data.value;upd()});
+    acum.addEventListener('input',()=>{r.acum=acum.value;upd()});
+    val.addEventListener('input',()=>{r.valor=val.value;upd()}); val.addEventListener('blur',()=>{const n=parseNum(val.value);if(isFinite(n)){val.value=brl(n);r.valor=n}upd()});
+    irrf.addEventListener('input',()=>{r.irrf=irrf.value;upd()}); irrf.addEventListener('blur',()=>{const n=parseNum(irrf.value);if(isFinite(n)){irrf.value=brl(n);r.irrf=n}upd()});
+    q('button').addEventListener('click',()=>{st.rows.splice(i,1);save();render()});
+    r._tr=tr; tb.appendChild(tr);
+  });
+  refresh();
+}
+function upd(){save();refresh()}
+$('b-add').addEventListener('click',()=>{
+  st.rows.push({cpf:'',nome:'',data:st.gData||'',acum:st.gAcum||'',valor:'',irrf:0}); save(); render();
+  const n=st.rows.length-1; const el=$(`r${n}-cpf`); if(el)el.focus();
+});
+
+function validate(r){
+  const e={}; const d=dig(r.cpf);
+  if(!d) e.cpf='Informe o CPF'; else if(d.length===11?!cpfOk(d):d.length===14?!cnpjOk(d):true) e.cpf='CPF inválido';
+  if(!clean(r.nome)) e.nome='Informe o nome';
+  if(!brDate(r.data)) e.data='Informe a data';
+  if(!dig(r.acum)) e.acum='Informe';
+  const v=parseNum(r.valor), ir=r.irrf===''||r.irrf==null?0:parseNum(r.irrf);
+  if(!(v>0)) e.valor='Valor inválido';
+  if(!isFinite(ir)||ir<0) e.irrf='IRRF inválido'; else if(v>0&&ir>v) e.irrf='Maior que o valor';
+  return e;
+}
+function numbers(){
+  const used={}; return st.rows.map(r=>{const b=baseNum(r.data); if(!b)return '';
+    if(st.fixos.seq==='igual') return b; const k=used[b]||0; used[b]=k+1; return k===0?b:b+k;});
+}
+function buildLines(nums){
+  const f=st.fixos;
+  return st.rows.map((r,i)=>{
+    const v=parseNum(r.valor), ir=parseNum(r.irrf)||0;
+    return [fmtDoc(r.cpf),clean(r.nome).toUpperCase(),clean(f.uf).toUpperCase(),clean(f.mun).toUpperCase(),clean(f.end),
+      nums[i],clean(f.serie),brDate(r.data),f.sit,dig(r.acum),clean(f.cfop),
+      txtNum(v),'0',txtNum(v),txtNum(v),'0','0','0',txtNum(ir),'0','0','0','0','0','','','',''].join(';');
+  });
+}
+function refresh(){
+  const nums=numbers(); let tv=0,ti=0,bad=0;
+  st.rows.forEach((r,i)=>{
+    const tr=r._tr; if(!tr)return; const e=validate(r);
+    ['cpf','nome','data','acum','valor','irrf'].forEach(k=>{
+      const inp=tr.querySelector(`#r${i}-${k}`), m=inp.nextElementSibling;
+      const show=e[k]&&(k!=='cpf'||dig(r.cpf).length>=11||e[k]==='Informe o CPF');
+      inp.classList.toggle('err',!!show); m.hidden=!show; m.textContent=show?e[k]:'';
+    });
+    if(Object.keys(e).length)bad++;
+    const v=parseNum(r.valor), ir=parseNum(r.irrf)||0;
+    tr.querySelector('[data-liq]').textContent=isFinite(v)?brl(v-ir):'—';
+    tr.querySelector('[data-num]').textContent=nums[i]||'—';
+    if(isFinite(v))tv+=v; if(isFinite(ir))ti+=ir;
+  });
+  $('t-val').textContent=brl(tv); $('t-irrf').textContent=brl(ti); $('t-liq').textContent=brl(tv-ti);
+  $('s-count').textContent=st.rows.length===1?'1 locador':`${st.rows.length} locadores`;
+  const ok=st.rows.length>0&&bad===0;
+  const s=$('st'); s.className='status '+(ok?'ok':'bad');
+  s.textContent=!st.rows.length?'Adicione ao menos um locador':ok?`${st.rows.length} linha(s) prontas`:`${bad} linha(s) com pendência`;
+  $('pv').textContent=st.rows.length?buildLines(nums).join('\n'):'';
+  $('b-baixar').disabled=!ok; $('b-copiar').disabled=!ok;
+}
+
+/* ---------- ANSI (Windows-1252) ---------- */
+const CP={}; (function(){const dec=new TextDecoder('windows-1252');const b=new Uint8Array(256);for(let i=0;i<256;i++)b[i]=i;const s=dec.decode(b);for(let i=0;i<256;i++)CP[s[i]]=i})();
+function toAnsi(str){const out=new Uint8Array(str.length);for(let i=0;i<str.length;i++){const c=str[i];out[i]=c in CP?CP[c]:63}return out}
+function fileBytes(){return toAnsi(buildLines(numbers()).join('\r\n')+'\r\n')}
+
+$('b-baixar').addEventListener('click',async()=>{
+  const msg=$('dl-msg'); msg.textContent=''; const bytes=fileBytes();
+  let dl=null; if(window.claude&&window.claude.use){try{dl=await window.claude.use('downloads')}catch(e){dl=null}}
+  if(dl){
+    try{await dl.save({filename:'ServicoTomados.txt',data:new Blob([bytes],{type:'text/plain'})});msg.textContent='Arquivo salvo.'}
+    catch(e){msg.textContent=e&&e.code==='declined'?'Download cancelado.':'Não foi possível baixar aqui. Use "Copiar conteúdo".'}
+    return;
+  }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([bytes],{type:'text/plain'}));
+  a.download='ServicoTomados.txt'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000); msg.textContent='Arquivo gerado.';
+});
+$('b-copiar').addEventListener('click',async()=>{
+  const t=$('pv').textContent; try{await navigator.clipboard.writeText(t);$('dl-msg').textContent='Conteúdo copiado. Ao salvar no Bloco de Notas, escolha a codificação ANSI.'}
+  catch(e){const r=document.createRange();r.selectNodeContents($('pv'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('dl-msg').textContent='Texto selecionado. Use Ctrl+C.'}
+});
+
+/* ---------- carregar TXT de um mês anterior ---------- */
+$('f-txt').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f)return; const buf=await f.arrayBuffer();
+  let txt; try{txt=new TextDecoder('utf-8',{fatal:true}).decode(buf)}catch(_){txt=new TextDecoder('windows-1252').decode(buf)}
+  const rows=[];
+  txt.split(/\r?\n/).forEach(l=>{const c=l.split(';'); if(c.length<19||!dig(c[0]))return;
+    const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(c[7]||'');
+    rows.push({cpf:fmtDoc(c[0]),nome:c[1].trim(),data:m?`${m[3]}-${m[2]}-${m[1]}`:'',acum:c[9],valor:parseNum(c[11]),irrf:parseNum(c[18])||0});
+    if(c[2])st.fixos.uf=c[2]; if(c[3]&&!c[3].includes(String.fromCharCode(0xFFFD)))st.fixos.mun=c[3]; st.fixos.serie=c[6]||st.fixos.serie; st.fixos.cfop=c[10]||st.fixos.cfop;
+  });
+  e.target.value='';
+  if(!rows.length){$('dl-msg').textContent='Nenhuma linha reconhecida nesse arquivo.';return}
+  st.rows=rows; for(const k in fx)$(fx[k]).value=st.fixos[k]; save(); render();
+  $('dl-msg').textContent=`${rows.length} locador(es) carregado(s) do arquivo.`;
+});
+
+render();
+})();
+</script>
+
+</body>
+</html>
