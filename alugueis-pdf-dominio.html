@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Aluguéis PDF por Empresa</title>
+<style>
+.ec-voltar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 20px;background:#ffffff;border-bottom:1px solid #dde4ec;font:500 14px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 2px 8px rgba(18,35,59,.05)}
+.ec-voltar a{color:#167a6e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px}
+.ec-voltar a:hover{background:#e3f3ee}
+.ec-voltar span{color:#4f5f73}
+@media (prefers-color-scheme:dark){.ec-voltar{background:#16212f;border-color:#26364a}.ec-voltar a{color:#3fc6a0}.ec-voltar a:hover{background:#16332c}.ec-voltar span{color:#9fb0c3}}
+</style>
+</head>
+<body>
+<div class="ec-voltar"><a href="index.html">&larr; Central de Automações</a><span>e.contabil projetos</span></div>
+<meta name="description" content="Lê o PDF de aluguéis e gera um ServicoTomados.txt por empresa para importar no Domínio.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/* Layout: uma coluna — envio do PDF, um bloco por empresa com seu TXT, itens não reconhecidos */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --fg:#17201e; --muted:#5d6b67; --line:#d7dedb;
+  --accent:#1d5e57; --accent-fg:#ffffff; --accent-soft:#e2eeeb;
+  --bad:#b3261e; --bad-soft:#fbe9e7; --ok:#2e7d4f; --warn:#8a5a00; --warn-soft:#fdf3dd;
+  --code-bg:#eef2f0;
+  --f-ui:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121816; --surface:#1a2220; --fg:#e4ebe8; --muted:#97a6a1; --line:#2d3936;
+  --accent:#5fb3a8; --accent-fg:#0d1513; --accent-soft:#1f3330;
+  --bad:#f08a80; --bad-soft:#3a1f1c; --ok:#7cc79a; --warn:#e8c06a; --warn-soft:#3a3020; --code-bg:#151c1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121816; --surface:#1a2220; --fg:#e4ebe8; --muted:#97a6a1; --line:#2d3936;
+  --accent:#5fb3a8; --accent-fg:#0d1513; --accent-soft:#1f3330;
+  --bad:#f08a80; --bad-soft:#3a1f1c; --ok:#7cc79a; --warn:#e8c06a; --warn-soft:#3a3020; --code-bg:#151c1a; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-ui);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 48px;display:grid;gap:20px}
+header h1{font-size:1.6rem;margin:0;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted);max-width:72ch}
+.tag{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;min-width:0}
+h2{font-size:1.05rem;margin:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h2 small{font-weight:400;color:var(--muted);font-size:.85rem}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+label.f{display:grid;gap:4px;font-size:12px;color:var(--muted);font-weight:500}
+input,select{font:inherit;font-size:14px;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0}
+input:focus-visible,button:focus-visible,summary:focus-visible,.drop:focus-within{outline:2px solid var(--accent);outline-offset:1px}
+button{font:600 14px var(--f-ui);border-radius:6px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.drop{position:relative;border:2px dashed var(--line);border-radius:10px;padding:26px 18px;text-align:center;background:var(--code-bg);transition:border-color .15s}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop b{display:block;font-size:15px}
+.drop span{color:var(--muted);font-size:13px}
+.fmt{font:12.5px/1.6 var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre-wrap;margin:0}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:1260px;font-size:14px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;font-weight:600;padding:8px;background:var(--code-bg);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td input{width:100%}
+th.num{text-align:right}
+td input.num{text-align:right;font-variant-numeric:tabular-nums}
+.calc{font:500 13px var(--f-mono);font-variant-numeric:tabular-nums;padding-top:8px;display:block;white-space:nowrap;text-align:right}
+input.err{border-color:var(--bad);background:var(--bad-soft)}
+.msg{font-size:12px;color:var(--bad);margin-top:3px}
+.co{border-left:4px solid var(--accent)}
+.co.bad{border-left-color:var(--bad)}
+.co-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.co-head h2{font-size:1.1rem}
+.pill{font:600 12px var(--f-ui);padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.figs{display:flex;gap:22px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.figs b{display:block;color:var(--fg);font:600 15px var(--f-mono);font-variant-numeric:tabular-nums}
+pre.pv{margin:0;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font:12px/1.6 var(--f-mono);overflow-x:auto;white-space:pre}
+details summary{cursor:pointer;font-weight:600;font-size:14px}
+details .row{margin-top:12px}
+.note{font-size:13px;color:var(--muted);margin:0;max-width:85ch}
+.warnbox{background:var(--warn-soft);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:8px}
+.warnbox h3{margin:0;font-size:14px;color:var(--warn)}
+.warnbox p{margin:0;font:12.5px/1.5 var(--f-mono)}
+.status{font-size:13px;font-weight:600}
+.status.ok{color:var(--ok)} .status.bad{color:var(--bad)}
+.empty{color:var(--muted);font-size:14px;text-align:center;padding:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="tag">Domínio · Escrita Fiscal · Serviços tomados</div>
+    <h1>Aluguéis PDF por Empresa</h1>
+    <p>Envie o PDF com os aluguéis do mês. A ferramenta separa os locadores por empresa e gera um <code>ServicoTomados.txt</code> para cada uma, no layout de importação do Domínio.</p>
+  </header>
+
+  <section aria-labelledby="t-env">
+    <h2 id="t-env">PDF dos aluguéis <span class="status" id="st-pdf" aria-live="polite"></span></h2>
+    <label class="drop" id="drop">
+      <input type="file" id="f-pdf" accept="application/pdf,.pdf" aria-label="Escolher o PDF dos aluguéis">
+      <b>Arraste o PDF aqui ou clique para escolher</b>
+      <span>Um parágrafo por aluguel, começando pelo nome da empresa</span>
+    </label>
+    <details>
+      <summary>Formato esperado de cada aluguel no PDF</summary>
+      <p class="fmt" style="margin-top:10px">EMPRESA: CPF: 000.000.000-00 – NOME DO LOCADOR – DATA 01/09/2026 – ACUMULADOR 1012 – CFOP 1.933 – VALOR DO SERVIÇO 5.000,00 – VALOR DO IRRF 450,00</p>
+      <p class="note" style="margin-top:8px">O IRRF é opcional: quando não aparece, sai zerado. Pontos no CFOP (1.933) e barras repetidas na data (01//09/2026) são aceitos. Tudo o que for lido pode ser conferido e corrigido na tabela antes de baixar.</p>
+    </details>
+    <details>
+      <summary>Campos fixos do layout</summary>
+      <div class="row">
+        <label class="f">UF<input type="text" id="c-uf" style="width:60px" maxlength="2"></label>
+        <label class="f">Município<input type="text" id="c-mun" style="width:180px"></label>
+        <label class="f">Endereço<input type="text" id="c-end" style="width:180px"></label>
+        <label class="f">Série<input type="text" id="c-serie" style="width:70px"></label>
+        <label class="f">Situação<select id="c-sit"><option value="0">0 - Regular</option><option value="2">2 - Cancelada</option></select></label>
+        <label class="f">Nº do documento repetido na empresa
+          <select id="c-seq"><option value="seq">Acrescentar sequência (926, 9261, 9262…)</option><option value="igual">Mesmo número para todos (926)</option></select>
+        </label>
+      </div>
+      <p class="note" style="margin-top:10px">Valor contábil e base de cálculo repetem o valor do serviço. Descontos, ISS, PIS, COFINS, CSLL, CRF e INSS saem zerados, e os campos de item ficam em branco. O número do documento é o mês e o ano da data (09/2026 vira 926), contado dentro de cada empresa.</p>
+    </details>
+  </section>
+
+  <section id="s-all" hidden>
+    <div class="co-head">
+      <h2>Resultado <small id="sum-txt"></small></h2>
+      <button class="primary" id="b-zip">Baixar todos (.zip)</button>
+    </div>
+    <div class="figs" id="sum-figs"></div>
+    <span class="note" id="dl-msg" aria-live="polite"></span>
+    <div class="warnbox" id="unk" hidden><h3>Trechos não reconhecidos como aluguel</h3><div id="unk-list"></div><p style="font-family:var(--f-ui)">Confira se o parágrafo tem "EMPRESA: CPF:" no começo. Se for um aluguel, acrescente-o à empresa pelo botão "Adicionar locador".</p></div>
+  </section>
+
+  <div id="cos" style="display:grid;gap:20px"></div>
+
+  <section id="s-empty"><p class="empty">Nenhum PDF carregado ainda. Depois de enviar o arquivo, cada empresa aparece aqui com a lista de locadores e o seu TXT.</p></section>
+</div>
+
+<script>
+(function(){
+if(window.pdfjsLib){try{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'}catch(e){}}
+const $=id=>document.getElementById(id);
+const KEY='alugueis-pdf-dominio-fixos-v1';
+let fixos={uf:'PR',mun:'CAMPO MOURÃO',end:'',serie:'1',sit:'0',seq:'seq'};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null'); if(s)Object.assign(fixos,s)}catch(e){}
+const fx={uf:'c-uf',mun:'c-mun',end:'c-end',serie:'c-serie',sit:'c-sit',seq:'c-seq'};
+for(const k in fx){const el=$(fx[k]); el.value=fixos[k]; el.addEventListener('input',()=>{fixos[k]=el.value;try{localStorage.setItem(KEY,JSON.stringify(fixos))}catch(e){};refreshAll()})}
+
+/* ---------- utilidades ---------- */
+const dig=s=>String(s||'').replace(/\D/g,'');
+function fmtDoc(s){const d=dig(s);
+  if(d.length===11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
+  if(d.length===14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5');
+  return String(s||'').trim();}
+function cpfOk(c){c=dig(c); if(c.length!==11||/^(\d)\1+$/.test(c))return false;
+  for(let t=9;t<11;t++){let s=0;for(let i=0;i<t;i++)s+=+c[i]*(t+1-i);if((s*10)%11%10!==+c[t])return false}return true}
+function cnpjOk(c){c=dig(c); if(c.length!==14||/^(\d)\1+$/.test(c))return false;
+  const calc=n=>{let s=0,p=n-7;for(let i=0;i<n;i++){s+=+c[i]*p--;if(p<2)p=9}const r=s%11;return r<2?0:11-r};
+  return calc(12)===+c[12]&&calc(13)===+c[13]}
+function parseNum(v){if(typeof v==='number')return v; let s=String(v||'').trim(); if(!s)return NaN;
+  s=s.replace(/[R$\s]/g,''); if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.'); const n=Number(s); return isFinite(n)?Math.round(n*100)/100:NaN}
+const brl=n=>isFinite(n)?n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+const txtNum=n=>String(Math.round((n||0)*100)/100).replace('.',',');
+function brDate(iso){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||'');return m?`${m[3]}/${m[2]}/${m[1]}`:''}
+function baseNum(iso){const m=/^(\d{4})-(\d{2})-\d{2}$/.exec(iso||'');return m?String(+m[2])+m[1].slice(2):''}
+const clean=s=>String(s||'').replace(/[;\r\n]/g,' ').replace(/\s+/g,' ').trim();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fileSafe=s=>clean(s).replace(/[\\\/:*?"<>|]/g,'-').slice(0,80)||'EMPRESA';
+
+/* ---------- leitura do PDF ---------- */
+async function pdfLines(buf){
+  const doc=await pdfjsLib.getDocument({data:buf}).promise; const out=[];
+  for(let p=1;p<=doc.numPages;p++){
+    const tc=await (await doc.getPage(p)).getTextContent(); let line='';
+    for(const it of tc.items){line+=it.str; if(it.hasEOL){out.push(line);line=''}}
+    if(line)out.push(line);
+  }
+  return out.map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
+}
+const START=/^(.{1,80}?)\s*:\s*CPF\b/i;
+function splitEntries(lines){
+  const entries=[], loose=[]; let cur=null;
+  for(const l of lines){
+    const m=START.exec(l);
+    if(m){cur={empresa:clean(m[1]).toUpperCase(),text:l.slice(m[0].length-3)}; entries.push(cur)}
+    else if(cur) cur.text+=' '+l;
+    else loose.push(l);
+  }
+  return {entries,loose};
+}
+function parseEntry(e){
+  const t=e.text.replace(/[–—−]/g,'-').replace(/\s+/g,' ').toUpperCase();
+  const r={empresa:e.empresa,raw:e.empresa+': '+e.text,cpf:'',nome:'',data:'',acum:'',cfop:'',valor:'',irrf:0};
+  let m=/CPF\s*:?\s*([\d.\-\/ ]{11,20}\d)/.exec(t); if(m) r.cpf=fmtDoc(m[1]);
+  const iD=t.search(/\bDATA\b/);
+  if(m&&iD>m.index) r.nome=clean(t.slice(m.index+m[0].length,iD).replace(/^[\s\-:]+|[\s\-:]+$/g,''));
+  m=/DATA\s*[:\-]?\s*(\d{1,2})\s*\/+\s*(\d{1,2})\s*\/+\s*(\d{4})/.exec(t); if(m) r.data=`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  m=/ACUMULADOR\s*[:\-]?\s*(\d+)/.exec(t); if(m) r.acum=m[1];
+  m=/CFOP\s*[:\-]?\s*(\d[\d.]*\d)/.exec(t); if(m) r.cfop=dig(m[1]);
+  m=/SERVI[CÇ]OS?\s*[:\-]?\s*(?:R\$\s*)?(\d[\d.]*,\d{1,2})/.exec(t); if(m) r.valor=parseNum(m[1]);
+  m=/IRRF\s*[:\-]?\s*(?:R\$\s*)?(\d[\d.]*,\d{1,2})/.exec(t); if(m) r.irrf=parseNum(m[1]);
+  return r;
+}
+
+/* ---------- estado ---------- */
+let cos=[], loose=[], period='';
+async function loadPdf(file){
+  const st=$('st-pdf'); st.className='status'; st.textContent='Lendo '+file.name+'…';
+  if(!window.pdfjsLib){st.className='status bad';st.textContent='Não foi possível carregar o leitor de PDF. Verifique a internet e recarregue a página.';return}
+  try{
+    const lines=await pdfLines(await file.arrayBuffer());
+    if(!lines.length){st.className='status bad';st.textContent='O PDF não tem texto selecionável (parece ser imagem escaneada).';return}
+    const {entries,loose:l}=splitEntries(lines); loose=l;
+    const map=new Map();
+    entries.map(parseEntry).forEach(r=>{if(!map.has(r.empresa))map.set(r.empresa,[]);map.get(r.empresa).push(r)});
+    cos=[...map].map(([nome,rows])=>({nome,rows}));
+    const d=cos.flatMap(c=>c.rows).map(r=>r.data).find(Boolean); period=d?d.slice(5,7)+'-'+d.slice(0,4):'';
+    st.className='status ok'; st.textContent=`${file.name}: ${entries.length} aluguel(is) em ${cos.length} empresa(s)`;
+    render();
+  }catch(err){st.className='status bad';st.textContent='Não consegui ler esse PDF. Confira se o arquivo abre normalmente e tente de novo.'}
+}
+
+function validate(r){
+  const e={}; const d=dig(r.cpf);
+  if(!d) e.cpf='Sem CPF'; else if(d.length===11?!cpfOk(d):d.length===14?!cnpjOk(d):true) e.cpf='CPF inválido';
+  if(!clean(r.nome)) e.nome='Sem nome';
+  if(!brDate(r.data)) e.data='Sem data';
+  if(!dig(r.acum)) e.acum='Informe';
+  if(dig(r.cfop).length!==4) e.cfop='4 dígitos';
+  const v=parseNum(r.valor), ir=r.irrf===''||r.irrf==null?0:parseNum(r.irrf);
+  if(!(v>0)) e.valor='Sem valor';
+  if(!isFinite(ir)||ir<0) e.irrf='Inválido'; else if(v>0&&ir>v) e.irrf='Maior que o valor';
+  return e;
+}
+function numbers(rows){const used={};return rows.map(r=>{const b=baseNum(r.data);if(!b)return '';
+  if(fixos.seq==='igual')return b;const k=used[b]||0;used[b]=k+1;return k===0?b:b+k})}
+function lines(rows){const f=fixos,n=numbers(rows);
+  return rows.map((r,i)=>{const v=parseNum(r.valor),ir=parseNum(r.irrf)||0;
+    return [fmtDoc(r.cpf),clean(r.nome).toUpperCase(),clean(f.uf).toUpperCase(),clean(f.mun).toUpperCase(),clean(f.end),
+      n[i],clean(f.serie),brDate(r.data),f.sit,dig(r.acum),dig(r.cfop),
+      txtNum(v),'0',txtNum(v),txtNum(v),'0','0','0',txtNum(ir),'0','0','0','0','0','','','',''].join(';')})}
+
+const CP={};(function(){const s=new TextDecoder('windows-1252').decode(Uint8Array.from({length:256},(_,i)=>i));for(let i=0;i<256;i++)CP[s[i]]=i})();
+const toAnsi=str=>Uint8Array.from(str,c=>c in CP?CP[c]:63);
+const fileOf=c=>toAnsi(lines(c.rows).join('\r\n')+'\r\n');
+const nameOf=c=>`ServicoTomados - ${fileSafe(c.nome)}.txt`;
+
+async function offer(filename,blob){
+  const msg=$('dl-msg'); let dl=null;
+  if(window.claude&&window.claude.use){try{dl=await window.claude.use('downloads')}catch(e){dl=null}}
+  if(dl){try{await dl.save({filename,data:blob});msg.textContent=filename+' salvo.'}
+    catch(e){msg.textContent=e&&e.code==='declined'?'Download cancelado.':'Não foi possível baixar aqui.'}return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);msg.textContent=filename+' gerado.';
+}
+
+/* ---------- tela ---------- */
+const COLS=[['cpf','CPF','150px'],['nome','Razão social',''],['data','Data','145px'],['acum','Acumulador','100px'],['cfop','CFOP','80px'],['valor','Valor do serviço','130px'],['irrf','IRRF','110px']];
+function render(){
+  $('s-empty').hidden=cos.length>0; $('s-all').hidden=cos.length===0 && !loose.length;
+  const box=$('cos'); box.innerHTML='';
+  cos.forEach((c,ci)=>{
+    const sec=document.createElement('section'); sec.className='co'; c._el=sec;
+    sec.innerHTML=`<div class="co-head"><h2>${esc(c.nome)} <span class="pill" data-pill></span></h2>
+      <div class="row"><button data-dl class="primary">Baixar TXT</button></div></div>
+      <div class="figs" data-figs></div>
+      <div class="tbl"><table><thead><tr>${COLS.map(([k,l,w])=>`<th${k==='valor'||k==='irrf'?' class="num"':''}${w?` style="width:${w}"`:''}>${l}</th>`).join('')}<th class="num" style="width:110px">Líquido</th><th class="num" style="width:80px">Nº doc.</th><th style="width:40px"></th></tr></thead><tbody></tbody></table></div>
+      <div class="row" style="justify-content:space-between"><button data-add>+ Adicionar locador</button></div>
+      <details><summary>Ver conteúdo do TXT</summary><pre class="pv" data-pv style="margin-top:10px"></pre></details>`;
+    const tb=sec.querySelector('tbody');
+    c.rows.forEach((r,i)=>{
+      const tr=document.createElement('tr'); r._tr=tr;
+      tr.innerHTML=COLS.map(([k])=>`<td><input id="c${ci}r${i}-${k}" data-k="${k}" ${k==='data'?'type="date"':''} ${k==='valor'||k==='irrf'?'class="num" inputmode="decimal"':''} aria-label="${k}"><div class="msg" hidden></div></td>`).join('')+
+        `<td><span class="calc" data-liq></span></td><td><span class="calc" data-num></span></td><td><button class="ghost" title="Remover linha" aria-label="Remover linha" style="border:0;background:none;color:var(--muted);padding:6px">✕</button></td>`;
+      tr.querySelectorAll('input').forEach(inp=>{const k=inp.dataset.k;
+        inp.value=(k==='valor'||k==='irrf')?(isFinite(parseNum(r[k]))?brl(parseNum(r[k])):''):(r[k]||'');
+        inp.addEventListener('input',()=>{r[k]=inp.value;refreshAll()});
+        inp.addEventListener('blur',()=>{
+          if(k==='cpf'){inp.value=r.cpf=fmtDoc(inp.value)}
+          if(k==='nome'){inp.value=r.nome=inp.value.toUpperCase().trim()}
+          if(k==='valor'||k==='irrf'){const n=parseNum(inp.value);if(isFinite(n)){inp.value=brl(n);r[k]=n}}
+          refreshAll()});
+      });
+      tr.querySelector('button').addEventListener('click',()=>{c.rows.splice(i,1);if(!c.rows.length)cos.splice(ci,1);render()});
+      tb.appendChild(tr);
+    });
+    sec.querySelector('[data-add]').addEventListener('click',()=>{const b=c.rows[c.rows.length-1]||{};
+      c.rows.push({cpf:'',nome:'',data:b.data||'',acum:b.acum||'',cfop:b.cfop||'',valor:'',irrf:0});render();const el=$(`c${ci}r${c.rows.length-1}-cpf`);if(el)el.focus()});
+    sec.querySelector('[data-dl]').addEventListener('click',()=>offer(nameOf(c),new Blob([fileOf(c)],{type:'text/plain'})));
+    box.appendChild(sec);
+  });
+  $('unk').hidden=!loose.length;
+  $('unk-list').innerHTML=loose.map(l=>`<p>${esc(l)}</p>`).join('');
+  refreshAll();
+}
+function refreshAll(){
+  let tot=0,tirrf=0,n=0,badCos=0;
+  cos.forEach(c=>{
+    const sec=c._el; if(!sec)return; const nums=numbers(c.rows); let tv=0,ti=0,bad=0;
+    c.rows.forEach((r,i)=>{const tr=r._tr; if(!tr)return; const e=validate(r);
+      tr.querySelectorAll('input').forEach(inp=>{const k=inp.dataset.k,m=inp.nextElementSibling;inp.classList.toggle('err',!!e[k]);m.hidden=!e[k];m.textContent=e[k]||''});
+      if(Object.keys(e).length)bad++;
+      const v=parseNum(r.valor),ir=parseNum(r.irrf)||0;
+      tr.querySelector('[data-liq]').textContent=isFinite(v)?brl(v-ir):'—';
+      tr.querySelector('[data-num]').textContent=nums[i]||'—';
+      if(isFinite(v))tv+=v; if(isFinite(ir))ti+=ir;});
+    const ok=bad===0&&c.rows.length>0; c.ok=ok; if(!ok)badCos++;
+    sec.classList.toggle('bad',!ok);
+    const pill=sec.querySelector('[data-pill]'); pill.className='pill'+(ok?'':' bad');
+    pill.textContent=ok?`${c.rows.length} locador(es)`:`${bad} linha(s) com pendência`;
+    sec.querySelector('[data-figs]').innerHTML=`<span>Valor do serviço<b>${brl(tv)}</b></span><span>IRRF<b>${brl(ti)}</b></span><span>Líquido<b>${brl(tv-ti)}</b></span>`;
+    sec.querySelector('[data-pv]').textContent=lines(c.rows).join('\n');
+    sec.querySelector('[data-dl]').disabled=!ok;
+    tot+=tv;tirrf+=ti;n+=c.rows.length;
+  });
+  $('sum-txt').textContent=cos.length?`${cos.length} empresa(s), ${n} aluguel(is)`:'';
+  $('sum-figs').innerHTML=cos.length?`<span>Valor do serviço<b>${brl(tot)}</b></span><span>IRRF<b>${brl(tirrf)}</b></span><span>Empresas prontas<b>${cos.length-badCos} de ${cos.length}</b></span>`:'';
+  $('b-zip').disabled=!cos.length||badCos>0;
+  $('b-zip').title=badCos?'Corrija as linhas marcadas para baixar todos':'';
+}
+$('b-zip').addEventListener('click',async()=>{
+  if(!window.JSZip){$('dl-msg').textContent='Não foi possível carregar o compactador. Baixe os TXT de cada empresa.';return}
+  const z=new JSZip(); const used={};
+  cos.forEach(c=>{let n=nameOf(c);if(used[n]){n=n.replace('.txt',` (${++used[n]}).txt`)}else used[n]=1;z.file(n,fileOf(c))});
+  const blob=await z.generateAsync({type:'blob'});
+  offer(`ServicosTomados${period?' '+period:''}.zip`,blob);
+});
+
+const drop=$('drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,()=>drop.classList.remove('over')));
+drop.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadPdf(f)});
+$('f-pdf').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadPdf(f);e.target.value=''});
+window.__alugueisPdf={splitEntries,parseEntry,lines,get cos(){return cos}};
+})();
+</script>
+
+</body>
+</html>

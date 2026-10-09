@@ -153,10 +153,7 @@ const $=id=>document.getElementById(id);
 const EXEMPLO={
   fixos:{uf:'PR',mun:'CAMPO MOURÃO',end:'',serie:'1',sit:'0',cfop:'1933',seq:'seq'},
   gData:'2026-09-01', gAcum:'1012',
-  rows:[
-    {cpf:'470.619.799-68',nome:'EVELI ROSANA TROMBINI',data:'2026-09-01',acum:'1012',valor:5048.47,irrf:479.6},
-    {cpf:'203.206.209-72',nome:'JOSE ANTUNES TEIXEIRA',data:'2026-09-01',acum:'1012',valor:5048.47,irrf:479.6}
-  ]
+  rows:[]
 };
 let st;
 try{const s=localStorage.getItem(KEY); st=s?JSON.parse(s):null;}catch(e){st=null}
