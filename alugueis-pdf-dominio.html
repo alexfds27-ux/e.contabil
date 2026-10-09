@@ -224,7 +224,7 @@ async function loadPdf(file){
     const map=new Map();
     entries.map(parseEntry).forEach(r=>{if(!map.has(r.empresa))map.set(r.empresa,[]);map.get(r.empresa).push(r)});
     cos=[...map].map(([nome,rows])=>({nome,rows}));
-    const d=cos.flatMap(c=>c.rows).map(r=>r.data).find(Boolean); period=d?d.slice(5,7)+'-'+d.slice(0,4):'';
+    const d=cos.flatMap(c=>c.rows).map(r=>r.data).find(Boolean); period=d?d.slice(5,7)+d.slice(2,4):'';
     st.className='status ok'; st.textContent=`${file.name}: ${entries.length} aluguel(is) em ${cos.length} empresa(s)`;
     render();
   }catch(err){st.className='status bad';st.textContent='Não consegui ler esse PDF. Confira se o arquivo abre normalmente e tente de novo.'}
@@ -253,7 +253,8 @@ function lines(rows){const f=fixos,n=numbers(rows);
 const CP={};(function(){const s=new TextDecoder('windows-1252').decode(Uint8Array.from({length:256},(_,i)=>i));for(let i=0;i<256;i++)CP[s[i]]=i})();
 const toAnsi=str=>Uint8Array.from(str,c=>c in CP?CP[c]:63);
 const fileOf=c=>toAnsi(lines(c.rows).join('\r\n')+'\r\n');
-const nameOf=c=>`ServicoTomados - ${fileSafe(c.nome)}.txt`;
+const mmyy=c=>{const d=(c.rows.map(r=>r.data).find(x=>/^\d{4}-\d{2}/.test(x||''))||'');return d?d.slice(5,7)+d.slice(2,4):''};
+const nameOf=c=>`${fileSafe(c.nome).toLowerCase()}${mmyy(c)?' '+mmyy(c):''}.txt`;
 
 async function offer(filename,blob){
   const msg=$('dl-msg'); let dl=null;
@@ -333,7 +334,7 @@ $('b-zip').addEventListener('click',async()=>{
   const z=new JSZip(); const used={};
   cos.forEach(c=>{let n=nameOf(c);if(used[n]){n=n.replace('.txt',` (${++used[n]}).txt`)}else used[n]=1;z.file(n,fileOf(c))});
   const blob=await z.generateAsync({type:'blob'});
-  offer(`ServicosTomados${period?' '+period:''}.zip`,blob);
+  offer(`alugueis${period?' '+period:''}.zip`,blob);
 });
 
 const drop=$('drop');
