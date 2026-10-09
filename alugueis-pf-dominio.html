@@ -57,7 +57,7 @@ button.primary:disabled{opacity:.45;cursor:not-allowed}
 button.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:6px 8px}
 button.ghost:hover{color:var(--bad)}
 .tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
-table{border-collapse:collapse;width:100%;min-width:980px;font-size:14px}
+table{border-collapse:collapse;width:100%;min-width:1180px;font-size:14px}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;font-weight:600;padding:8px;background:var(--code-bg);border-bottom:1px solid var(--line);white-space:nowrap}
 td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 tr:last-child td{border-bottom:0}
@@ -91,10 +91,11 @@ details .row{margin-top:12px}
   </header>
 
   <section aria-labelledby="t-mes">
-    <h2 id="t-mes">Premissas do mês <small>aplicadas a todas as linhas quando você clicar em "Aplicar a todos"</small></h2>
+    <h2 id="t-mes">Premissas do mês <small>data, acumulador e CFOP vão para todas as linhas ao clicar em "Aplicar a todos"; cada linha também pode ser ajustada</small></h2>
     <div class="row">
       <label class="f">Data do documento<input type="date" id="g-data"></label>
       <label class="f">Acumulador<input type="text" id="g-acum" inputmode="numeric" style="width:110px"></label>
+      <label class="f">CFOP<input type="text" id="g-cfop" inputmode="numeric" maxlength="4" style="width:90px"></label>
       <button id="b-aplicar">Aplicar a todos</button>
       <span class="filebtn"><button type="button" tabindex="-1">Carregar TXT anterior</button><input type="file" id="f-txt" accept=".txt" aria-label="Carregar ServicoTomados.txt de um mês anterior"></span>
     </div>
@@ -106,7 +107,6 @@ details .row{margin-top:12px}
         <label class="f">Endereço<input type="text" id="c-end" style="width:180px"></label>
         <label class="f">Série<input type="text" id="c-serie" style="width:70px"></label>
         <label class="f">Situação<select id="c-sit"><option value="0">0 - Regular</option><option value="2">2 - Cancelada</option></select></label>
-        <label class="f">CFOP<input type="text" id="c-cfop" style="width:80px"></label>
         <label class="f">Nº do documento repetido
           <select id="c-seq"><option value="seq">Acrescentar sequência (926, 9261, 9262…)</option><option value="igual">Mesmo número para todos (926)</option></select>
         </label>
@@ -120,11 +120,11 @@ details .row{margin-top:12px}
     <div class="tbl">
       <table>
         <thead><tr>
-          <th style="width:150px">CPF</th><th>Razão social</th><th style="width:150px">Data</th><th style="width:100px">Acumulador</th>
+          <th style="width:150px">CPF</th><th>Razão social</th><th style="width:150px">Data</th><th style="width:100px">Acumulador</th><th style="width:80px">CFOP</th>
           <th class="num" style="width:130px">Valor do serviço</th><th class="num" style="width:110px">IRRF</th><th class="num" style="width:110px">Líquido</th><th class="num" style="width:90px">Nº doc.</th><th style="width:40px"></th>
         </tr></thead>
         <tbody id="tb"></tbody>
-        <tfoot><tr><td colspan="4">Total</td><td class="num"><span class="calc" id="t-val"></span></td><td class="num"><span class="calc" id="t-irrf"></span></td><td class="num"><span class="calc" id="t-liq"></span></td><td colspan="2"></td></tr></tfoot>
+        <tfoot><tr><td colspan="5">Total</td><td class="num"><span class="calc" id="t-val"></span></td><td class="num"><span class="calc" id="t-irrf"></span></td><td class="num"><span class="calc" id="t-liq"></span></td><td colspan="2"></td></tr></tfoot>
       </table>
     </div>
     <div class="row" style="justify-content:space-between">
@@ -162,6 +162,8 @@ let st;
 try{const s=localStorage.getItem(KEY); st=s?JSON.parse(s):null;}catch(e){st=null}
 if(!st||!Array.isArray(st.rows)) st=JSON.parse(JSON.stringify(EXEMPLO));
 st.fixos=Object.assign({},EXEMPLO.fixos,st.fixos||{});
+if(!st.gCfop) st.gCfop=st.fixos.cfop||'1933';
+st.rows.forEach(r=>{if(!r.cfop) r.cfop=st.fixos.cfop||'1933'});
 function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
 
 /* ---------- utilidades ---------- */
@@ -185,13 +187,14 @@ function baseNum(iso){const m=/^(\d{4})-(\d{2})-\d{2}$/.exec(iso||'');return m?S
 const clean=s=>String(s||'').replace(/[;\r\n]/g,' ').trim();
 
 /* ---------- campos fixos e premissas ---------- */
-const fx={uf:'c-uf',mun:'c-mun',end:'c-end',serie:'c-serie',sit:'c-sit',cfop:'c-cfop',seq:'c-seq'};
+const fx={uf:'c-uf',mun:'c-mun',end:'c-end',serie:'c-serie',sit:'c-sit',seq:'c-seq'};
 for(const k in fx){const el=$(fx[k]); el.value=st.fixos[k]; el.addEventListener('input',()=>{st.fixos[k]=el.value;save();refresh()})}
-$('g-data').value=st.gData||''; $('g-acum').value=st.gAcum||'';
+$('g-data').value=st.gData||''; $('g-acum').value=st.gAcum||''; $('g-cfop').value=st.gCfop||'';
+$('g-cfop').addEventListener('input',e=>{st.gCfop=e.target.value;save()});
 $('g-data').addEventListener('input',e=>{st.gData=e.target.value;save()});
 $('g-acum').addEventListener('input',e=>{st.gAcum=e.target.value;save()});
 $('b-aplicar').addEventListener('click',()=>{
-  st.rows.forEach(r=>{if(st.gData)r.data=st.gData; if(st.gAcum)r.acum=st.gAcum}); save(); render();
+  st.rows.forEach(r=>{if(st.gData)r.data=st.gData; if(st.gAcum)r.acum=st.gAcum; if(st.gCfop)r.cfop=st.gCfop}); save(); render();
 });
 
 /* ---------- tabela ---------- */
@@ -204,19 +207,21 @@ function render(){
       <td><input id="r${i}-nome" placeholder="Nome do locador" aria-label="Razão social"><div class="msg" hidden></div></td>
       <td><input id="r${i}-data" type="date" aria-label="Data"><div class="msg" hidden></div></td>
       <td><input id="r${i}-acum" inputmode="numeric" aria-label="Acumulador"><div class="msg" hidden></div></td>
+      <td><input id="r${i}-cfop" inputmode="numeric" maxlength="4" aria-label="CFOP"><div class="msg" hidden></div></td>
       <td><input id="r${i}-valor" class="num" inputmode="decimal" placeholder="0,00" aria-label="Valor do serviço"><div class="msg" hidden></div></td>
       <td><input id="r${i}-irrf" class="num" inputmode="decimal" placeholder="0,00" aria-label="IRRF"><div class="msg" hidden></div></td>
       <td class="num"><span class="calc" data-liq></span></td>
       <td class="num"><span class="calc" data-num></span></td>
       <td><button class="ghost" title="Remover linha" aria-label="Remover linha">✕</button></td>`;
     const q=s=>tr.querySelector(s);
-    const cpf=q(`#r${i}-cpf`),nome=q(`#r${i}-nome`),data=q(`#r${i}-data`),acum=q(`#r${i}-acum`),val=q(`#r${i}-valor`),irrf=q(`#r${i}-irrf`);
-    cpf.value=r.cpf||''; nome.value=r.nome||''; data.value=r.data||''; acum.value=r.acum||'';
+    const cpf=q(`#r${i}-cpf`),nome=q(`#r${i}-nome`),data=q(`#r${i}-data`),acum=q(`#r${i}-acum`),cfop=q(`#r${i}-cfop`),val=q(`#r${i}-valor`),irrf=q(`#r${i}-irrf`);
+    cpf.value=r.cpf||''; nome.value=r.nome||''; data.value=r.data||''; acum.value=r.acum||''; cfop.value=r.cfop||'';
     val.value=isFinite(parseNum(r.valor))?brl(parseNum(r.valor)):''; irrf.value=isFinite(parseNum(r.irrf))?brl(parseNum(r.irrf)):'';
     cpf.addEventListener('input',()=>{r.cpf=cpf.value;upd()}); cpf.addEventListener('blur',()=>{cpf.value=r.cpf=fmtDoc(cpf.value);upd()});
     nome.addEventListener('input',()=>{r.nome=nome.value;upd()}); nome.addEventListener('blur',()=>{nome.value=r.nome=nome.value.toUpperCase().trim();upd()});
     data.addEventListener('input',()=>{r.data=data.value;upd()});
     acum.addEventListener('input',()=>{r.acum=acum.value;upd()});
+    cfop.addEventListener('input',()=>{r.cfop=cfop.value;upd()});
     val.addEventListener('input',()=>{r.valor=val.value;upd()}); val.addEventListener('blur',()=>{const n=parseNum(val.value);if(isFinite(n)){val.value=brl(n);r.valor=n}upd()});
     irrf.addEventListener('input',()=>{r.irrf=irrf.value;upd()}); irrf.addEventListener('blur',()=>{const n=parseNum(irrf.value);if(isFinite(n)){irrf.value=brl(n);r.irrf=n}upd()});
     q('button').addEventListener('click',()=>{st.rows.splice(i,1);save();render()});
@@ -226,7 +231,7 @@ function render(){
 }
 function upd(){save();refresh()}
 $('b-add').addEventListener('click',()=>{
-  st.rows.push({cpf:'',nome:'',data:st.gData||'',acum:st.gAcum||'',valor:'',irrf:0}); save(); render();
+  st.rows.push({cpf:'',nome:'',data:st.gData||'',acum:st.gAcum||'',cfop:st.gCfop||'1933',valor:'',irrf:0}); save(); render();
   const n=st.rows.length-1; const el=$(`r${n}-cpf`); if(el)el.focus();
 });
 
@@ -236,6 +241,7 @@ function validate(r){
   if(!clean(r.nome)) e.nome='Informe o nome';
   if(!brDate(r.data)) e.data='Informe a data';
   if(!dig(r.acum)) e.acum='Informe';
+  if(dig(r.cfop).length!==4) e.cfop='4 dígitos';
   const v=parseNum(r.valor), ir=r.irrf===''||r.irrf==null?0:parseNum(r.irrf);
   if(!(v>0)) e.valor='Valor inválido';
   if(!isFinite(ir)||ir<0) e.irrf='IRRF inválido'; else if(v>0&&ir>v) e.irrf='Maior que o valor';
@@ -250,7 +256,7 @@ function buildLines(nums){
   return st.rows.map((r,i)=>{
     const v=parseNum(r.valor), ir=parseNum(r.irrf)||0;
     return [fmtDoc(r.cpf),clean(r.nome).toUpperCase(),clean(f.uf).toUpperCase(),clean(f.mun).toUpperCase(),clean(f.end),
-      nums[i],clean(f.serie),brDate(r.data),f.sit,dig(r.acum),clean(f.cfop),
+      nums[i],clean(f.serie),brDate(r.data),f.sit,dig(r.acum),dig(r.cfop),
       txtNum(v),'0',txtNum(v),txtNum(v),'0','0','0',txtNum(ir),'0','0','0','0','0','','','',''].join(';');
   });
 }
@@ -258,7 +264,7 @@ function refresh(){
   const nums=numbers(); let tv=0,ti=0,bad=0;
   st.rows.forEach((r,i)=>{
     const tr=r._tr; if(!tr)return; const e=validate(r);
-    ['cpf','nome','data','acum','valor','irrf'].forEach(k=>{
+    ['cpf','nome','data','acum','cfop','valor','irrf'].forEach(k=>{
       const inp=tr.querySelector(`#r${i}-${k}`), m=inp.nextElementSibling;
       const show=e[k]&&(k!=='cpf'||dig(r.cpf).length>=11||e[k]==='Informe o CPF');
       inp.classList.toggle('err',!!show); m.hidden=!show; m.textContent=show?e[k]:'';
@@ -307,8 +313,8 @@ $('f-txt').addEventListener('change',async e=>{
   const rows=[];
   txt.split(/\r?\n/).forEach(l=>{const c=l.split(';'); if(c.length<19||!dig(c[0]))return;
     const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(c[7]||'');
-    rows.push({cpf:fmtDoc(c[0]),nome:c[1].trim(),data:m?`${m[3]}-${m[2]}-${m[1]}`:'',acum:c[9],valor:parseNum(c[11]),irrf:parseNum(c[18])||0});
-    if(c[2])st.fixos.uf=c[2]; if(c[3]&&!c[3].includes(String.fromCharCode(0xFFFD)))st.fixos.mun=c[3]; st.fixos.serie=c[6]||st.fixos.serie; st.fixos.cfop=c[10]||st.fixos.cfop;
+    rows.push({cpf:fmtDoc(c[0]),nome:c[1].trim(),data:m?`${m[3]}-${m[2]}-${m[1]}`:'',acum:c[9],cfop:dig(c[10])||st.gCfop||'1933',valor:parseNum(c[11]),irrf:parseNum(c[18])||0});
+    if(c[2])st.fixos.uf=c[2]; if(c[3]&&!c[3].includes(String.fromCharCode(0xFFFD)))st.fixos.mun=c[3]; st.fixos.serie=c[6]||st.fixos.serie;
   });
   e.target.value='';
   if(!rows.length){$('dl-msg').textContent='Nenhuma linha reconhecida nesse arquivo.';return}
