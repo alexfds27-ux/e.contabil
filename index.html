@@ -55,6 +55,21 @@ nav.menu svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1
 .hero h1{margin:0;font-size:clamp(1.9rem,4vw,2.6rem);font-weight:700;letter-spacing:-.02em}
 .hero p{margin:6px 0 0;font-size:1.15rem;color:var(--muted)}
 
+/* ---------- Seções (Escritório / Empresa) ---------- */
+.grupos{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:30px}
+.grupo{display:flex;align-items:center;gap:16px;text-align:left;padding:20px 22px;background:var(--surface);border:2px solid var(--line);border-radius:14px;box-shadow:var(--shadow);font:inherit;color:var(--ink);cursor:pointer;transition:border-color .15s,transform .15s,background .15s}
+.grupo:hover{border-color:var(--accent);transform:translateY(-1px)}
+.grupo:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.grupo .gi{width:52px;height:52px;border-radius:12px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);flex:none}
+.grupo .gi svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.grupo b{display:block;font-size:1.2rem;font-weight:700;letter-spacing:.04em}
+.grupo small{display:block;color:var(--muted);font-size:.92rem;margin-top:2px}
+.grupo[aria-pressed="true"]{border-color:transparent;background:var(--grad);color:#fff}
+.grupo[aria-pressed="true"] small{color:rgba(255,255,255,.85)}
+.grupo[aria-pressed="true"] .gi{background:rgba(255,255,255,.18);color:#fff}
+.layout.unica{grid-template-columns:1fr}
+.layout.unica .side{display:none}
+
 /* ---------- Abas ---------- */
 .tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin}
 .tab{flex:1 1 220px;min-width:0;text-align:left;line-height:1.25;display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-bottom:none;margin-right:-1px;margin-bottom:-1px;font:inherit;font-size:.98rem;color:var(--ink);cursor:pointer;position:relative}
@@ -127,6 +142,9 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding-bottom:30px
   nav.menu a span{display:none}
   .brand-txt b{font-size:1.35rem}
   .brand svg{width:40px;height:40px}
+  .grupos{grid-template-columns:1fr;gap:12px}
+  .grupo{padding:16px}
+  .grupo .gi{width:44px;height:44px}
   .tabs{flex-wrap:nowrap}
   .tab{flex:none;white-space:nowrap;padding:14px 16px;font-size:.95rem}
   .tab svg{width:26px;height:26px}
@@ -218,9 +236,20 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding-bottom:30px
     <p>Gerencie e execute suas tarefas de forma automatizada</p>
   </section>
 
+  <div class="grupos" role="group" aria-label="Escolha a área">
+    <button class="grupo" type="button" data-g="escritorio" aria-pressed="true">
+      <span class="gi"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg></span>
+      <span><b>PARA SEU ESCRITÓRIO</b><small>Conciliações, conferências, SPED e importações para o Domínio</small></span>
+    </button>
+    <button class="grupo" type="button" data-g="empresa" aria-pressed="false">
+      <span class="gi"><svg viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M2 21h20M8 7h4M8 11h4M8 15h4"/></svg></span>
+      <span><b>PARA SUA EMPRESA</b><small>Contrato de compra e venda e termo de comissão</small></span>
+    </button>
+  </div>
+
   <div class="tabs" role="tablist" id="ferramentas" aria-label="Ferramentas"></div>
 
-  <div class="layout">
+  <div class="layout" id="layout">
     <section class="panel" id="panel" role="tabpanel" aria-live="polite"></section>
     <aside class="side">
       <h3 class="label">Outras ferramentas</h3>
@@ -247,6 +276,8 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding-bottom:30px
    troque os textos e o nome do arquivo (href), e suba o
    arquivo .html da ferramenta na mesma pasta do site.
    Ícones disponíveis: car, cross, xml, receipt, code
+   Área: sem "grupo" a ferramenta vai para PARA SEU ESCRITÓRIO;
+   com grupo: "empresa" vai para PARA SUA EMPRESA.
    ========================================================= */
 const FERRAMENTAS = [
   {
@@ -407,6 +438,7 @@ const FERRAMENTAS = [
   },
   {
     id: "contrato",
+    grupo: "empresa",
     aba: "Contrato + Termo de Comissão",
     curto: "Contrato",
     titulo: "Gerar Contrato e Termo de Comissão",
@@ -442,12 +474,21 @@ function previa(f){
   </div>`;
 }
 
+const grupoDe = f => f.grupo || "escritorio";
+let grupo = "escritorio";
 let atual = 0;
+const lista = () => FERRAMENTAS.filter(f => grupoDe(f) === grupo);
+
 function render(){
-  $("ferramentas").innerHTML = FERRAMENTAS.map((f,i) =>
+  const L = lista();
+  if (atual >= L.length) atual = 0;
+  document.querySelectorAll(".grupo").forEach(b => b.setAttribute("aria-pressed", b.dataset.g === grupo));
+  $("layout").classList.toggle("unica", L.length < 2);
+
+  $("ferramentas").innerHTML = L.map((f,i) =>
     `<button class="tab" role="tab" id="tab-${f.id}" aria-selected="${i===atual}" aria-controls="panel" data-i="${i}">${icon(f.icone)}<span>${esc(f.aba)}</span></button>`).join("");
 
-  const f = FERRAMENTAS[atual];
+  const f = L[atual];
   $("panel").setAttribute("aria-labelledby", "tab-" + f.id);
   $("panel").innerHTML = `<div class="panel-inner">
       <h2>${esc(f.titulo)}</h2>
@@ -457,7 +498,7 @@ function render(){
       ${previa(f)}
     </div>`;
 
-  $("cards").innerHTML = FERRAMENTAS.map((g,i) => i===atual ? "" :
+  $("cards").innerHTML = L.map((g,i) => i===atual ? "" :
     `<article class="card">
       <div class="ico">${icon(g.icone)}<b>${esc(g.curto)}</b></div>
       <div class="txt">
@@ -473,14 +514,21 @@ function render(){
 
 function selecionar(i, foco){
   atual = i; render();
-  try { history.replaceState(null, "", "#" + FERRAMENTAS[i].id); } catch(e){}
-  if (foco) document.getElementById("tab-" + FERRAMENTAS[i].id).focus();
+  const f = lista()[i];
+  try { history.replaceState(null, "", "#" + f.id); } catch(e){}
+  if (foco) document.getElementById("tab-" + f.id).focus();
 }
+
+document.querySelectorAll(".grupo").forEach(b => b.addEventListener("click", () => {
+  if (grupo === b.dataset.g) return;
+  grupo = b.dataset.g; atual = 0; render();
+  try { history.replaceState(null, "", "#" + grupo); } catch(e){}
+}));
 
 $("ferramentas").addEventListener("click", e => { const b = e.target.closest(".tab"); if (b) selecionar(+b.dataset.i); });
 $("ferramentas").addEventListener("keydown", e => {
   if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-  const n = FERRAMENTAS.length;
+  const n = lista().length;
   selecionar((atual + (e.key === "ArrowRight" ? 1 : n - 1)) % n, true);
 });
 $("cards").addEventListener("click", e => {
@@ -488,9 +536,13 @@ $("cards").addEventListener("click", e => {
   if (b){ selecionar(+b.dataset.i); $("ferramentas").scrollIntoView({block:"start"}); }
 });
 
-// Abre direto na aba indicada no endereço (ex.: ...github.io/#xml)
-const inicial = FERRAMENTAS.findIndex(f => "#" + f.id === location.hash);
-if (inicial >= 0) atual = inicial;
+// Abre direto na área ou aba indicada no endereço (ex.: .../#empresa ou .../#xml)
+const h = location.hash.slice(1);
+if (h === "escritorio" || h === "empresa") grupo = h;
+else {
+  const fi = FERRAMENTAS.find(f => f.id === h);
+  if (fi){ grupo = grupoDe(fi); atual = lista().indexOf(fi); }
+}
 render();
 
 // Tema claro/escuro (lembrado neste navegador)
