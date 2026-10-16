@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ferramenta · e.contabil</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23167a6e'/%3E%3Crect x='20' y='34' width='6' height='12' rx='1' fill='white'/%3E%3Crect x='29' y='28' width='6' height='18' rx='1' fill='white'/%3E%3Crect x='38' y='22' width='6' height='24' rx='1' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="estilo.css">
+<style>
+html,body{height:100%}
+body{display:flex;flex-direction:column;overflow:hidden}
+.barra{flex:none;display:flex;align-items:center;gap:14px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--line);min-height:52px}
+.barra .voltar{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--accent);font-weight:500;font-size:.95rem;white-space:nowrap}
+.barra .nome{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.barra .marca{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.85rem;white-space:nowrap}
+.barra .marca svg{width:22px;height:22px}
+#quadro{flex:1;width:100%;border:0;display:block;background:var(--bg)}
+#estado{flex:1;overflow:auto}
+@media (max-width:600px){.barra .marca span{display:none}}
+</style>
+</head>
+<body>
+<div class="barra">
+  <a class="voltar" href="painel.html">&larr; Minhas ferramentas</a>
+  <div class="nome" id="nome"></div>
+  <div class="marca"><svg><use href="#i-logo"/></svg><span>e.contabil projetos</span></div>
+</div>
+<div id="estado"><div class="carregando"><span class="spin"></span>Abrindo a ferramenta…</div></div>
+<iframe id="quadro" title="Ferramenta" hidden></iframe>
+
+<script type="module">
+import { db, doc, getDoc, exigirLogin, msgErro, iniciarTema, injetarIcones, $, esc } from "./fb.js";
+
+injetarIcones();
+iniciarTema();
+
+function erro(texto){
+  $("estado").innerHTML = `<div class="container" style="padding-top:40px"><div class="panel vazio">
+    <div class="aviso erro">${esc(texto)}</div>
+    <p style="margin-top:18px"><a class="btn" href="painel.html">Voltar às minhas ferramentas</a></p></div></div>`;
+}
+
+const id = new URLSearchParams(location.search).get("f") || "";
+try {
+  await exigirLogin();
+  if (!id) throw { code: "sem-id" };
+  let snap;
+  try { snap = await getDoc(doc(db, "ferramentas", id)); }
+  catch(e){ if (/permission-denied/.test(e.code || "")) throw { code: "sem-acesso" }; throw e; }
+  if (!snap.exists()) throw { code: "nao-existe" };
+
+  const f = snap.data();
+  document.title = (f.aba || "Ferramenta") + " · e.contabil";
+  $("nome").textContent = f.aba || "";
+
+  // Tira a barra "← Central de Automações" da versão antiga: a barra de cima já faz esse papel
+  let html = String(f.html || "").replace(/<div class="ec-voltar">[\s\S]*?<\/div>/, "");
+  // Qualquer link que ainda aponte para a página inicial antiga volta para o painel
+  html = html.replace(/href="index\.html"/g, 'href="painel.html" target="_top"');
+
+  const q = $("quadro");
+  q.srcdoc = html;
+  q.hidden = false;
+  $("estado").remove();
+} catch(err){
+  const c = err && err.code;
+  if (c === "sem-acesso" || c === "nao-existe") erro("Esta ferramenta não está liberada para o seu acesso.");
+  else if (c === "sem-id") erro("Nenhuma ferramenta foi indicada.");
+  else erro(msgErro(err));
+}
+</script>
+</body>
+</html>

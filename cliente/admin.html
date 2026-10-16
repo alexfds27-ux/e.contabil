@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Administração · e.contabil</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23167a6e'/%3E%3Crect x='20' y='34' width='6' height='12' rx='1' fill='white'/%3E%3Crect x='29' y='28' width='6' height='18' rx='1' fill='white'/%3E%3Crect x='38' y='22' width='6' height='24' rx='1' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="estilo.css">
+<style>
+.abas{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin:8px 0 22px}
+.aba{background:none;border:none;border-bottom:3px solid transparent;font:inherit;font-size:1rem;color:var(--muted);padding:10px 14px;cursor:pointer;margin-bottom:-1px}
+.aba[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.cab{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.cab h2{margin:0;font-size:1.25rem}
+.cab p{margin:2px 0 0;color:var(--muted);font-size:.92rem}
+table{width:100%;border-collapse:collapse;font-size:.93rem}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+td .acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.chip{display:inline-block;font-size:.78rem;color:var(--accent);background:var(--accent-soft);padding:2px 10px;border-radius:999px;margin:2px 4px 2px 0}
+.mini{color:var(--muted);font-size:.8rem;font-family:ui-monospace,Consolas,monospace;word-break:break-all}
+.ic{width:32px;height:32px}
+.ic svg{width:32px;height:32px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form .full{grid-column:1/-1}
+.checks{display:flex;gap:16px;flex-wrap:wrap;padding:6px 0}
+.checks label{display:flex;gap:6px;align-items:center;font-weight:400;cursor:pointer}
+.botoes{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:0;width:min(760px,calc(100vw - 24px));box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(10,20,35,.5)}
+dialog .dcorpo{padding:24px;max-height:calc(100vh - 80px);overflow:auto}
+dialog h3{margin:0 0 16px;font-size:1.2rem}
+.log{margin-top:14px;max-height:340px;overflow:auto;background:var(--surface-2);border-radius:8px;padding:10px 12px;font-size:.88rem;display:grid;gap:4px}
+.log .ok{color:var(--accent)} .log .er{color:var(--danger)}
+.tbl-wrap{overflow-x:auto}
+@media (max-width:700px){.form{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="container">
+    <a class="brand" href="painel.html" aria-label="e.contabil, minhas ferramentas">
+      <svg><use href="#i-logo"/></svg>
+      <div class="brand-txt"><b>e.contabil</b><span>projetos</span></div>
+    </a>
+    <div class="top-acoes">
+      <a class="btn2" href="painel.html">Minhas ferramentas</a>
+      <button class="btn2" id="bSair" type="button">Sair</button>
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="Alternar tema claro/escuro">
+        <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1>Administração</h1>
+    <p>Suba e organize as ferramentas e defina o que cada login pode acessar.</p>
+  </section>
+
+  <div id="bloqueio"><div class="carregando"><span class="spin"></span>Conferindo acesso…</div></div>
+
+  <div id="app" hidden>
+    <div class="abas" role="tablist">
+      <button class="aba" role="tab" data-s="ferr" aria-selected="true">Ferramentas</button>
+      <button class="aba" role="tab" data-s="usu" aria-selected="false">Logins</button>
+      <button class="aba" role="tab" data-s="grp" aria-selected="false">Grupos</button>
+    </div>
+
+    <!-- FERRAMENTAS -->
+    <section class="panel" data-sec="ferr">
+      <div class="cab">
+        <div><h2>Ferramentas</h2><p>Cada ferramenta aparece para os logins dos grupos marcados.</p></div>
+        <div class="botoes">
+          <button class="btn2" id="bImportar" type="button">Importar do site atual</button>
+          <button class="btn" id="bNova" type="button">+ Nova ferramenta</button>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th></th><th>Ferramenta</th><th>Grupos</th><th></th></tr></thead>
+        <tbody id="tFerr"></tbody>
+      </table></div>
+    </section>
+
+    <!-- LOGINS -->
+    <section class="panel" data-sec="usu" hidden>
+      <div class="cab">
+        <div><h2>Logins</h2><p>Crie o login em Firebase › Authentication › Usuários, copie o UID e cadastre aqui.</p></div>
+        <button class="btn" id="bNovoUsu" type="button">+ Cadastrar login</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Nome / e-mail</th><th>Grupos</th><th>Admin</th><th></th></tr></thead>
+        <tbody id="tUsu"></tbody>
+      </table></div>
+    </section>
+
+    <!-- GRUPOS -->
+    <section class="panel" data-sec="grp" hidden>
+      <div class="cab">
+        <div><h2>Grupos</h2><p>Grupos juntam ferramentas. Cada login enxerga as ferramentas dos seus grupos.</p></div>
+        <button class="btn" id="bNovoGrp" type="button">+ Novo grupo</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Grupo</th><th>Código</th><th>Ferramentas</th><th></th></tr></thead>
+        <tbody id="tGrp"></tbody>
+      </table></div>
+    </section>
+  </div>
+</main>
+
+<!-- Diálogo: ferramenta -->
+<dialog id="dFerr"><form method="dialog" class="dcorpo" id="fFerr">
+  <h3 id="dFerrTit">Nova ferramenta</h3>
+  <div class="form">
+    <label class="campo">Nome (aparece no cartão)<input type="text" id="fAba" required></label>
+    <label class="campo">Código (sem espaço nem acento)<input type="text" id="fId" required pattern="[a-z0-9-]+"></label>
+    <label class="campo">Nome curto (embaixo do ícone)<input type="text" id="fCurto"></label>
+    <label class="campo">Ícone<select id="fIcone">
+      <option value="xml">XML</option><option value="receipt">Recibo / documento</option>
+      <option value="cross">Cruzamento</option><option value="code">Códigos</option><option value="car">Veículos</option>
+    </select></label>
+    <label class="campo full">Resumo (uma linha)<input type="text" id="fResumo"></label>
+    <label class="campo full">Descrição<textarea id="fDesc"></textarea></label>
+    <label class="campo">Etiquetas (separe por vírgula)<input type="text" id="fTags" placeholder="XML / ZIP, Excel"></label>
+    <label class="campo">Ordem na lista<input type="number" id="fOrdem" value="100"></label>
+    <div class="campo full">Grupos que acessam<div class="checks" id="fGrupos"></div></div>
+    <label class="campo full"><span id="fArqTxt">Arquivo da ferramenta (.html)</span><input type="file" id="fArq" accept=".html,.htm,text/html"></label>
+  </div>
+  <div id="fMsg" class="aviso" hidden style="margin-top:14px"></div>
+  <div class="botoes" style="margin-top:18px">
+    <button class="btn" id="fSalvar" type="button">Salvar</button>
+    <button class="btn2" value="cancel">Cancelar</button>
+  </div>
+</form></dialog>
+
+<!-- Diálogo: login -->
+<dialog id="dUsu"><form method="dialog" class="dcorpo">
+  <h3 id="dUsuTit">Cadastrar login</h3>
+  <div class="form">
+    <label class="campo full">UID do usuário (Firebase › Authentication)<input type="text" id="uUid" required></label>
+    <label class="campo">Nome<input type="text" id="uNome" placeholder="Ex.: KR Caminhões"></label>
+    <label class="campo">E-mail (só para identificar)<input type="email" id="uEmail"></label>
+    <div class="campo full">Grupos<div class="checks" id="uGrupos"></div></div>
+    <label class="campo full" style="flex-direction:row;align-items:center;gap:8px;font-weight:400"><input type="checkbox" id="uAdmin"> Administrador (pode subir ferramentas e liberar acessos)</label>
+  </div>
+  <div id="uMsg" class="aviso" hidden style="margin-top:14px"></div>
+  <div class="botoes" style="margin-top:18px">
+    <button class="btn" id="uSalvar" type="button">Salvar</button>
+    <button class="btn2" value="cancel">Cancelar</button>
+  </div>
+</form></dialog>
+
+<!-- Diálogo: grupo -->
+<dialog id="dGrp"><form method="dialog" class="dcorpo">
+  <h3 id="dGrpTit">Novo grupo</h3>
+  <div class="form">
+    <label class="campo">Nome<input type="text" id="gNome" placeholder="Ex.: Revenda de veículos"></label>
+    <label class="campo">Código (sem espaço nem acento)<input type="text" id="gId" pattern="[a-z0-9-]+"></label>
+    <label class="campo full">Descrição (opcional)<input type="text" id="gDesc"></label>
+  </div>
+  <div id="gMsg" class="aviso" hidden style="margin-top:14px"></div>
+  <div class="botoes" style="margin-top:18px">
+    <button class="btn" id="gSalvar" type="button">Salvar</button>
+    <button class="btn2" value="cancel">Cancelar</button>
+  </div>
+</form></dialog>
+
+<!-- Diálogo: importação -->
+<dialog id="dImp"><form method="dialog" class="dcorpo">
+  <h3>Importar ferramentas do site atual</h3>
+  <p style="margin:0;color:var(--muted)">Copia para o Firebase todas as ferramentas que estão hoje na página inicial, já separadas em "Para seu escritório" e "Para sua empresa". O site atual continua igual.</p>
+  <label style="display:flex;gap:8px;align-items:center;margin-top:14px"><input type="checkbox" id="impSubst" checked> Substituir as que já foram importadas antes</label>
+  <div class="log" id="impLog" hidden></div>
+  <div class="botoes" style="margin-top:18px">
+    <button class="btn" id="impIr" type="button">Importar agora</button>
+    <button class="btn2" value="cancel" id="impFechar">Fechar</button>
+  </div>
+</form></dialog>
+
+<script type="module">
+import { db, auth, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, collection, deleteField,
+         serverTimestamp, writeBatch, exigirLogin, sair, msgErro, iniciarTema, injetarIcones,
+         $, esc, icone } from "./fb.js";
+
+injetarIcones();
+iniciarTema($("themeBtn"));
+$("bSair").addEventListener("click", sair);
+
+const GRUPOS_PADRAO = {
+  escritorio: { nome: "Para seu escritório", descricao: "Conciliações, conferências, SPED e importações para o Domínio" },
+  empresa:    { nome: "Para sua empresa",    descricao: "Contrato de compra e venda e termo de comissão" }
+};
+const LIMITE = 1_000_000; // tamanho máximo de um documento no Firestore (~1 MB)
+const slug = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const tamanho = s => new Blob([s]).size;
+const aviso = (el, txt, tipo) => { el.textContent = txt; el.className = "aviso " + tipo; el.hidden = !txt; };
+
+let eu = null;
+let grupos = {};      // id -> {nome, descricao, itens}
+let usuarios = [];    // [{uid, ...}]
+
+// ---------- abas ----------
+document.querySelectorAll(".aba").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".aba").forEach(x => x.setAttribute("aria-selected", x === b));
+  document.querySelectorAll("[data-sec]").forEach(s => s.hidden = s.dataset.sec !== b.dataset.s);
+}));
+
+// ---------- carregar dados ----------
+async function carregarGrupos(){
+  grupos = {};
+  const snap = await getDocs(collection(db, "grupos"));
+  snap.forEach(d => grupos[d.id] = { itens: {}, ...d.data() });
+}
+async function carregarUsuarios(){
+  usuarios = [];
+  const snap = await getDocs(collection(db, "usuarios"));
+  snap.forEach(d => usuarios.push({ uid: d.id, grupos: [], ...d.data() }));
+  usuarios.sort((a,b) => String(a.nome||"").localeCompare(String(b.nome||"")));
+}
+const nomeGrupo = g => (grupos[g] && grupos[g].nome) || g;
+
+// Todas as ferramentas, juntando o que cada grupo lista
+function todasFerramentas(){
+  const m = {};
+  for (const [g, d] of Object.entries(grupos)){
+    for (const [id, meta] of Object.entries(d.itens || {})){
+      if (!m[id]) m[id] = { id, ...meta, grupos: [] };
+      m[id].grupos.push(g);
+    }
+  }
+  return Object.values(m).sort((a,b) => (a.ordem ?? 999) - (b.ordem ?? 999) || String(a.aba).localeCompare(b.aba));
+}
+
+function renderFerr(){
+  const L = todasFerramentas();
+  $("tFerr").innerHTML = L.length ? L.map(f => `<tr>
+    <td class="ic">${icone(f.icone)}</td>
+    <td><b>${esc(f.aba)}</b><div class="mini">${esc(f.id)}</div></td>
+    <td>${f.grupos.map(g => `<span class="chip">${esc(nomeGrupo(g))}</span>`).join("")}</td>
+    <td><div class="acoes">
+      <a class="btn2" href="abrir.html?f=${encodeURIComponent(f.id)}" target="_blank">Abrir</a>
+      <button class="btn2" data-ed="${esc(f.id)}">Editar</button>
+      <button class="btn2 perigo" data-rm="${esc(f.id)}">Remover</button>
+    </div></td></tr>`).join("")
+    : `<tr><td colspan="4" class="vazio">Nenhuma ferramenta ainda. Use "Importar do site atual" para trazer as que já existem.</td></tr>`;
+}
+function renderUsu(){
+  $("tUsu").innerHTML = usuarios.length ? usuarios.map(u => `<tr>
+    <td><b>${esc(u.nome || "(sem nome)")}</b><div class="mini">${esc(u.email || "")} · UID ${esc(u.uid)}</div></td>
+    <td>${(u.grupos||[]).map(g => `<span class="chip">${esc(nomeGrupo(g))}</span>`).join("") || "—"}</td>
+    <td>${u.admin === true ? "Sim" : "—"}</td>
+    <td><div class="acoes">
+      <button class="btn2" data-eu="${esc(u.uid)}">Editar</button>
+      ${u.uid === eu.uid ? "" : `<button class="btn2 perigo" data-ru="${esc(u.uid)}">Remover acesso</button>`}
+    </div></td></tr>`).join("")
+    : `<tr><td colspan="4" class="vazio">Nenhum login cadastrado.</td></tr>`;
+}
+function renderGrp(){
+  const L = Object.entries(grupos);
+  $("tGrp").innerHTML = L.length ? L.map(([id, d]) => `<tr>
+    <td><b>${esc(d.nome || id)}</b><div class="mini">${esc(d.descricao || "")}</div></td>
+    <td class="mini">${esc(id)}</td>
+    <td>${Object.keys(d.itens || {}).length}</td>
+    <td><div class="acoes"><button class="btn2" data-eg="${esc(id)}">Editar</button></div></td></tr>`).join("")
+    : `<tr><td colspan="4" class="vazio">Nenhum grupo ainda. A importação cria "Para seu escritório" e "Para sua empresa".</td></tr>`;
+}
+function renderTudo(){ renderFerr(); renderUsu(); renderGrp(); }
+
+function checksGrupos(cont, marcados){
+  const ids = Object.keys(grupos);
+  cont.innerHTML = ids.length
+    ? ids.map(g => `<label><input type="checkbox" value="${esc(g)}" ${marcados.includes(g) ? "checked" : ""}> ${esc(nomeGrupo(g))}</label>`).join("")
+    : `<span class="mini">Crie um grupo primeiro (aba Grupos).</span>`;
+}
+const marcados = cont => [...cont.querySelectorAll("input:checked")].map(i => i.value);
+
+// ---------- salvar uma ferramenta (código + presença nos grupos) ----------
+async function salvarFerramenta(meta, gruposSel, html, gruposAntes = []){
+  const id = meta.id;
+  const card = { aba: meta.aba, curto: meta.curto || "", resumo: meta.resumo || "", descricao: meta.descricao || "",
+                 tags: meta.tags || [], icone: meta.icone || "receipt", ordem: Number(meta.ordem ?? 100) };
+  const dados = { ...card, grupos: gruposSel, atualizado: serverTimestamp(), atualizadoPor: eu.email || eu.uid };
+  if (html != null){
+    if (tamanho(html) > LIMITE) throw new Error(`o arquivo tem ${(tamanho(html)/1e6).toFixed(2)} MB e o limite é 1 MB`);
+    dados.html = html;
+  }
+  const b = writeBatch(db);
+  b.set(doc(db, "ferramentas", id), dados, { merge: true });
+  for (const g of gruposSel) b.set(doc(db, "grupos", g), { itens: { [id]: card } }, { merge: true });
+  for (const g of gruposAntes) if (!gruposSel.includes(g)) b.update(doc(db, "grupos", g), { ["itens." + id]: deleteField() });
+  await b.commit();
+}
+
+// ---------- diálogo de ferramenta ----------
+let editando = null; // { id, grupos }
+function abrirFerr(f){
+  editando = f ? { id: f.id, grupos: [...f.grupos] } : null;
+  $("dFerrTit").textContent = f ? "Editar ferramenta" : "Nova ferramenta";
+  $("fAba").value = f?.aba || ""; $("fId").value = f?.id || ""; $("fId").readOnly = !!f;
+  $("fCurto").value = f?.curto || ""; $("fIcone").value = f?.icone || "xml";
+  $("fResumo").value = f?.resumo || ""; $("fDesc").value = f?.descricao || "";
+  $("fTags").value = (f?.tags || []).join(", "); $("fOrdem").value = f?.ordem ?? 100;
+  $("fArq").value = ""; $("fArqTxt").textContent = f ? "Trocar o arquivo da ferramenta (deixe vazio para manter o atual)" : "Arquivo da ferramenta (.html)";
+  checksGrupos($("fGrupos"), f ? f.grupos : []);
+  aviso($("fMsg"), "", ""); $("dFerr").showModal();
+}
+$("fAba").addEventListener("input", () => { if (!editando) $("fId").value = slug($("fAba").value); });
+$("bNova").addEventListener("click", () => abrirFerr(null));
+$("fSalvar").addEventListener("click", async () => {
+  const meta = { id: slug($("fId").value), aba: $("fAba").value.trim(), curto: $("fCurto").value.trim(),
+    icone: $("fIcone").value, resumo: $("fResumo").value.trim(), descricao: $("fDesc").value.trim(),
+    tags: $("fTags").value.split(",").map(s => s.trim()).filter(Boolean), ordem: Number($("fOrdem").value || 100) };
+  const gs = marcados($("fGrupos"));
+  const arq = $("fArq").files[0];
+  if (!meta.aba || !meta.id) return aviso($("fMsg"), "Preencha o nome e o código.", "erro");
+  if (!gs.length) return aviso($("fMsg"), "Marque pelo menos um grupo.", "erro");
+  if (!editando && !arq) return aviso($("fMsg"), "Escolha o arquivo .html da ferramenta.", "erro");
+  if (!editando && todasFerramentas().some(f => f.id === meta.id)) return aviso($("fMsg"), "Já existe uma ferramenta com esse código.", "erro");
+  $("fSalvar").disabled = true; aviso($("fMsg"), "Salvando…", "info");
+  try {
+    const html = arq ? await arq.text() : null;
+    await salvarFerramenta(meta, gs, html, editando ? editando.grupos : []);
+    await carregarGrupos(); renderTudo(); $("dFerr").close();
+  } catch(e){ aviso($("fMsg"), "Não foi possível salvar: " + (e.code ? msgErro(e) : e.message), "erro"); }
+  $("fSalvar").disabled = false;
+});
+
+$("tFerr").addEventListener("click", async e => {
+  const ed = e.target.closest("[data-ed]"), rm = e.target.closest("[data-rm]");
+  if (ed) abrirFerr(todasFerramentas().find(f => f.id === ed.dataset.ed));
+  if (rm){
+    const f = todasFerramentas().find(x => x.id === rm.dataset.rm);
+    if (!confirm(`Remover "${f.aba}"? Ela some para todos os logins.`)) return;
+    try {
+      const b = writeBatch(db);
+      b.delete(doc(db, "ferramentas", f.id));
+      for (const g of f.grupos) b.update(doc(db, "grupos", g), { ["itens." + f.id]: deleteField() });
+      await b.commit(); await carregarGrupos(); renderTudo();
+    } catch(err){ alert("Não foi possível remover: " + msgErro(err)); }
+  }
+});
+
+// ---------- importação do site atual ----------
+$("bImportar").addEventListener("click", () => { $("impLog").hidden = true; $("impLog").innerHTML = ""; $("dImp").showModal(); });
+$("impIr").addEventListener("click", async () => {
+  const log = (txt, cls = "") => { const d = document.createElement("div"); d.className = cls; d.textContent = txt; $("impLog").append(d); $("impLog").scrollTop = 1e9; };
+  $("impLog").hidden = false; $("impLog").innerHTML = ""; $("impIr").disabled = true; $("impFechar").disabled = true;
+  let ok = 0, falhas = 0, pulos = 0;
+  try {
+    log("Lendo a página inicial do site…");
+    const idx = await (await fetch("../index.html", { cache: "no-store" })).text();
+    const m = idx.match(/const FERRAMENTAS\s*=\s*\[([\s\S]*?)\n\];/);
+    if (!m) throw new Error("não encontrei a lista de ferramentas na página inicial");
+    const lista = new Function("return [" + m[1] + "]")();
+    log(`${lista.length} ferramentas encontradas.`);
+
+    for (const [g, d] of Object.entries(GRUPOS_PADRAO))
+      if (!grupos[g]) { await setDoc(doc(db, "grupos", g), { ...d, itens: {} }, { merge: true }); log(`Grupo criado: ${d.nome}`, "ok"); }
+    await carregarGrupos();
+    const existentes = new Set(todasFerramentas().map(f => f.id));
+
+    for (const [i, f] of lista.entries()){
+      if (existentes.has(f.id) && !$("impSubst").checked){ pulos++; log(`• ${f.aba}: já existe, mantida.`); continue; }
+      try {
+        const r = await fetch("../" + f.href, { cache: "no-store" });
+        if (!r.ok) throw new Error("arquivo " + f.href + " não encontrado");
+        const html = await r.text();
+        const g = f.grupo || "escritorio";
+        const antes = todasFerramentas().find(x => x.id === f.id)?.grupos || [];
+        await salvarFerramenta({ ...f, ordem: i + 1 }, [g], html, antes);
+        ok++; log(`✓ ${f.aba} (${(tamanho(html)/1024).toFixed(0)} KB) → ${nomeGrupo(g)}`, "ok");
+      } catch(err){ falhas++; log(`✗ ${f.aba}: ${err.code ? msgErro(err) : err.message}`, "er"); }
+    }
+    log(`Concluído: ${ok} importadas${pulos ? `, ${pulos} mantidas` : ""}${falhas ? `, ${falhas} com erro` : ""}.`, falhas ? "er" : "ok");
+  } catch(err){ log("Erro: " + (err.code ? msgErro(err) : err.message), "er"); }
+  await carregarGrupos(); renderTudo();
+  $("impIr").disabled = false; $("impFechar").disabled = false;
+});
+
+// ---------- logins ----------
+let usuEditando = null;
+function abrirUsu(u){
+  usuEditando = u || null;
+  $("dUsuTit").textContent = u ? "Editar login" : "Cadastrar login";
+  $("uUid").value = u?.uid || ""; $("uUid").readOnly = !!u;
+  $("uNome").value = u?.nome || ""; $("uEmail").value = u?.email || "";
+  $("uAdmin").checked = u?.admin === true; $("uAdmin").disabled = u && u.uid === eu.uid;
+  checksGrupos($("uGrupos"), u?.grupos || []);
+  aviso($("uMsg"), "", ""); $("dUsu").showModal();
+}
+$("bNovoUsu").addEventListener("click", () => abrirUsu(null));
+$("uSalvar").addEventListener("click", async () => {
+  const uid = $("uUid").value.trim();
+  if (!/^[A-Za-z0-9]{20,40}$/.test(uid)) return aviso($("uMsg"), "Cole o UID exatamente como aparece no Firebase.", "erro");
+  if (!usuEditando && usuarios.some(u => u.uid === uid)) return aviso($("uMsg"), "Esse login já está cadastrado.", "erro");
+  const dados = { nome: $("uNome").value.trim(), email: $("uEmail").value.trim(), grupos: marcados($("uGrupos")),
+                  admin: uid === eu.uid ? true : $("uAdmin").checked };
+  try { await setDoc(doc(db, "usuarios", uid), dados, { merge: true }); await carregarUsuarios(); renderUsu(); $("dUsu").close(); }
+  catch(e){ aviso($("uMsg"), "Não foi possível salvar: " + msgErro(e), "erro"); }
+});
+$("tUsu").addEventListener("click", async e => {
+  const ed = e.target.closest("[data-eu]"), rm = e.target.closest("[data-ru]");
+  if (ed) abrirUsu(usuarios.find(u => u.uid === ed.dataset.eu));
+  if (rm){
+    const u = usuarios.find(x => x.uid === rm.dataset.ru);
+    if (!confirm(`Remover o acesso de "${u.nome || u.uid}"? O login continua existindo no Firebase, mas não enxerga mais nenhuma ferramenta.`)) return;
+    try { await deleteDoc(doc(db, "usuarios", u.uid)); await carregarUsuarios(); renderUsu(); }
+    catch(err){ alert("Não foi possível remover: " + msgErro(err)); }
+  }
+});
+
+// ---------- grupos ----------
+let grpEditando = null;
+function abrirGrp(id){
+  grpEditando = id || null;
+  const d = id ? grupos[id] : {};
+  $("dGrpTit").textContent = id ? "Editar grupo" : "Novo grupo";
+  $("gNome").value = d.nome || ""; $("gId").value = id || ""; $("gId").readOnly = !!id; $("gDesc").value = d.descricao || "";
+  aviso($("gMsg"), "", ""); $("dGrp").showModal();
+}
+$("gNome").addEventListener("input", () => { if (!grpEditando) $("gId").value = slug($("gNome").value); });
+$("bNovoGrp").addEventListener("click", () => abrirGrp(null));
+$("tGrp").addEventListener("click", e => { const b = e.target.closest("[data-eg]"); if (b) abrirGrp(b.dataset.eg); });
+$("gSalvar").addEventListener("click", async () => {
+  const id = slug($("gId").value), nome = $("gNome").value.trim();
+  if (!id || !nome) return aviso($("gMsg"), "Preencha nome e código.", "erro");
+  if (!grpEditando && grupos[id]) return aviso($("gMsg"), "Já existe um grupo com esse código.", "erro");
+  try {
+    await setDoc(doc(db, "grupos", id), { nome, descricao: $("gDesc").value.trim(), ...(grpEditando ? {} : { itens: {} }) }, { merge: true });
+    await carregarGrupos(); renderTudo(); $("dGrp").close();
+  } catch(e){ aviso($("gMsg"), "Não foi possível salvar: " + msgErro(e), "erro"); }
+});
+
+// ---------- início ----------
+try {
+  const { u } = await exigirLogin({ admin: true });
+  eu = { uid: u.uid, email: u.email };
+  await Promise.all([carregarGrupos(), carregarUsuarios()]);
+  renderTudo();
+  $("bloqueio").remove(); $("app").hidden = false;
+} catch(err){
+  $("bloqueio").innerHTML = `<div class="panel vazio"><div class="aviso erro">${esc(msgErro(err))}</div>
+    <p style="margin-top:18px"><a class="btn" href="painel.html">Voltar às minhas ferramentas</a></p></div>`;
+}
+</script>
+</body>
+</html>

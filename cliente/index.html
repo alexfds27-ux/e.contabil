@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Área do Cliente · e.contabil</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23167a6e'/%3E%3Crect x='20' y='34' width='6' height='12' rx='1' fill='white'/%3E%3Crect x='29' y='28' width='6' height='18' rx='1' fill='white'/%3E%3Crect x='38' y='22' width='6' height='24' rx='1' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="estilo.css">
+<style>
+.tela{min-height:calc(100vh - 72px);display:grid;place-items:center;padding:30px 16px}
+.caixa{width:100%;max-width:420px}
+.caixa .panel{padding:30px 28px}
+.caixa h1{margin:0;font-size:1.6rem;letter-spacing:-.01em}
+.caixa .sub{margin:4px 0 22px;color:var(--muted)}
+form{display:flex;flex-direction:column;gap:16px}
+.senha-wrap{position:relative}
+.senha-wrap input{padding-right:70px}
+.ver{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--accent);font:inherit;font-size:.85rem;cursor:pointer;padding:6px}
+form .btn{width:100%;margin-top:4px}
+.rodape-form{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:.9rem}
+.seguro{display:flex;gap:10px;align-items:flex-start;margin-top:18px;color:var(--muted);font-size:.85rem;line-height:1.4}
+.seguro svg{width:18px;height:18px;flex:none;stroke:var(--accent);fill:none;stroke-width:1.8;margin-top:1px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="container">
+    <a class="brand" href="../" aria-label="e.contabil, página inicial">
+      <svg><use href="#i-logo"/></svg>
+      <div class="brand-txt"><b>e.contabil</b><span>projetos</span></div>
+    </a>
+    <div class="top-acoes">
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="Alternar tema claro/escuro">
+        <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="tela">
+  <div class="caixa">
+    <div class="panel">
+      <h1 id="titulo">Área do Cliente</h1>
+      <p class="sub" id="subtitulo">Entre com o e-mail e a senha que você recebeu do escritório.</p>
+
+      <form id="fLogin" novalidate>
+        <label class="campo">E-mail
+          <input type="email" id="email" autocomplete="username" required>
+        </label>
+        <label class="campo">Senha
+          <span class="senha-wrap">
+            <input type="password" id="senha" autocomplete="current-password" required>
+            <button type="button" class="ver" id="verSenha">Mostrar</button>
+          </span>
+        </label>
+        <div id="msg" class="aviso" role="alert" hidden></div>
+        <button class="btn" id="bEntrar" type="submit">Entrar</button>
+        <div class="rodape-form">
+          <button type="button" class="linklike" id="bEsqueci">Esqueci minha senha</button>
+          <a class="linklike" href="../">Voltar ao site</a>
+        </div>
+      </form>
+
+      <form id="fReset" novalidate hidden>
+        <label class="campo">E-mail cadastrado
+          <input type="email" id="emailReset" autocomplete="username" required>
+        </label>
+        <div id="msgReset" class="aviso" role="alert" hidden></div>
+        <button class="btn" id="bReset" type="submit">Enviar link para nova senha</button>
+        <div class="rodape-form">
+          <button type="button" class="linklike" id="bVoltarLogin">Voltar para o login</button>
+        </div>
+      </form>
+
+      <div class="seguro">
+        <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <span>Os arquivos que você usa nas ferramentas são lidos só no seu computador. Nada é enviado para a internet.</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { auth, signInWithEmailAndPassword, sendPasswordResetEmail, usuarioAtual,
+         msgErro, iniciarTema, injetarIcones, $ } from "./fb.js";
+
+injetarIcones();
+iniciarTema($("themeBtn"));
+
+// Para onde ir depois de entrar (só páginas desta pasta)
+const pedido = new URLSearchParams(location.search).get("volta") || "";
+const destino = /^(painel|abrir|admin)\.html(\?[\w=&%.-]*)?$/.test(pedido) ? pedido : "painel.html";
+
+// Se já está logado, vai direto
+usuarioAtual().then(u => { if (u) location.replace(destino); });
+
+function mostrar(el, texto, tipo){ el.textContent = texto; el.className = "aviso " + tipo; el.hidden = !texto; }
+
+$("verSenha").addEventListener("click", () => {
+  const s = $("senha"); const ver = s.type === "password";
+  s.type = ver ? "text" : "password"; $("verSenha").textContent = ver ? "Ocultar" : "Mostrar";
+});
+
+$("fLogin").addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = $("email").value.trim(), senha = $("senha").value;
+  if (!email || !senha){ mostrar($("msg"), "Preencha e-mail e senha.", "erro"); return; }
+  $("bEntrar").disabled = true; $("bEntrar").textContent = "Entrando…"; mostrar($("msg"), "", "");
+  try {
+    await signInWithEmailAndPassword(auth, email, senha);
+    location.replace(destino);
+  } catch(err){
+    mostrar($("msg"), msgErro(err), "erro");
+    $("bEntrar").disabled = false; $("bEntrar").textContent = "Entrar";
+  }
+});
+
+function trocar(reset){
+  $("fLogin").hidden = reset; $("fReset").hidden = !reset;
+  $("titulo").textContent = reset ? "Nova senha" : "Área do Cliente";
+  $("subtitulo").textContent = reset
+    ? "Informe seu e-mail. Se ele estiver cadastrado, você recebe um link para criar uma nova senha."
+    : "Entre com o e-mail e a senha que você recebeu do escritório.";
+  if (reset){ $("emailReset").value = $("email").value; $("emailReset").focus(); } else $("email").focus();
+}
+$("bEsqueci").addEventListener("click", () => trocar(true));
+$("bVoltarLogin").addEventListener("click", () => trocar(false));
+
+$("fReset").addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = $("emailReset").value.trim();
+  if (!email){ mostrar($("msgReset"), "Informe o e-mail.", "erro"); return; }
+  $("bReset").disabled = true;
+  try {
+    await sendPasswordResetEmail(auth, email);
+    mostrar($("msgReset"), "Pronto. Se o e-mail estiver cadastrado, o link chega em alguns minutos (confira também o spam).", "ok");
+  } catch(err){
+    if (/user-not-found/.test(err.code || "")) mostrar($("msgReset"), "Pronto. Se o e-mail estiver cadastrado, o link chega em alguns minutos (confira também o spam).", "ok");
+    else mostrar($("msgReset"), msgErro(err), "erro");
+  }
+  $("bReset").disabled = false;
+});
+</script>
+</body>
+</html>

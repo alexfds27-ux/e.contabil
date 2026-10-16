@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minhas ferramentas · e.contabil</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23167a6e'/%3E%3Crect x='20' y='34' width='6' height='12' rx='1' fill='white'/%3E%3Crect x='29' y='28' width='6' height='18' rx='1' fill='white'/%3E%3Crect x='38' y='22' width='6' height='24' rx='1' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="container">
+    <a class="brand" href="painel.html" aria-label="e.contabil, minhas ferramentas">
+      <svg><use href="#i-logo"/></svg>
+      <div class="brand-txt"><b>e.contabil</b><span>projetos</span></div>
+    </a>
+    <div class="top-acoes">
+      <div class="quem" id="quem" hidden></div>
+      <a class="btn2" id="lnkAdmin" href="admin.html" hidden>Administração</a>
+      <button class="btn2" id="bSair" type="button">Sair</button>
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="Alternar tema claro/escuro">
+        <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1 id="ola">Minhas ferramentas</h1>
+    <p>Escolha uma ferramenta para abrir. Os arquivos que você carregar ficam só no seu computador.</p>
+    <input type="text" class="busca" id="busca" placeholder="Procurar ferramenta…" aria-label="Procurar ferramenta" hidden>
+  </section>
+  <div id="conteudo"><div class="carregando"><span class="spin"></span>Carregando suas ferramentas…</div></div>
+</main>
+<footer>e.contabil projetos · ferramentas de apoio contábil</footer>
+
+<script type="module">
+import { db, doc, getDoc, exigirLogin, sair, msgErro, iniciarTema, injetarIcones,
+         $, esc, icone } from "./fb.js";
+
+injetarIcones();
+iniciarTema($("themeBtn"));
+$("bSair").addEventListener("click", sair);
+
+const ICO_GRUPO = {
+  escritorio: '<svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>',
+  empresa:    '<svg viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M2 21h20M8 7h4M8 11h4M8 15h4"/></svg>',
+  outro:      '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>'
+};
+
+let secoes = [];
+
+function cartao(f){
+  return `<article class="card" data-busca="${esc((f.aba+" "+(f.resumo||"")+" "+(f.tags||[]).join(" ")).toLowerCase())}">
+    <div class="ico">${icone(f.icone)}<b>${esc(f.curto || f.aba)}</b></div>
+    <div class="txt">
+      <h3>${esc(f.aba)}</h3>
+      <p>${esc(f.resumo || f.descricao || "")}</p>
+      ${(f.tags||[]).length ? `<div class="tags">${f.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div>` : ""}
+      <a class="btn" href="abrir.html?f=${encodeURIComponent(f.id)}">Abrir ferramenta</a>
+    </div>
+  </article>`;
+}
+
+function render(){
+  const total = secoes.reduce((n,s) => n + s.itens.length, 0);
+  if (!total){
+    $("conteudo").innerHTML = `<div class="panel vazio">Ainda não há ferramentas liberadas para este acesso.<br>Fale com o escritório.</div>`;
+    return;
+  }
+  $("busca").hidden = total < 6;
+  $("conteudo").innerHTML = secoes.filter(s => s.itens.length).map(s => `
+    <section class="secao" data-g="${esc(s.id)}">
+      <div class="secao-titulo">
+        <span class="gi">${ICO_GRUPO[s.id] || ICO_GRUPO.outro}</span>
+        <h2>${esc(s.nome)}${s.descricao ? `<small>${esc(s.descricao)}</small>` : ""}</h2>
+      </div>
+      <div class="grade">${s.itens.map(cartao).join("")}</div>
+    </section>`).join("");
+}
+
+$("busca").addEventListener("input", () => {
+  const q = $("busca").value.trim().toLowerCase();
+  document.querySelectorAll(".secao").forEach(sec => {
+    let vis = 0;
+    sec.querySelectorAll(".card").forEach(c => { const ok = !q || c.dataset.busca.includes(q); c.hidden = !ok; vis += ok; });
+    sec.hidden = !vis;
+  });
+});
+
+try {
+  const { p } = await exigirLogin();
+  $("quem").innerHTML = `<b>${esc(p.nome || "")}</b>${esc(p.email || "")}`;
+  $("quem").hidden = !p.nome;
+  if (p.admin === true) $("lnkAdmin").hidden = false;
+
+  const vistos = new Set();
+  for (const g of p.grupos){
+    let d = null;
+    try { const s = await getDoc(doc(db, "grupos", g)); d = s.exists() ? s.data() : null; } catch(e){ d = null; }
+    if (!d) continue;
+    const itens = Object.entries(d.itens || {})
+      .map(([id, m]) => ({ id, ...m }))
+      .filter(f => !vistos.has(f.id))
+      .sort((a,b) => (a.ordem ?? 999) - (b.ordem ?? 999) || String(a.aba).localeCompare(b.aba));
+    itens.forEach(f => vistos.add(f.id));
+    secoes.push({ id: g, nome: d.nome || g, descricao: d.descricao || "", itens });
+  }
+  render();
+} catch(err){
+  $("conteudo").innerHTML = `<div class="panel vazio"><div class="aviso erro">${esc(msgErro(err))}</div></div>`;
+}
+</script>
+</body>
+</html>
