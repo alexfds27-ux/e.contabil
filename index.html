@@ -3,624 +3,434 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>e.contabil · Central de Automações</title>
+<title>e-contabil automações · Ferramentas para a rotina contábil e fiscal</title>
+<meta name="description" content="Ferramentas que simplificam a rotina contábil e fiscal: conversão de PDF para OFX, leitura de XML, conciliações e relatórios personalizados.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23167a6e'/%3E%3Crect x='20' y='34' width='6' height='12' rx='1' fill='white'/%3E%3Crect x='29' y='28' width='6' height='18' rx='1' fill='white'/%3E%3Crect x='38' y='22' width='6' height='24' rx='1' fill='white'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230b4fb8'/%3E%3Cpath d='M44 34H21a11 11 0 0 0 20 5' fill='none' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M21 30a11 11 0 0 1 22 0' fill='none' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 :root{
-  --bg:#eef2f6; --surface:#ffffff; --surface-2:#f4f7fa;
-  --ink:#12233b; --muted:#4f5f73; --line:#dde4ec;
-  --teal-1:#1b5f86; --teal-2:#17a074; --accent:#167a6e; --accent-soft:#e3f3ee;
-  --shadow:0 1px 2px rgba(18,35,59,.05),0 6px 20px rgba(18,35,59,.06);
-  --grad:linear-gradient(100deg,var(--teal-1),var(--teal-2));
+  color-scheme:light;
+  --navy:#0a2a5c; --navy-2:#0c3a7d; --blue:#1673e6; --blue-2:#2b8cff; --sky:#5ec8ff;
+  --ink:#0d2346; --muted:#56647a; --line:#e2e8f1; --bg:#ffffff; --bg-2:#f4f7fb;
+  --red:#d9333f; --green:#1e9e57; --violet:#6a4ae0;
   --f:"Lexend",system-ui,-apple-system,"Segoe UI",sans-serif;
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0f1824; --surface:#16212f; --surface-2:#1b2838;
-  --ink:#e6edf5; --muted:#9fb0c3; --line:#26364a;
-  --accent:#3fc6a0; --accent-soft:#16332c;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
-}}
-:root[data-theme="dark"]{
-  --bg:#0f1824; --surface:#16212f; --surface-2:#1b2838;
-  --ink:#e6edf5; --muted:#9fb0c3; --line:#26364a;
-  --accent:#3fc6a0; --accent-soft:#16332c;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  --shadow:0 1px 2px rgba(13,35,70,.05),0 10px 30px rgba(13,35,70,.07);
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
 a{color:inherit}
-.container{max-width:1200px;margin:0 auto;padding-inline:20px}
+img,svg{display:block}
+.container{max-width:1240px;margin:0 auto;padding-inline:24px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
 /* ---------- Topo ---------- */
-.topbar{background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 2px 10px rgba(18,35,59,.04);position:sticky;top:0;z-index:10}
-.topbar .container{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:76px}
-.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
-.brand svg{width:48px;height:48px;flex:none}
-.brand-txt{display:flex;flex-direction:column;line-height:1}
-.brand-txt b{font-size:1.65rem;font-weight:700;letter-spacing:-.02em}
-.brand-txt span{align-self:flex-end;font-size:.95rem;color:var(--muted);margin-top:2px}
-nav.menu{display:flex;gap:28px;align-items:center}
-nav.menu a{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);font-size:1rem;padding:6px 0;border-bottom:2px solid transparent}
-nav.menu a:hover{border-bottom-color:var(--accent)}
-nav.menu svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8}
-.theme-btn{border:1px solid var(--line);background:var(--surface-2);color:var(--ink);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;cursor:pointer}
-.theme-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+.topo{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.topo .container{display:flex;align-items:center;gap:32px;min-height:88px}
+.marca{display:flex;align-items:center;gap:14px;text-decoration:none;flex:none}
+.marca svg{width:60px;height:60px}
+.marca-txt{display:flex;flex-direction:column;line-height:1}
+.marca-txt b{font-size:2.05rem;font-weight:600;letter-spacing:-.02em;color:var(--navy)}
+.marca-txt span{font-size:.72rem;letter-spacing:.42em;color:var(--blue);margin-top:5px;padding-left:2px;font-weight:500}
+nav.menu{display:flex;gap:6px;margin-left:auto;margin-right:auto}
+nav.menu a{text-decoration:none;color:var(--ink);font-size:.98rem;padding:8px 18px;position:relative}
+nav.menu a::after{content:"";position:absolute;left:18px;right:18px;bottom:0;height:3px;border-radius:2px;background:var(--blue);transform:scaleX(0);transition:transform .2s}
+nav.menu a:hover::after,nav.menu a.ativo::after{transform:scaleX(1)}
+nav.menu a.ativo{color:var(--blue)}
+.btn-cliente{display:inline-flex;align-items:center;gap:10px;background:var(--navy-2);color:#fff;text-decoration:none;font-weight:500;padding:12px 26px;border-radius:12px;flex:none;transition:background .15s,transform .15s}
+.btn-cliente:hover{background:var(--blue);transform:translateY(-1px)}
+.btn-cliente svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8}
+.menu-btn{display:none;margin-left:auto;background:none;border:1px solid var(--line);border-radius:10px;width:44px;height:44px;place-items:center;cursor:pointer;color:var(--ink)}
+.menu-btn svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;fill:none}
+a:focus-visible,button:focus-visible{outline:3px solid var(--blue-2);outline-offset:3px;border-radius:6px}
 
-/* ---------- Título ---------- */
-.hero{padding-block:44px 28px}
-.hero h1{margin:0;font-size:clamp(1.9rem,4vw,2.6rem);font-weight:700;letter-spacing:-.02em}
-.hero p{margin:6px 0 0;font-size:1.15rem;color:var(--muted)}
+/* ---------- Hero ---------- */
+.hero{position:relative;overflow:hidden;color:#fff;
+  background:
+    radial-gradient(900px 500px at 78% 40%,rgba(43,140,255,.45),transparent 60%),
+    radial-gradient(600px 400px at 10% 110%,rgba(22,115,230,.35),transparent 60%),
+    linear-gradient(110deg,#071d42 0%,#0a2a5c 45%,#0d47a1 100%)}
+.hero::before{content:"";position:absolute;inset:0;opacity:.12;
+  background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);
+  background-size:64px 64px;mask-image:linear-gradient(90deg,transparent 30%,#000 70%)}
+.hero .container{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:32px;align-items:center;padding-block:56px 60px}
+.eyebrow{font-size:.8rem;letter-spacing:.24em;text-transform:uppercase;color:var(--sky);font-weight:500;margin:0 0 14px}
+.hero h1{margin:0;font-size:clamp(2.8rem,6vw,4.4rem);line-height:1.02;font-weight:700;letter-spacing:-.03em}
+.hero h1 span{display:block;color:var(--blue-2);background:linear-gradient(90deg,#2b8cff,#5ec8ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p.lead{margin:20px 0 0;font-size:1.08rem;max-width:52ch;color:#dbe6f7;font-weight:300}
+.btn-hero{display:inline-flex;align-items:center;gap:12px;margin-top:28px;background:linear-gradient(90deg,#1673e6,#2b8cff);color:#fff;text-decoration:none;font-weight:500;padding:14px 28px;border-radius:999px;box-shadow:0 8px 24px rgba(22,115,230,.45);transition:transform .15s,box-shadow .15s}
+.btn-hero:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(22,115,230,.55)}
+.btn-hero svg{width:18px;height:18px;stroke:currentColor;stroke-width:2.2;fill:none}
+.ilustra{width:100%;height:auto;max-width:640px;justify-self:end}
 
-/* ---------- Seções (Escritório / Empresa) ---------- */
-.grupos{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:30px}
-.grupo{display:flex;align-items:center;gap:16px;text-align:left;padding:20px 22px;background:var(--surface);border:2px solid var(--line);border-radius:14px;box-shadow:var(--shadow);font:inherit;color:var(--ink);cursor:pointer;transition:border-color .15s,transform .15s,background .15s}
-.grupo:hover{border-color:var(--accent);transform:translateY(-1px)}
-.grupo:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
-.grupo .gi{width:52px;height:52px;border-radius:12px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);flex:none}
-.grupo .gi svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.grupo b{display:block;font-size:1.2rem;font-weight:700;letter-spacing:.04em}
-.grupo small{display:block;color:var(--muted);font-size:.92rem;margin-top:2px}
-.grupo[aria-pressed="true"]{border-color:transparent;background:var(--grad);color:#fff}
-.grupo[aria-pressed="true"] small{color:rgba(255,255,255,.85)}
-.grupo[aria-pressed="true"] .gi{background:rgba(255,255,255,.18);color:#fff}
-.layout.unica{grid-template-columns:1fr}
-.layout.unica .side{display:none}
+/* ---------- Seção ferramentas ---------- */
+section.bloco{padding-block:56px 40px}
+.sec-cab{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:28px}
+.kicker{font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--blue);font-weight:600;margin:0 0 6px}
+.sec-cab h2{margin:0;font-size:clamp(1.6rem,3vw,2.1rem);font-weight:700;letter-spacing:-.02em}
+.sec-cab p{margin:0;max-width:44ch;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{display:grid;grid-template-columns:auto 1fr;gap:22px;padding:30px 26px;border:1px solid var(--line);border-radius:10px;background:#fff;box-shadow:var(--shadow);transition:transform .15s,border-color .15s}
+.card:hover{transform:translateY(-3px);border-color:#c9d7ec}
+.card.verde{background:linear-gradient(180deg,#f3fbf7,#fff)}
+.card.roxo{background:linear-gradient(180deg,#f6f4ff,#fff)}
+.card .art{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}
+.card .art svg{width:62px;height:auto;flex:none}
+.card .art .seta{width:18px!important}
+.card .art .seta{width:18px}
+.card.duplo .art svg:not(.seta){width:50px}
+.card .art{align-self:start;padding-top:4px}
+.card h3{margin:0 0 8px;font-size:1.15rem;font-weight:600}
+.card p{margin:0;color:var(--muted);font-size:.93rem;line-height:1.55}
+.card .ir{display:inline-flex;align-items:center;gap:8px;margin-top:18px;color:var(--blue);font-weight:500;font-size:.93rem;text-decoration:none}
+.card .ir:hover{text-decoration:underline}
+.card .ir svg{width:14px;height:14px;stroke:currentColor;stroke-width:2.4;fill:none}
 
-/* ---------- Abas ---------- */
-.tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin}
-.tab{flex:1 1 220px;min-width:0;text-align:left;line-height:1.25;display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-bottom:none;margin-right:-1px;margin-bottom:-1px;font:inherit;font-size:.98rem;color:var(--ink);cursor:pointer;position:relative}
-.tab:first-child{border-top-left-radius:10px}
-.tab:last-child{border-top-right-radius:10px}
-.tab svg{width:26px;height:26px;flex:none}
-.tab[aria-selected="true"]{background:var(--accent-soft)}
-.tab[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--grad)}
-.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+/* ---------- Diferenciais ---------- */
+.dif{background:var(--bg-2);border-top:1px solid var(--line)}
+.dif .container{display:grid;grid-template-columns:repeat(4,1fr);padding-block:30px}
+.dif .item{display:flex;gap:18px;align-items:flex-start;padding:6px 28px;border-left:1px solid #d3dce9}
+.dif .item:first-child{border-left:none;padding-left:0}
+.dif .item svg{width:40px;height:40px;flex:none;stroke:var(--blue);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.dif h3{margin:0;font-size:1.02rem;font-weight:600}
+.dif p{margin:4px 0 0;color:var(--muted);font-size:.88rem;line-height:1.45}
 
-/* ---------- Corpo ---------- */
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:32px;padding-block:32px 60px;align-items:start}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:24px}
-.panel-inner{background:var(--surface-2);border-radius:12px;padding:40px 28px 0;text-align:center;overflow:hidden}
-.panel-inner h2{margin:0;font-size:1.75rem;font-weight:700;letter-spacing:-.01em}
-.panel-inner p{margin:10px auto 0;color:var(--muted);font-size:1.1rem;max-width:56ch}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--grad);color:#fff;text-decoration:none;font-weight:500;font-size:1.05rem;padding:14px 30px;border-radius:8px;box-shadow:0 4px 12px rgba(23,122,110,.25);transition:transform .15s,box-shadow .15s}
-.btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(23,122,110,.32)}
-.btn:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
-.panel-inner .btn{margin-top:26px}
-.tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
-.tags span{font-size:.82rem;color:var(--accent);background:var(--accent-soft);padding:4px 12px;border-radius:999px}
+/* ---------- Faixa ---------- */
+.faixa{background:linear-gradient(90deg,#0a2a5c,#0d3f8f,#0a2a5c);color:#fff;text-align:center;padding:22px 24px;font-size:1.15rem;font-weight:500;display:flex;align-items:center;justify-content:center;gap:24px}
+.faixa::before,.faixa::after{content:"";height:1px;width:min(120px,12vw);background:linear-gradient(90deg,transparent,rgba(94,200,255,.7))}
+.faixa::after{transform:scaleX(-1)}
 
-/* mini prévia da ferramenta */
-.preview{margin:34px auto 0;max-width:620px;border-radius:10px 10px 0 0;border:1px solid var(--line);border-bottom:none;overflow:hidden;background:var(--surface);box-shadow:0 -4px 24px rgba(18,35,59,.08);text-align:left}
-.pv-bar{height:26px;background:#e3e7ec;display:flex;align-items:center;gap:6px;padding-inline:10px}
-.pv-bar i{width:9px;height:9px;border-radius:50%;display:block}
-.pv-body{display:grid;grid-template-columns:130px 1fr;min-height:230px}
-.pv-side{background:#132a45;padding:12px 10px;display:flex;flex-direction:column;gap:10px}
-.pv-logo{color:#fff;font-size:.78rem;font-weight:600;display:flex;align-items:center;gap:5px;margin-bottom:6px}
-.pv-logo svg{width:18px;height:18px}
-.pv-side .ln{height:7px;border-radius:4px;background:rgba(255,255,255,.18)}
-.pv-side .ln.on{background:var(--grad);height:16px}
-.pv-main{padding:12px 14px;display:flex;flex-direction:column;gap:9px}
-.pv-main .t{font-size:.82rem;font-weight:600;color:var(--ink)}
-.pv-card{border:1px solid var(--line);border-radius:6px;padding:9px 10px;display:flex;flex-direction:column;gap:9px}
-.pv-card .h{font-size:.7rem;font-weight:600;color:var(--ink)}
-.pv-row{display:flex;gap:10px;align-items:center}
-.pv-row .ic{width:14px;height:14px;border-radius:3px;background:var(--accent-soft);flex:none}
-.pv-row .b{height:6px;border-radius:3px;background:var(--line)}
-.pv-row .ok{width:34px;height:12px;border-radius:999px;background:var(--accent-soft);margin-left:auto}
+/* ---------- Relatórios / todas ---------- */
+.lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.mini{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.mini .bolha{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;flex:none;font-size:.7rem;font-weight:700;color:#fff}
+.mini b{display:block;font-weight:600;font-size:.97rem}
+.mini span{display:block;color:var(--muted);font-size:.86rem;line-height:1.4;margin-top:2px}
+.nota{margin-top:20px;color:var(--muted);font-size:.92rem;display:flex;gap:10px;align-items:center}
+.nota svg{width:18px;height:18px;stroke:var(--blue);fill:none;stroke-width:1.8;flex:none}
+.nota a{color:var(--blue);font-weight:500}
 
-/* ---------- Cartões laterais ---------- */
-.side{display:flex;flex-direction:column;gap:22px}
-.side h3.label{margin:0;font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);display:grid;grid-template-columns:120px 1fr;gap:0;padding:20px 20px 20px 10px}
-.card .ico{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border-right:1px solid var(--line);padding-inline:6px;text-align:center}
-.card .ico svg{width:64px;height:64px}
-.card .ico b{font-size:.92rem;font-weight:600;line-height:1.2}
-.card .txt{padding-left:18px;display:flex;flex-direction:column;gap:6px;min-width:0}
-.card h4{margin:0;font-size:1.08rem;font-weight:600}
-.card p{margin:0;color:var(--muted);font-size:.95rem;line-height:1.4}
-.card .btn{margin-top:auto;padding:11px 16px;font-size:.98rem}
-.card .actions{margin-top:12px;display:flex;flex-direction:column;gap:8px}
-.card .linklike{background:none;border:none;color:var(--accent);font:inherit;font-size:.88rem;cursor:pointer;padding:0;text-align:left}
-.card .linklike:hover{text-decoration:underline}
-
-/* ---------- Ajuda ---------- */
-.help{border-top:1px solid var(--line);padding-block:36px 50px;color:var(--muted);font-size:.95rem}
-.help h2{color:var(--ink);font-size:1.2rem;margin:0 0 10px}
-.help ul{margin:0;padding-left:20px;display:grid;gap:6px;max-width:80ch}
-footer{text-align:center;color:var(--muted);font-size:.85rem;padding-bottom:30px}
+/* ---------- Sobre / contato ---------- */
+.duas{display:grid;grid-template-columns:1.2fr 1fr;gap:28px;align-items:stretch}
+.caixa{border:1px solid var(--line);border-radius:12px;padding:32px;background:#fff;box-shadow:var(--shadow)}
+.caixa h2{margin:0 0 12px;font-size:1.5rem;letter-spacing:-.01em}
+.caixa p{margin:0 0 12px;color:var(--muted)}
+.caixa ul{margin:0;padding-left:20px;color:var(--muted);display:grid;gap:6px}
+.caixa.escura{background:linear-gradient(140deg,#0a2a5c,#0d47a1);color:#fff;border:none}
+.caixa.escura p{color:#d2def2}
+.caixa.escura .btn-hero{margin-top:12px}
+footer{background:#071d42;color:#9fb2d0;font-size:.88rem}
+footer .container{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-block:26px}
+footer a{color:#cfe0ff;text-decoration:none}
+footer a:hover{text-decoration:underline}
 
 /* ---------- Responsivo ---------- */
-@media (max-width:1000px){
-  .layout{grid-template-columns:1fr}
-  nav.menu{gap:18px}
+@media (max-width:1100px){
+  nav.menu a{padding:8px 10px}
+  nav.menu a::after{left:10px;right:10px}
+  .cards{grid-template-columns:1fr 1fr}
+  .dif .container{grid-template-columns:1fr 1fr;gap:20px 0}
+  .dif .item:nth-child(3){border-left:none;padding-left:0}
 }
-@media (max-width:700px){
-  nav.menu a span{display:none}
-  .brand-txt b{font-size:1.35rem}
-  .brand svg{width:40px;height:40px}
-  .grupos{grid-template-columns:1fr;gap:12px}
-  .grupo{padding:16px}
-  .grupo .gi{width:44px;height:44px}
-  .tabs{flex-wrap:nowrap}
-  .tab{flex:none;white-space:nowrap;padding:14px 16px;font-size:.95rem}
-  .tab svg{width:26px;height:26px}
-  .panel{padding:14px}
-  .panel-inner{padding:28px 16px 0}
-  .pv-body{grid-template-columns:80px 1fr}
-  .pv-logo span{display:none}
-  .card{grid-template-columns:90px 1fr}
-  .card .ico svg{width:48px;height:48px}
+@media (max-width:900px){
+  .topo .container{min-height:72px;gap:12px}
+  .marca svg{width:46px;height:46px}
+  .marca-txt b{font-size:1.6rem}
+  .marca-txt span{font-size:.6rem;letter-spacing:.32em}
+  .menu-btn{display:grid}
+  nav.menu{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:#fff;border-bottom:1px solid var(--line);padding:8px 16px 16px;box-shadow:0 10px 20px rgba(0,0,0,.06)}
+  nav.menu.aberto{display:flex}
+  nav.menu a{padding:12px 6px;border-bottom:1px solid var(--line)}
+  nav.menu a::after{display:none}
+  .btn-cliente{padding:10px 14px}
+  .btn-cliente span{display:none}
+  .hero .container{grid-template-columns:1fr;padding-block:40px}
+  .ilustra{justify-self:center}
+  .cards{grid-template-columns:1fr}
+  .duas{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .container{padding-inline:16px}
+  .marca-txt b{font-size:1.35rem}
+  .dif .container{grid-template-columns:1fr}
+  .dif .item{border-left:none;padding-left:0}
+  .card{grid-template-columns:1fr;padding:24px 20px}
+  .faixa{font-size:1rem}
+  .faixa::before,.faixa::after{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
 
-<!-- Ícones reutilizados -->
+<!-- Ícones de arquivo reutilizados -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1b5f86"/><stop offset="1" stop-color="#17a074"/>
-    </linearGradient>
+    <linearGradient id="gLogo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b8cff"/><stop offset="1" stop-color="#0a3d91"/></linearGradient>
+    <linearGradient id="gTela" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f3c86"/><stop offset="1" stop-color="#0a2554"/></linearGradient>
+    <linearGradient id="gBase" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9d6ea"/><stop offset="1" stop-color="#7f93b5"/></linearGradient>
   </defs>
-  <symbol id="i-logo" viewBox="0 0 64 64">
-    <path fill="url(#g)" d="M27.6 3h8.8l1.4 7.1a22 22 0 0 1 5.6 2.3l6-4.1 6.2 6.2-4.1 6a22 22 0 0 1 2.3 5.6l7.2 1.4v8.8l-7.2 1.4a22 22 0 0 1-2.3 5.6l4.1 6-6.2 6.2-6-4.1a22 22 0 0 1-5.6 2.3L36.4 61h-8.8l-1.4-7.2a22 22 0 0 1-5.6-2.3l-6 4.1-6.2-6.2 4.1-6a22 22 0 0 1-2.3-5.6L3 36.4v-8.8l7.2-1.4a22 22 0 0 1 2.3-5.6l-4.1-6 6.2-6.2 6 4.1a22 22 0 0 1 5.6-2.3z"/>
-    <circle cx="32" cy="32" r="15" fill="#fff"/>
-    <rect x="23" y="33" width="4.5" height="8" rx="1" fill="#1b5f86"/>
-    <rect x="29.8" y="28" width="4.5" height="13" rx="1" fill="#1a7f84"/>
-    <rect x="36.6" y="24" width="4.5" height="17" rx="1" fill="#17a074"/>
-    <path d="M22 29l8-7 4 3 8-8" fill="none" stroke="#17a074" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M38 16h5v5" fill="none" stroke="#17a074" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <symbol id="f-pdf" viewBox="0 0 70 84">
+    <path d="M6 2h42l18 18v56a6 6 0 0 1-6 6H6a6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z" fill="#fff" stroke="#d9333f" stroke-width="3"/>
+    <path d="M48 2v18h18" fill="#f6c9cd" stroke="#d9333f" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M22 40c4-12 7-16 9-12s-6 18-14 22 2 6 14-2 18-6 14-8-16 2-23-12" fill="none" stroke="#d9333f" stroke-width="2.8" stroke-linejoin="round"/>
+    <rect x="1.5" y="56" width="63" height="24.5" rx="0" fill="#d9333f"/>
+    <path d="M0 56h66v20a6 6 0 0 1-6 6H6a6 6 0 0 1-6-6z" fill="#d9333f"/>
+    <text x="33" y="75" text-anchor="middle" font-family="Lexend,Arial,sans-serif" font-weight="700" font-size="17" fill="#fff">PDF</text>
   </symbol>
-  <symbol id="i-car" viewBox="0 0 64 64">
-    <path d="M14 14h22m0 0-5-5m5 5-5 5M50 22H28m0 0 5-5m-5 5 5 5" fill="none" stroke="#17a074" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <path fill="#1b5f86" d="M17 32h30l5 9h3a3 3 0 0 1 3 3v8a2 2 0 0 1-2 2h-3a6 6 0 0 1-12 0H23a6 6 0 0 1-12 0H8a2 2 0 0 1-2-2v-8a3 3 0 0 1 3-3h3z"/>
-    <path fill="#e3f3ee" d="M19.5 35h11v6H16.5zM33.5 35h11.5l3 6H33.5z"/>
-    <circle cx="17" cy="54" r="3.5" fill="#e3f3ee"/><circle cx="47" cy="54" r="3.5" fill="#e3f3ee"/>
+  <symbol id="f-ofx" viewBox="0 0 70 84">
+    <path d="M6 2h42l18 18v56a6 6 0 0 1-6 6H6a6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z" fill="#fff" stroke="#1673e6" stroke-width="3"/>
+    <path d="M48 2v18h18" fill="#cfe2fb" stroke="#1673e6" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M18 28h26M18 36h26M18 44h16" stroke="#1673e6" stroke-width="4" stroke-linecap="round"/>
+    <path d="M0 56h66v20a6 6 0 0 1-6 6H6a6 6 0 0 1-6-6z" fill="#1673e6"/>
+    <text x="33" y="75" text-anchor="middle" font-family="Lexend,Arial,sans-serif" font-weight="700" font-size="17" fill="#fff">OFX</text>
   </symbol>
-  <symbol id="i-cross" viewBox="0 0 64 64">
-    <g fill="#1b5f86"><ellipse cx="16" cy="12" rx="10" ry="4"/><path d="M6 12v6c0 2.2 4.5 4 10 4s10-1.8 10-4v-6c0 2.2-4.5 4-10 4S6 14.2 6 12z"/><path d="M6 20v6c0 2.2 4.5 4 10 4s10-1.8 10-4v-6c0 2.2-4.5 4-10 4S6 22.2 6 20z"/></g>
-    <g fill="#17a074"><ellipse cx="48" cy="40" rx="10" ry="4"/><path d="M38 40v6c0 2.2 4.5 4 10 4s10-1.8 10-4v-6c0 2.2-4.5 4-10 4s-10-1.8-10-4z"/><path d="M38 48v6c0 2.2 4.5 4 10 4s10-1.8 10-4v-6c0 2.2-4.5 4-10 4s-10-1.8-10-4z"/></g>
-    <path d="M26 38 54 10m0 0H42m12 0v12M38 26 10 54m0 0h12m-12 0V42" fill="none" stroke="url(#g)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <symbol id="f-xml" viewBox="0 0 70 84">
+    <path d="M6 2h42l18 18v56a6 6 0 0 1-6 6H6a6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z" fill="#fff" stroke="#1e9e57" stroke-width="3"/>
+    <path d="M48 2v18h18" fill="#c8ecd8" stroke="#1e9e57" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M22 30l-8 8 8 8M44 30l8 8-8 8M37 27l-8 23" fill="none" stroke="#1e9e57" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M0 56h66v20a6 6 0 0 1-6 6H6a6 6 0 0 1-6-6z" fill="#1e9e57"/>
+    <text x="33" y="75" text-anchor="middle" font-family="Lexend,Arial,sans-serif" font-weight="700" font-size="17" fill="#fff">XML</text>
   </symbol>
-  <symbol id="i-xml" viewBox="0 0 64 64">
-    <path d="M14 5h26l12 12v38a4 4 0 0 1-4 4H14a4 4 0 0 1-4-4V9a4 4 0 0 1 4-4z" fill="#fff" stroke="#1b5f86" stroke-width="3"/>
-    <path d="M40 5v12h12" fill="none" stroke="#1b5f86" stroke-width="3" stroke-linejoin="round"/>
-    <text x="30" y="38" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="13" fill="#1b5f86">XML</text>
-    <circle cx="48" cy="50" r="11" fill="#17a074"/>
-    <path d="M48 44v11m-4.5-4.5L48 55l4.5-4.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <symbol id="f-rel" viewBox="0 0 84 84">
+    <rect x="2" y="2" width="80" height="80" rx="4" fill="#fff" stroke="#6a4ae0" stroke-width="3"/>
+    <rect x="18" y="26" width="7" height="14" fill="#6a4ae0"/><rect x="29" y="18" width="7" height="22" fill="#6a4ae0"/><rect x="40" y="12" width="7" height="28" fill="#6a4ae0"/>
+    <path d="M14 50h28M14 58h22M14 66h26" stroke="#6a4ae0" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="60" cy="60" r="12" fill="#6a4ae0"/><path d="M60 60V48a12 12 0 0 1 12 12z" fill="#fff"/>
   </symbol>
-  <symbol id="i-receipt" viewBox="0 0 64 64">
-    <path d="M12 5h40v54l-6.7-4-6.6 4-6.7-4-6.7 4-6.6-4-6.7 4z" fill="#fff" stroke="#1b5f86" stroke-width="3" stroke-linejoin="round"/>
-    <path d="M20 17h24M20 25h24M20 33h14" stroke="#1b5f86" stroke-width="3" stroke-linecap="round"/>
-    <circle cx="44" cy="42" r="10" fill="#17a074"/>
-    <path d="m39.5 42 3.2 3.2 6-6.4" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-  </symbol>
-  <symbol id="i-code" viewBox="0 0 64 64">
-    <rect x="5" y="9" width="40" height="46" rx="4" fill="#fff" stroke="#1b5f86" stroke-width="3"/>
-    <path d="M5 21h40M5 33h40M5 45h40M19 9v46" stroke="#1b5f86" stroke-width="2.2"/>
-    <g fill="#17a074"><rect x="44" y="16" width="3" height="32"/><rect x="49" y="16" width="1.6" height="32"/><rect x="52.5" y="16" width="3.4" height="32"/><rect x="57.8" y="16" width="1.6" height="32"/></g>
-    <rect x="41" y="12" width="21" height="40" rx="3" fill="none" stroke="url(#g)" stroke-width="3"/>
+  <symbol id="logo" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="30" fill="url(#gLogo)"/>
+    <path d="M6 40a27 27 0 0 0 50 2" fill="none" stroke="#8fd0ff" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+    <path d="M46 34H20a12.5 12.5 0 0 0 23 6.5" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M20 30a12.5 12.5 0 0 1 25 0" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round"/>
   </symbol>
 </svg>
 
-<header class="topbar">
+<header class="topo">
   <div class="container">
-    <a class="brand" href="#" aria-label="e.contabil projetos, início">
-      <svg><use href="#i-logo"/></svg>
-      <div class="brand-txt"><b>e.contabil</b><span>projetos</span></div>
+    <a class="marca" href="#inicio" aria-label="e-contabil automações, início">
+      <svg><use href="#logo"/></svg>
+      <span class="marca-txt"><b>e-contabil</b><span>AUTOMAÇÕES</span></span>
     </a>
-    <nav class="menu" aria-label="Menu principal">
-      <a href="#ferramentas">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
-        <span>Ferramentas</span>
-      </a>
-      <a href="#ajuda">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/></svg>
-        <span>Como usar</span>
-      </a>
-      <button class="theme-btn" id="themeBtn" type="button" aria-label="Alternar tema claro/escuro">
-        <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-      </button>
+    <button class="menu-btn" id="menuBtn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <nav class="menu" id="menu" aria-label="Menu principal">
+      <a href="#inicio" class="ativo">Início</a>
+      <a href="#ferramentas">Ferramentas</a>
+      <a href="#relatorios">Relatórios</a>
+      <a href="#sobre">Sobre Nós</a>
+      <a href="#contato">Contato</a>
     </nav>
+    <a class="btn-cliente" href="cliente/">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+      <span>Área do Cliente</span>
+    </a>
   </div>
 </header>
 
-<main class="container">
-  <section class="hero">
-    <h1>Central de Automações</h1>
-    <p>Gerencie e execute suas tarefas de forma automatizada</p>
-  </section>
-
-  <div class="grupos" role="group" aria-label="Escolha a área">
-    <button class="grupo" type="button" data-g="escritorio" aria-pressed="true">
-      <span class="gi"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg></span>
-      <span><b>PARA SEU ESCRITÓRIO</b><small>Conciliações, conferências, SPED e importações para o Domínio</small></span>
-    </button>
-    <button class="grupo" type="button" data-g="empresa" aria-pressed="false">
-      <span class="gi"><svg viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M2 21h20M8 7h4M8 11h4M8 15h4"/></svg></span>
-      <span><b>PARA SUA EMPRESA</b><small>Contrato de compra e venda e termo de comissão</small></span>
-    </button>
-  </div>
-
-  <div class="tabs" role="tablist" id="ferramentas" aria-label="Ferramentas"></div>
-
-  <div class="layout" id="layout">
-    <section class="panel" id="panel" role="tabpanel" aria-live="polite"></section>
-    <aside class="side">
-      <h3 class="label">Outras ferramentas</h3>
-      <div id="cards" class="side" style="gap:22px"></div>
-    </aside>
-  </div>
-
-  <section class="help" id="ajuda">
-    <h2>Como usar</h2>
-    <ul>
-      <li>Escolha uma ferramenta nas abas ou nos cartões e clique para abrir. Ela abre em uma página própria, com um botão para voltar aqui.</li>
-      <li>Os arquivos que você carrega (XML, OFX, PDF, planilhas) são lidos apenas no seu navegador. Nada é enviado para a internet nem fica salvo no site.</li>
-      <li>Os resultados podem ser baixados em Excel direto pela ferramenta.</li>
-      <li>Funciona em qualquer computador com Chrome, Edge ou Firefox atualizados.</li>
-    </ul>
-  </section>
-</main>
-<footer>e.contabil projetos · ferramentas internas de apoio contábil</footer>
-
-<script>
-/* =========================================================
-   LISTA DE FERRAMENTAS
-   Para acrescentar uma nova: copie um bloco { ... } abaixo,
-   troque os textos e o nome do arquivo (href), e suba o
-   arquivo .html da ferramenta na mesma pasta do site.
-   Ícones disponíveis: car, cross, xml, receipt, code
-   Área: sem "grupo" a ferramenta vai para PARA SEU ESCRITÓRIO;
-   com grupo: "empresa" vai para PARA SUA EMPRESA.
-   ========================================================= */
-const FERRAMENTAS = [
-  {
-    id: "conciliacao",
-    aba: "Conciliação Veículos",
-    curto: "Conciliação Veículos",
-    titulo: "Iniciar Conciliação de Veículos",
-    descricao: "Cruze as NF-e de venda, compra e permuta com os extratos bancários (OFX) e veja o que bate e o que fica pendente.",
-    resumo: "Notas de veículos × extrato bancário, com permutas.",
-    tags: ["XML NF-e", "OFX", "Excel"],
-    icone: "car",
-    href: "conciliacao-veiculos.html",
-    botao: "Carregar Novo Arquivo / Dados",
-    previa: "Histórico de Conciliações"
-  },
-  {
-    id: "piscofins",
-    aba: "Cruzamento PIS COFINS",
-    curto: "Cruzamento PIS COFINS",
-    titulo: "Iniciar Cruzamento PIS/COFINS",
-    descricao: "Cruze o relatório de Movimentação de Produtos com o de Informações PIS/COFINS e traga natureza da receita e códigos Rec. PIS e Rec. COFINS.",
-    resumo: "Movimento de produtos × código da receita.",
-    tags: ["PDF", "CFOP / NCM", "Excel"],
-    icone: "cross",
-    href: "cruzamento-pis-cofins.html",
-    botao: "Carregar Relatórios",
-    previa: "Itens cruzados"
-  },
-  {
-    id: "xml",
-    aba: "Extração XML Notas",
-    curto: "XML",
-    titulo: "Iniciar Extração de XML",
-    descricao: "Anexe os XMLs das notas (ou um .zip) e gere um relatório item a item com nota, emissão, natureza, NCM, CFOP, quantidade e valor.",
-    resumo: "XMLs de NF-e e NFC-e viram planilha item a item.",
-    tags: ["XML / ZIP", "NF-e e NFC-e", "Excel"],
-    icone: "xml",
-    href: "leitor-xml-nfe.html",
-    botao: "Anexar XMLs",
-    previa: "Itens das notas"
-  },
-  {
-    id: "cupons",
-    aba: "Conferência de Cupons",
-    curto: "Cupons",
-    titulo: "Iniciar Conferência de Cupons",
-    descricao: "Compare o relatório de vendas da empresa com o Acompanhamento de Saídas do sistema, nota a nota e por valor, e encontre faltas e diferenças.",
-    resumo: "Vendas da empresa × saídas do sistema (NFC-e).",
-    tags: ["PDF", "NFC-e", "Pendências"],
-    icone: "receipt",
-    href: "conferencia-cupons.html",
-    botao: "Carregar Relatórios",
-    previa: "Conferência nota a nota"
-  },
-  {
-    id: "codigos",
-    aba: "Cruzamento de Códigos",
-    curto: "Códigos",
-    titulo: "Iniciar Cruzamento de Códigos",
-    descricao: "Envie a contagem do mês e a ferramenta localiza o código de cada produto na base, sugerindo os mais parecidos para o que faltar.",
-    resumo: "Preenche códigos de produto na contagem do mês.",
-    tags: ["Excel", "Base de códigos", "Sugestões"],
-    icone: "code",
-    href: "cruzamento-codigos.html",
-    botao: "Carregar Planilha do Mês",
-    previa: "Conferência de códigos"
-   },
-  {
-    id: "ofx",
-    aba: "OFX para Domínio",
-    curto: "OFX",
-    titulo: "Gerar Lançamentos do Extrato",
-    descricao: "Suba o OFX do banco e gere o TXT de lançamentos caixa x banco, tarifas e juros pagos, pronto para importar no Domínio.",
-    resumo: "Extrato OFX vira TXT de importação no Domínio.",
-    tags: ["OFX", "Domínio", "TXT"],
-    icone: "receipt",
-    href: "ofx-dominio.html",
-    botao: "Carregar Extrato OFX",
-    previa: "Lançamentos gerados"
-  },
-  {
-    id: "rendimentos",
-    aba: "Rendimentos de Aplicações",
-    curto: "Aplicações",
-    titulo: "Apurar Rendimentos de Aplicações",
-    descricao: "Compare as posições mensais de aplicações do Santander e apure o rendimento e o I.R. do mês, base do PIS e da COFINS no Lucro Real.",
-    resumo: "Posições mensais em PDF viram relatório de rendimento e I.R.",
-    tags: ["PDF Santander", "PIS/COFINS", "Excel e PDF"],
-    icone: "cross",
-    href: "rendimentos-aplicacoes.html",
-    botao: "Carregar PDFs das Posições",
-    previa: "Rendimento do mês"
-  },
-  {
-    id: "entradas",
-    aba: "Conferência XML × Entradas",
-    curto: "Entradas",
-    titulo: "Iniciar Conferência de Entradas",
-    descricao: "Suba o PDF do Acompanhamento de Entradas e os XMLs do mês (NF-e e CT-e) e veja quais notas não foram lançadas, com número e chave de acesso.",
-    resumo: "XMLs do mês × relatório de entradas do sistema.",
-    tags: ["PDF", "XML / ZIP", "Chave de acesso"],
-    icone: "xml",
-    href: "conferencia-xml-entradas.html",
-    botao: "Carregar Relatório e XMLs",
-    previa: "Notas não lançadas"
-  },
-  {
-    id: "spedh010",
-    aba: "SPED H010 Conta Contábil",
-    curto: "SPED H010",
-    titulo: "Corrigir Conta do Inventário (H010)",
-    descricao: "Suba o TXT do SPED Fiscal e a ferramenta preenche a conta contábil vazia nos registros H010 (padrão 175), sem mexer no restante do arquivo.",
-    resumo: "Preenche COD_CTA vazio no H010 do SPED Fiscal.",
-    tags: ["SPED ICMS/IPI", "Bloco H", "TXT"],
-    icone: "code",
-    href: "sped-h010-conta.html",
-    botao: "Carregar Arquivo do SPED",
-    previa: "Linhas H010 corrigidas"
-  },
-  {
-    id: "razao",
-    aba: "Conciliação do Razão por NF",
-    curto: "Razão",
-    titulo: "Conciliar Razão de Clientes por NF",
-    descricao: "Suba o razão em Excel e a ferramenta agrupa os lançamentos pelo número da nota: valor emitido, recebimentos, veículo na troca e o saldo pendente de cada cliente.",
-    resumo: "Razão de clientes conciliado nota a nota, com pendências.",
-    tags: ["Excel", "Recebimentos", "Pendências"],
-    icone: "receipt",
-    href: "conciliacao-razao-nf.html",
-    botao: "Carregar Razão",
-    previa: "Saldo por nota"
-  },
-  {
-    id: "alugueis",
-    aba: "Aluguéis PF para Domínio",
-    curto: "Aluguéis",
-    titulo: "Gerar Aluguéis de Pessoa Física",
-    descricao: "Informe CPF, nome, data, acumulador, valor e IRRF de cada locador e baixe o ServicoTomados.txt no layout de serviços tomados do Domínio, sem usar a planilha.",
-    resumo: "Aluguéis PF com IRRF viram TXT de serviços tomados.",
-    tags: ["Domínio", "IRRF", "TXT"],
-    icone: "receipt",
-    href: "alugueis-pf-dominio.html",
-    botao: "Preencher Aluguéis do Mês",
-    previa: "Locadores do mês"
-  },
-  {
-    id: "alugueispdf",
-    aba: "Aluguéis PDF por Empresa",
-    curto: "Aluguéis PDF",
-    titulo: "Gerar TXT de Aluguéis a partir do PDF",
-    descricao: "Suba o PDF com os aluguéis do mês e a ferramenta separa os locadores por empresa, gerando um ServicoTomados.txt para cada uma, pronto para importar no Domínio.",
-    resumo: "PDF de aluguéis vira um TXT de serviços tomados por empresa.",
-    tags: ["PDF", "Domínio", "TXT por empresa"],
-    icone: "receipt",
-    href: "alugueis-pdf-dominio.html",
-    botao: "Carregar PDF dos Aluguéis",
-    previa: "Aluguéis por empresa"
-  },
-  {
-    id: "ncm0102",
-    aba: "Filtro NCM 0102 Animais Vivos",
-    curto: "NCM 0102",
-    titulo: "Filtrar Notas de Animais Vivos",
-    descricao: "Suba os XMLs (ou um .zip) e a ferramenta aponta as notas com item de NCM iniciando em 0102, mostra emitente, destinatário, CFOP e valores, e separa só esses XMLs num ZIP.",
-    resumo: "Separa os XMLs de notas com NCM 0102 (animais vivos).",
-    tags: ["XML / ZIP", "NCM 0102", "ZIP e CSV"],
-    icone: "xml",
-    href: "filtro-ncm-animais-vivos.html",
-    botao: "Anexar XMLs",
-    previa: "Notas com animais vivos"
-  },
-  {
-    id: "fixacao1132",
-    aba: "Relatório Fixação CFOP 1132/1135",
-    curto: "Fixação 1132/1135",
-    titulo: "Relatório de Fixação de Preço por Agricultor",
-    descricao: "Suba os XMLs (ou um .zip) e a ferramenta considera só os itens com CFOP 1132 e 1135, lista produto, unidade, quilos e valor por nota e resume por produto quantas sacas de 60 kg deram, no papel timbrado da LUX, pronto para salvar em PDF.",
-    resumo: "XMLs de fixação (CFOP 1132/1135) viram relatório em kg e sacas por produto.",
-    tags: ["XML / ZIP", "CFOP 1132/1135", "PDF timbrado"],
-    icone: "xml",
-    href: "relatorio-fixacao-1132-1135.html",
-    botao: "Anexar XMLs",
-    previa: "Sacas por produto"
-  },
-  {
-    id: "vendagado5101",
-    aba: "Relatório Venda de Gado CFOP 5101",
-    curto: "Venda de gado 5101",
-    titulo: "Relatório de Venda de Gado por Destinatário",
-    descricao: "Suba os XMLs (ou um .zip) e a ferramenta considera só os itens com CFOP 5101 e NCM iniciando em 0102, mostra por nota o destinatário, quantas cabeças foram vendidas, o valor unitário e o total, com resumo por destinatário e por produto, no papel timbrado da LUX, pronto para salvar em PDF.",
-    resumo: "XMLs de venda de gado (CFOP 5101 · NCM 0102) viram relatório de cabeças e valores por destinatário.",
-    tags: ["XML / ZIP", "CFOP 5101 · NCM 0102", "PDF timbrado"],
-    icone: "xml",
-    href: "relatorio-venda-gado-5101.html",
-    botao: "Anexar XMLs",
-    previa: "Cabeças por destinatário"
-  },
-  {
-    id: "dieselfazenda",
-    aba: "Diesel por Fazenda",
-    curto: "Diesel por fazenda",
-    titulo: "Relatório de Óleo Diesel por Fazenda",
-    descricao: "Suba os XMLs (ou um .zip) e a ferramenta pega só os itens com NCM 27101921 (óleo diesel), separa pela fazenda do endereço do destinatário e lista nota a nota data, fornecedor, litros, valor unitário e total, com o total de cada fazenda, no papel timbrado da LUX. Salva em PDF e baixa em Excel.",
-    resumo: "XMLs de diesel (NCM 27101921) viram relatório por fazenda, nota a nota.",
-    tags: ["XML / ZIP", "NCM 27101921", "PDF timbrado", "Excel"],
-    icone: "xml",
-    href: "diesel-por-fazenda.html",
-    botao: "Anexar XMLs",
-    previa: "Litros e R$ por fazenda"
-  },
-  {
-    id: "pdfofx",
-    aba: "Extrato PDF para OFX",
-    curto: "PDF → OFX",
-    titulo: "Converter Extrato PDF em OFX",
-    descricao: "Suba o extrato em PDF e a ferramenta lê data, histórico e valor, mostra os lançamentos para conferência e gera o OFX com os débitos negativos e o histórico na linha MEMO. A aba Layouts disponíveis mostra o modelo de PDF aceito.",
-    resumo: "Extrato em PDF vira arquivo OFX para importar.",
-    tags: ["PDF", "OFX", "Layouts"],
-    icone: "receipt",
-    href: "extrato-pdf-ofx.html",
-    botao: "Carregar Extrato PDF",
-    previa: "Lançamentos do extrato"
-  },
-  {
-    id: "contrato",
-    grupo: "empresa",
-    aba: "Contrato + Termo de Comissão",
-    curto: "Contrato",
-    titulo: "Gerar Contrato e Termo de Comissão",
-    descricao: "Preencha vendedor, comprador e produtos e baixe em Word o contrato de compra e venda e o termo de comissão no modelo AgroSomos, com totais, comissão e datas calculados.",
-    resumo: "Formulário gera o contrato e o termo de comissão em Word.",
-    tags: ["Word", "Contrato", "Comissão"],
-    icone: "receipt",
-    href: "contrato-termo-agrosomos.html",
-    botao: "Preencher Contrato",
-    previa: "Contrato de compra e venda"
-  },
-];
-
-const $ = id => document.getElementById(id);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const icon = n => `<svg aria-hidden="true"><use href="#i-${n}"/></svg>`;
-
-function previa(f){
-  const rows = Array.from({length:4}, (_,i) =>
-    `<div class="pv-row"><span class="ic"></span><span class="b" style="width:${38-i*5}%"></span><span class="b" style="width:14%"></span><span class="b" style="width:12%"></span><span class="ok"></span></div>`).join("");
-  return `<div class="preview" aria-hidden="true">
-    <div class="pv-bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
-    <div class="pv-body">
-      <div class="pv-side">
-        <div class="pv-logo"><svg><use href="#i-logo"/></svg><span>e.contabil</span></div>
-        <div class="ln on"></div><div class="ln"></div><div class="ln" style="width:70%"></div><div class="ln" style="width:80%"></div>
+<main>
+  <!-- HERO -->
+  <section class="hero" id="inicio">
+    <div class="container">
+      <div>
+        <p class="eyebrow">Mais agilidade e eficiência para o seu dia a dia</p>
+        <h1>e-contabil <span>automações</span></h1>
+        <p class="lead">Ferramentas que simplificam a sua rotina contábil e fiscal. Converta arquivos, organize dados e tenha relatórios personalizados com praticidade e segurança.</p>
+        <a class="btn-hero" href="#ferramentas">
+          <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg>
+          Conheça nossas ferramentas
+        </a>
       </div>
-      <div class="pv-main">
-        <div class="t">${esc(f.aba)}</div>
-        <div class="pv-card"><div class="h">${esc(f.previa)}</div>${rows}</div>
+
+      <!-- Ilustração: notebook convertendo PDF → OFX → XML → relatórios -->
+      <svg class="ilustra" viewBox="0 0 640 400" role="img" aria-label="Notebook convertendo arquivos PDF em OFX e XML e gerando relatórios personalizados">
+        <!-- relatórios ao fundo -->
+        <g transform="translate(470 30) rotate(4)">
+          <rect width="130" height="170" rx="6" fill="#eef3fb"/>
+          <rect x="16" y="20" width="98" height="8" rx="4" fill="#c4d3ea"/>
+          <rect x="22" y="50" width="12" height="40" fill="#2b8cff"/><rect x="40" y="38" width="12" height="52" fill="#1673e6"/><rect x="58" y="60" width="12" height="30" fill="#2b8cff"/><rect x="76" y="44" width="12" height="46" fill="#1673e6"/>
+          <rect x="16" y="108" width="98" height="6" rx="3" fill="#d4dfef"/><rect x="16" y="122" width="80" height="6" rx="3" fill="#d4dfef"/><rect x="16" y="136" width="90" height="6" rx="3" fill="#d4dfef"/>
+        </g>
+        <g transform="translate(420 70) rotate(-3)">
+          <rect width="130" height="170" rx="6" fill="#fff" stroke="#dbe5f3"/>
+          <rect x="16" y="18" width="70" height="8" rx="4" fill="#c4d3ea"/>
+          <rect x="18" y="44" width="10" height="30" fill="#5ec8ff"/><rect x="32" y="34" width="10" height="40" fill="#2b8cff"/><rect x="46" y="50" width="10" height="24" fill="#5ec8ff"/>
+          <circle cx="95" cy="58" r="17" fill="#2b8cff"/><path d="M95 58V41a17 17 0 0 1 17 17z" fill="#cfe7ff"/>
+          <rect x="16" y="96" width="98" height="6" rx="3" fill="#d4dfef"/><rect x="16" y="110" width="76" height="6" rx="3" fill="#d4dfef"/><rect x="16" y="124" width="92" height="6" rx="3" fill="#d4dfef"/><rect x="16" y="138" width="60" height="6" rx="3" fill="#d4dfef"/>
+        </g>
+        <!-- notebook -->
+        <g>
+          <path d="M120 70h330a14 14 0 0 1 14 14v200H106V84a14 14 0 0 1 14-14z" fill="#1c2c45"/>
+          <rect x="118" y="82" width="334" height="196" rx="4" fill="url(#gTela)"/>
+          <path d="M118 82h334v60L118 220z" fill="#fff" opacity=".04"/>
+          <path d="M70 284h430l26 26a8 8 0 0 1-6 13H50a8 8 0 0 1-6-13z" fill="url(#gBase)"/>
+          <path d="M60 296h450" stroke="#a9b8d0" stroke-width="2"/>
+          <rect x="250" y="300" width="70" height="8" rx="4" fill="#97a8c4"/>
+        </g>
+        <!-- arquivos e setas -->
+        <use href="#f-pdf" x="132" y="112" width="70" height="84"/>
+        <path d="M212 158h22m-8-8 8 8-8 8" fill="none" stroke="#5ec8ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <use href="#f-ofx" x="244" y="112" width="70" height="84"/>
+        <path d="M324 158h22m-8-8 8 8-8 8" fill="none" stroke="#5ec8ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <use href="#f-xml" x="356" y="112" width="70" height="84"/>
+        <path d="M436 158h22m-8-8 8 8-8 8" fill="none" stroke="#5ec8ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- selo -->
+        <g transform="translate(468 236)">
+          <rect width="156" height="70" rx="10" fill="#0d3f8f" stroke="#2b8cff" stroke-width="1.5"/>
+          <text x="78" y="30" text-anchor="middle" font-family="Lexend,Arial,sans-serif" font-style="italic" font-weight="500" font-size="16" fill="#fff">Relatórios</text>
+          <text x="78" y="52" text-anchor="middle" font-family="Lexend,Arial,sans-serif" font-style="italic" font-weight="500" font-size="16" fill="#fff">Personalizados</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- FERRAMENTAS -->
+  <section class="bloco" id="ferramentas">
+    <div class="container">
+      <div class="sec-cab">
+        <div>
+          <p class="kicker">Nossas ferramentas</p>
+          <h2>Soluções práticas para o seu trabalho</h2>
+        </div>
+        <p>Ferramentas simples, rápidas e seguras para facilitar a rotina fiscal e contábil da sua empresa.</p>
+      </div>
+
+      <div class="cards">
+        <article class="card duplo">
+          <div class="art">
+            <svg viewBox="0 0 70 84"><use href="#f-pdf"/></svg>
+            <svg class="seta" viewBox="0 0 22 16"><path d="M2 8h16m-6-6 6 6-6 6" fill="none" stroke="#1673e6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 70 84"><use href="#f-ofx"/></svg>
+          </div>
+          <div>
+            <h3>PDF para OFX</h3>
+            <p>Converta seus extratos bancários em PDF para o formato OFX, prontos para importação no seu sistema contábil.</p>
+            <a class="ir" href="cliente/">Acessar ferramenta <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></a>
+          </div>
+        </article>
+        <article class="card verde">
+          <div class="art"><svg viewBox="0 0 70 84"><use href="#f-xml"/></svg></div>
+          <div>
+            <h3>Conversor de XML</h3>
+            <p>Leia e organize os XMLs de NF-e e NFC-e de forma rápida, com relatórios item a item e filtros por CFOP e NCM.</p>
+            <a class="ir" href="cliente/">Acessar ferramenta <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></a>
+          </div>
+        </article>
+        <article class="card roxo">
+          <div class="art"><svg viewBox="0 0 84 84" style="width:76px"><use href="#f-rel"/></svg></div>
+          <div>
+            <h3>Relatórios Personalizados</h3>
+            <p>Crie relatórios sob medida para a sua necessidade. Mais controle, agilidade e informações relevantes para a sua tomada de decisão.</p>
+            <a class="ir" href="cliente/">Acessar ferramenta <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></a>
+          </div>
+        </article>
       </div>
     </div>
-  </div>`;
-}
+  </section>
 
-const grupoDe = f => f.grupo || "escritorio";
-let grupo = "escritorio";
-let atual = 0;
-const lista = () => FERRAMENTAS.filter(f => grupoDe(f) === grupo);
-
-function render(){
-  const L = lista();
-  if (atual >= L.length) atual = 0;
-  document.querySelectorAll(".grupo").forEach(b => b.setAttribute("aria-pressed", b.dataset.g === grupo));
-  $("layout").classList.toggle("unica", L.length < 2);
-
-  $("ferramentas").innerHTML = L.map((f,i) =>
-    `<button class="tab" role="tab" id="tab-${f.id}" aria-selected="${i===atual}" aria-controls="panel" data-i="${i}">${icon(f.icone)}<span>${esc(f.aba)}</span></button>`).join("");
-
-  const f = L[atual];
-  $("panel").setAttribute("aria-labelledby", "tab-" + f.id);
-  $("panel").innerHTML = `<div class="panel-inner">
-      <h2>${esc(f.titulo)}</h2>
-      <p>${esc(f.descricao)}</p>
-      <div class="tags">${f.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div>
-      <a class="btn" href="${esc(f.href)}">${esc(f.botao)}</a>
-      ${previa(f)}
-    </div>`;
-
-  $("cards").innerHTML = L.map((g,i) => i===atual ? "" :
-    `<article class="card">
-      <div class="ico">${icon(g.icone)}<b>${esc(g.curto)}</b></div>
-      <div class="txt">
-        <h4>${esc(g.aba)}</h4>
-        <p>${esc(g.resumo)}</p>
-        <div class="actions">
-          <a class="btn" href="${esc(g.href)}">Acessar Ferramenta</a>
-          <button class="linklike" type="button" data-i="${i}">Ver detalhes</button>
-        </div>
+  <!-- DIFERENCIAIS -->
+  <section class="dif" aria-label="Diferenciais">
+    <div class="container">
+      <div class="item">
+        <svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+        <div><h3>Agilidade</h3><p>Economize tempo com processos automatizados e sem complicação.</p></div>
       </div>
-    </article>`).join("");
-}
+      <div class="item">
+        <svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>
+        <div><h3>Segurança</h3><p>Seus arquivos são lidos no seu computador e não ficam salvos na internet.</p></div>
+      </div>
+      <div class="item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <div><h3>Personalização</h3><p>Soluções sob medida para a sua realidade.</p></div>
+      </div>
+      <div class="item">
+        <svg viewBox="0 0 24 24"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="2" y="14" width="5" height="6" rx="2"/><rect x="17" y="14" width="5" height="6" rx="2"/><path d="M19.5 20c0 1.5-2 2.5-5 2.5"/></svg>
+        <div><h3>Suporte especializado</h3><p>Conte com nossa equipe sempre que precisar.</p></div>
+      </div>
+    </div>
+  </section>
 
-function selecionar(i, foco){
-  atual = i; render();
-  const f = lista()[i];
-  try { history.replaceState(null, "", "#" + f.id); } catch(e){}
-  if (foco) document.getElementById("tab-" + f.id).focus();
-}
+  <div class="faixa">Personalizamos relatórios e ferramentas para você.</div>
 
-document.querySelectorAll(".grupo").forEach(b => b.addEventListener("click", () => {
-  if (grupo === b.dataset.g) return;
-  grupo = b.dataset.g; atual = 0; render();
-  try { history.replaceState(null, "", "#" + grupo); } catch(e){}
-}));
+  <!-- RELATÓRIOS -->
+  <section class="bloco" id="relatorios">
+    <div class="container">
+      <div class="sec-cab">
+        <div>
+          <p class="kicker">Relatórios e conferências</p>
+          <h2>O que já automatizamos</h2>
+        </div>
+        <p>Algumas das ferramentas disponíveis na Área do Cliente. Cada acesso enxerga as ferramentas liberadas para ele.</p>
+      </div>
+      <div class="lista">
+        <div class="mini"><span class="bolha" style="background:#1673e6">OFX</span><div><b>Extrato OFX para Domínio</b><span>Lançamentos de banco, tarifas e juros prontos para importar.</span></div></div>
+        <div class="mini"><span class="bolha" style="background:#1e9e57">XML</span><div><b>Conferência XML × Entradas</b><span>Aponta as notas do mês que ainda não foram lançadas.</span></div></div>
+        <div class="mini"><span class="bolha" style="background:#0d3f8f">NF</span><div><b>Conciliações</b><span>Notas × extrato bancário e razão de clientes nota a nota.</span></div></div>
+        <div class="mini"><span class="bolha" style="background:#d9333f">PDF</span><div><b>Rendimentos de aplicações</b><span>Rendimento e I.R. do mês para PIS/COFINS no Lucro Real.</span></div></div>
+        <div class="mini"><span class="bolha" style="background:#6a4ae0">SPED</span><div><b>SPED Fiscal e PIS/COFINS</b><span>Correção do H010 e cruzamento de códigos da receita.</span></div></div>
+        <div class="mini"><span class="bolha" style="background:#1e9e57">R$</span><div><b>Relatórios do agro</b><span>Diesel por fazenda, fixação de preço e venda de gado.</span></div></div>
+        <div class="mini"><span class="bolha" style="background:#1673e6">TXT</span><div><b>Aluguéis PF para Domínio</b><span>Serviços tomados com IRRF gerados a partir de formulário ou PDF.</span></div></div>
+        <div class="mini"><span class="bolha" style="background:#0d3f8f">DOC</span><div><b>Contratos</b><span>Contrato de compra e venda e termo de comissão em Word.</span></div></div>
+      </div>
+      <p class="nota">
+        <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <span>As ferramentas ficam na <a href="cliente/">Área do Cliente</a>, com acesso por e-mail e senha.</span>
+      </p>
+    </div>
+  </section>
 
-$("ferramentas").addEventListener("click", e => { const b = e.target.closest(".tab"); if (b) selecionar(+b.dataset.i); });
-$("ferramentas").addEventListener("keydown", e => {
-  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-  const n = lista().length;
-  selecionar((atual + (e.key === "ArrowRight" ? 1 : n - 1)) % n, true);
+  <!-- SOBRE / CONTATO -->
+  <section class="bloco" style="padding-top:10px;padding-bottom:64px">
+    <div class="container duas">
+      <div class="caixa" id="sobre">
+        <p class="kicker">Sobre nós</p>
+        <h2>Feito por quem vive a rotina contábil</h2>
+        <p>A e-contabil automações nasceu dentro do escritório contábil, a partir das tarefas repetitivas do dia a dia: conferir notas, conciliar extratos, montar relatórios e preparar arquivos de importação.</p>
+        <p>Cada ferramenta resolve um problema real e é ajustada à realidade de quem usa.</p>
+        <ul>
+          <li>Funciona no navegador, sem instalar nada</li>
+          <li>Os arquivos são processados no seu computador</li>
+          <li>Novas ferramentas sob medida, conforme a sua necessidade</li>
+        </ul>
+      </div>
+      <div class="caixa escura" id="contato">
+        <p class="kicker" style="color:var(--sky)">Contato</p>
+        <h2>Precisa de uma ferramenta ou relatório?</h2>
+        <p>Fale com a gente e conte o que toma tempo na sua rotina. Montamos a solução para você.</p>
+        <p>Já é cliente? Acesse suas ferramentas pela Área do Cliente.</p>
+        <a class="btn-hero" href="cliente/">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          Área do Cliente
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <span>© <span id="ano">2026</span> e-contabil automações</span>
+    <a href="cliente/">Área do Cliente</a>
+  </div>
+</footer>
+
+<script>
+document.getElementById("ano").textContent = new Date().getFullYear();
+const btn = document.getElementById("menuBtn"), menu = document.getElementById("menu");
+btn.addEventListener("click", () => {
+  const ab = menu.classList.toggle("aberto");
+  btn.setAttribute("aria-expanded", ab);
 });
-$("cards").addEventListener("click", e => {
-  const b = e.target.closest(".linklike");
-  if (b){ selecionar(+b.dataset.i); $("ferramentas").scrollIntoView({block:"start"}); }
-});
-
-// Abre direto na área ou aba indicada no endereço (ex.: .../#empresa ou .../#xml)
-const h = location.hash.slice(1);
-if (h === "escritorio" || h === "empresa") grupo = h;
-else {
-  const fi = FERRAMENTAS.find(f => f.id === h);
-  if (fi){ grupo = grupoDe(fi); atual = lista().indexOf(fi); }
-}
-render();
-
-// Tema claro/escuro (lembrado neste navegador)
-const KEY = "econtabil-tema";
-try { const t = localStorage.getItem(KEY); if (t) document.documentElement.dataset.theme = t; } catch(e){}
-$("themeBtn").addEventListener("click", () => {
-  const dark = document.documentElement.dataset.theme
-    ? document.documentElement.dataset.theme === "dark"
-    : matchMedia("(prefers-color-scheme: dark)").matches;
-  const novo = dark ? "light" : "dark";
-  document.documentElement.dataset.theme = novo;
-  try { localStorage.setItem(KEY, novo); } catch(e){}
-});
+menu.addEventListener("click", e => { if (e.target.tagName === "A"){ menu.classList.remove("aberto"); btn.setAttribute("aria-expanded", false); } });
+// Destaca no menu a seção visível
+const links = [...menu.querySelectorAll("a")];
+const obs = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) links.forEach(a => a.classList.toggle("ativo", a.getAttribute("href") === "#" + e.target.id));
+}), { rootMargin: "-45% 0px -50% 0px" });
+["inicio","ferramentas","relatorios","sobre","contato"].forEach(id => { const el = document.getElementById(id); if (el) obs.observe(el); });
 </script>
 </body>
 </html>
