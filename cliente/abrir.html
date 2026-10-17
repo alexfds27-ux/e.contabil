@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ferramenta · e.contabil</title>
+<title>Ferramenta · e-contabil</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23167a6e'/%3E%3Crect x='20' y='34' width='6' height='12' rx='1' fill='white'/%3E%3Crect x='29' y='28' width='6' height='18' rx='1' fill='white'/%3E%3Crect x='38' y='22' width='6' height='24' rx='1' fill='white'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="../favicon.png">
 <link rel="stylesheet" href="estilo.css">
 <style>
 html,body{height:100%}
@@ -17,7 +17,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .barra .voltar{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--accent);font-weight:500;font-size:.95rem;white-space:nowrap}
 .barra .nome{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .barra .marca{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.85rem;white-space:nowrap}
-.barra .marca svg{width:22px;height:22px}
+.barra .marca img{width:24px;height:24px;border-radius:50%}
 #quadro{flex:1;width:100%;border:0;display:block;background:var(--bg)}
 #estado{flex:1;overflow:auto}
 @media (max-width:600px){.barra .marca span{display:none}}
@@ -27,7 +27,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 <div class="barra">
   <a class="voltar" href="painel.html">&larr; Minhas ferramentas</a>
   <div class="nome" id="nome"></div>
-  <div class="marca"><svg><use href="#i-logo"/></svg><span>e.contabil projetos</span></div>
+  <div class="marca"><img src="../logo.png" alt=""><span>e-contabil automações</span></div>
 </div>
 <div id="estado"><div class="carregando"><span class="spin"></span>Abrindo a ferramenta…</div></div>
 <iframe id="quadro" title="Ferramenta" hidden></iframe>
@@ -54,7 +54,7 @@ try {
   if (!snap.exists()) throw { code: "nao-existe" };
 
   const f = snap.data();
-  document.title = (f.aba || "Ferramenta") + " · e.contabil";
+  document.title = (f.aba || "Ferramenta") + " · e-contabil";
   $("nome").textContent = f.aba || "";
 
   // Tira a barra "← Central de Automações" da versão antiga: a barra de cima já faz esse papel
