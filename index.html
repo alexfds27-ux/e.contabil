@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230b4fb8'/%3E%3Cpath d='M44 34H21a11 11 0 0 0 20 5' fill='none' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M21 30a11 11 0 0 1 22 0' fill='none' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="favicon.png">
 <style>
 :root{
   color-scheme:light;
@@ -30,7 +30,7 @@ img,svg{display:block}
 .topo{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
 .topo .container{display:flex;align-items:center;gap:32px;min-height:88px}
 .marca{display:flex;align-items:center;gap:14px;text-decoration:none;flex:none}
-.marca svg{width:60px;height:60px}
+.marca img{width:60px;height:60px;border-radius:50%}
 .marca-txt{display:flex;flex-direction:column;line-height:1}
 .marca-txt b{font-size:2.05rem;font-weight:600;letter-spacing:-.02em;color:var(--navy)}
 .marca-txt span{font-size:.72rem;letter-spacing:.42em;color:var(--blue);margin-top:5px;padding-left:2px;font-weight:500}
@@ -136,7 +136,7 @@ footer a:hover{text-decoration:underline}
 }
 @media (max-width:900px){
   .topo .container{min-height:72px;gap:12px}
-  .marca svg{width:46px;height:46px}
+  .marca img{width:46px;height:46px}
   .marca-txt b{font-size:1.6rem}
   .marca-txt span{font-size:.6rem;letter-spacing:.32em}
   .menu-btn{display:grid}
@@ -211,7 +211,7 @@ footer a:hover{text-decoration:underline}
 <header class="topo">
   <div class="container">
     <a class="marca" href="#inicio" aria-label="e-contabil automações, início">
-      <svg><use href="#logo"/></svg>
+      <img src="logo.png" alt="" width="60" height="60">
       <span class="marca-txt"><b>e-contabil</b><span>AUTOMAÇÕES</span></span>
     </a>
     <button class="menu-btn" id="menuBtn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu">
