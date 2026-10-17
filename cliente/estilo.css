@@ -3,7 +3,7 @@
   --bg:#eef2f6; --surface:#ffffff; --surface-2:#f4f7fa;
   --ink:#12233b; --muted:#4f5f73; --line:#dde4ec;
   --teal-1:#1b5f86; --teal-2:#17a074; --accent:#167a6e; --accent-soft:#e3f3ee;
-  --danger:#b4232c; --danger-soft:#fde8ea; --warn-soft:#fff4dc;
+  --sub:#1673e6; --danger:#b4232c; --danger-soft:#fde8ea; --warn-soft:#fff4dc;
   --shadow:0 1px 2px rgba(18,35,59,.05),0 6px 20px rgba(18,35,59,.06);
   --grad:linear-gradient(100deg,var(--teal-1),var(--teal-2));
   --f:"Lexend",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -11,13 +11,13 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f1824; --surface:#16212f; --surface-2:#1b2838;
   --ink:#e6edf5; --muted:#9fb0c3; --line:#26364a;
-  --accent:#3fc6a0; --accent-soft:#16332c; --danger:#ff8a92; --danger-soft:#3a1d22; --warn-soft:#3a3020;
+  --accent:#3fc6a0; --accent-soft:#16332c; --sub:#5ec8ff; --danger:#ff8a92; --danger-soft:#3a1d22; --warn-soft:#3a3020;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
 }}
 :root[data-theme="dark"]{
   --bg:#0f1824; --surface:#16212f; --surface-2:#1b2838;
   --ink:#e6edf5; --muted:#9fb0c3; --line:#26364a;
-  --accent:#3fc6a0; --accent-soft:#16332c; --danger:#ff8a92; --danger-soft:#3a1d22; --warn-soft:#3a3020;
+  --accent:#3fc6a0; --accent-soft:#16332c; --sub:#5ec8ff; --danger:#ff8a92; --danger-soft:#3a1d22; --warn-soft:#3a3020;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
 }
 *{box-sizing:border-box}
@@ -33,7 +33,7 @@ a{color:inherit}
 .brand img{width:48px;height:48px;flex:none;border-radius:50%}
 .brand-txt{display:flex;flex-direction:column;line-height:1}
 .brand-txt b{font-size:1.55rem;font-weight:700;letter-spacing:-.02em}
-.brand-txt span{font-size:.62rem;letter-spacing:.38em;color:var(--teal-1);margin-top:5px;padding-left:2px;font-weight:500}
+.brand-txt span{font-size:.62rem;letter-spacing:.38em;color:var(--sub);margin-top:5px;padding-left:2px;font-weight:500}
 .top-acoes{display:flex;align-items:center;gap:14px}
 .quem{color:var(--muted);font-size:.92rem;text-align:right;line-height:1.25}
 .quem b{display:block;color:var(--ink);font-weight:600}
