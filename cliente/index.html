@@ -136,7 +136,8 @@ $("fReset").addEventListener("submit", async e => {
   if (!email){ mostrar($("msgReset"), "Informe o e-mail.", "erro"); return; }
   $("bReset").disabled = true;
   try {
-    await sendPasswordResetEmail(auth, email);
+    // Depois de salvar a senha nova, o botão "Continuar" do Firebase traz de volta ao login
+    await sendPasswordResetEmail(auth, email, { url: "https://www.econtabil-ia.com.br/cliente/" });
     mostrar($("msgReset"), "Pronto. Se o e-mail estiver cadastrado, o link chega em alguns minutos (confira também o spam).", "ok");
   } catch(err){
     if (/user-not-found/.test(err.code || "")) mostrar($("msgReset"), "Pronto. Se o e-mail estiver cadastrado, o link chega em alguns minutos (confira também o spam).", "ok");
